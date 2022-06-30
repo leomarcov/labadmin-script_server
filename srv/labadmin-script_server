@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#===================================================================================
+# LABADMIN SCRIPT SERVER
+#         FILE: labadmin-script_server
+#        USAGE: labadmin-script_server -h hostname -o os -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
+#
+#  DESCRIPTION: Labadmin script server manager
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#	   LICENSE: GNU General Public License v3.0
+#      VERSION: 2022.06
+#      CREATED: 28.06.2022
+#=================================================================================== 
+
+
+#===============================================================================
+#  GLOBAL VARIABLES
+#===============================================================================
+readonly scripts_path=$(dirname "$(readlink -f "$0")")
+
+
+#=== FUNCTION ==================================================================
+#        NAME: help
+# DESCRIPTION: Show help and exit 
+# PARAMETERS:
+#	$1	Exit code value
+#===============================================================================
+function help() {
+	echo "Usage: $(basename "$0") -h hostname -o os -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
+	exit "$1"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: check_params
+# DESCRIPTION: Checks input parameters and load values
+# PARAMETERS:
+#	$@	All parameter from command line
+#===============================================================================
+function check_params() {
+	while getopts ":h:o:a:s:e:" option
+	do		
+		case $option in
+		h)			
+			readonly hostname="$OPTARG"
+		;;
+		o)
+			readonly os="$OPTARG"
+			readonly scripts_os="${scripts_path}/${os}/"
+		;;
+		a)
+			readonly action="$OPTARG"
+		;;
+		s)
+			readonly script="$OPTARG"
+		;;
+		m) 
+			readonly exec_msg="$OPTARG"
+		;;
+		\?)
+			echo "$0: incorrect option  $OPTARG"
+			exit 2
+		;;
+	   esac
+	done
+
+	[ "$script" ] && readonly script_path="${scripts_os}/${script}/"
+
+	if [ ! "$hostname" ]; then
+		echo "Hostname not present"
+		help 2
+	elif [ ! "$os" ]; then
+	    echo "OS not present"
+		help 2 
+	elif [ ! "$action" ]; then
+	    echo "Action not present"
+		help 2  
+	elif  [[ "$action" != @(list|get|exec_ok|exec_error) ]]; then
+	    echo "Invalid action value"
+		help 2  
+	elif [[ "$action" = @(get|exec_ok|exec_error) ]] && [ ! "$script" ]; then
+		echo "Script not present"
+		help 2  
+	elif [ ! -d "$scripts_path" ] || [ ! -r "$scripts_path" ]; then
+		echo "Cant access scripts directory: $scripts_path"
+		exit 2
+	elif [ ! -d "$scripts_os" ] || [ ! -r "$scripts_os" ]; then
+		echo "Cant access OS directory: $scripts_os"
+		exit 2
+	fi
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: log
+# DESCRIPTION: write in log file using format: [date time] HOSTNAME ACTION EXEC_MSG
+
+#===============================================================================
+function log() {
+	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hostname}\t${action^^}\t$([ "${#action}" -lt 5 ] && echo $'\t')${exec_msg}" >> "${script_path}/log"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_list
+# DESCRIPTION: List all pending scripts for hostname according script name and select script
+#===============================================================================
+function action_list() {
+	IFS2="$IFS"; IFS=$'\n'
+
+	for s in $(ls "$scripts_os"); do
+		# Check if hostname match with script REGEX
+		re=$(echo "$s" | cut -f1 -d" ")	
+		[[ "$hostname" = $re ]] || continue
+
+		# Check if hostname is selected
+		bash "${scripts_os}/${s}/select" "$hostname" || continue
+		
+		# List script!
+		echo "$s"
+	done
+	IFS="$IFS2"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_get
+# DESCRIPTION: Show script code
+#===============================================================================
+function action_get() {
+	# Show script
+	cat "${script_path}/script"	|| exit 1
+	log 
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_exec_ok
+# DESCRIPTION: Notify correct execution
+#===============================================================================
+function action_exec_ok() {
+	log 
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_exec_error
+# DESCRIPTION: Notify error execution
+#===============================================================================
+function action_exec_error() {
+	log 
+}
+
+
+##### CHECK PARAMETERS
+check_params "$@"
+
+
+##### EXEC ACTION
+case "$action" in
+	list)		action_list			;;
+	get)		action_get			;;
+	exec_ok)	action_exec_ok		;;
+	exec_error)	action_exec_ok		;;
+esac

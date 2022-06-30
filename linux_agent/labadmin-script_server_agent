@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+#===================================================================================
+# LABADMIN SCRIPT SERVER AGENT
+#         FILE: labadmin-script_server_agent
+#
+#  DESCRIPTION: Labadmin script server client agent
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#	   LICENSE: GNU General Public License v3.0
+#      VERSION: 2022.06
+#      CREATED: 28.06.2022
+#=================================================================================== 
+
+
+#===============================================================================
+#  GLOBAL VARIABLES
+#===============================================================================
+readonly log_path="/var/log/labadmin-script_server_agent"
+readonly srv_address="10.119.171.215"
+readonly srv_port="666"
+readonly srv_user="labadminscripts"
+readonly hostname=$(hostname)
+readonly os=linux
+
+
+#=== FUNCTION ==================================================================
+#        NAME: log
+# DESCRIPTION: write in log file using format: [date time] HOSTNAME ACTION EXEC_MSG
+#===============================================================================
+function log() {
+	local action="$1"
+	local script="$2"
+	local exec_msg="$3"
+
+	echo -en "[$(date "+%Y-%m-%d %H:%M:%S")] ${action^^}\t$([ "${#action}" -lt 5 ] && echo $'\t')${script}" >> "$log_path"
+	if [ "$(echo "$exec_msg" | wc -l)" -gt 1 ]; then
+		echo $'###########################################################\n'"$exec_msg"$'###########################################################' >> "$log_path"
+	else
+		echo -e "\t${exec_msg}" >> "$log_path"
+	fi
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: call_script_server
+# DESCRIPTION: call ssh labadmin_script-server manager
+# PARAMETERS:
+#	$1 	action
+#	$2 	script
+#	$3 	exec_msg
+#===============================================================================
+function call_script_server() {
+	local action="$1"
+	local script="$2"
+	local exec_msg="$3"
+
+	ssh -T ${sshuser}@${srv_address} -p ${sshport} "labadmin-script_server -h \"$hostname\" -o \"$os\" $([ "$action" ] && echo "-a \""$action"\"") $([ "$script" ] && echo "-s \""$script"\"") $([ "$exec_msg" ] && echo "-m \""$exec_msg"\"")"
+	return $?
+}
+
+
+
+# GET PENDING SCRIPT NAMES
+call_output=$(call_script_server "list")
+if [ $? -ne 0 ]; then
+	log "list" "" "$call_output"
+	echo "$call_output"
+	exit 1
+fi
+script_list="$call_output"
+
+
+# GET AND EXEC SCRIPTS
+IFS2="$IFS"; IFS=$'\n';
+for script in $script_list; do
+	# GET SCRIPT CODE
+	script_code=$(call_script_server "get" "$script")
+	if [ $? -ne 0 ]; then
+		log "get" "$script" "$script_code"
+		continue
+	fi
+
+	# EXEC SCRIPT
+	echo "$script_code" | bash
+	if [ $? -eq 0 ]; then 
+		call_script_server "exec_ok" "$script"
+		[ $? -ne 0 ] && log "exec_ok" "$script" "$script_code"
+	else
+		call_script_server "exec_error" "$script"
+		[ $? -ne 0 ] && log "exec_error" "$script" "$script_code"
+	fi
+done
+IFS="$IFS2"
+
