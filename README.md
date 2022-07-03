@@ -3,7 +3,7 @@
 Labadmin Script Server is a server repository to automate script execution on hosts on booting time. Its written in Bash shellscript.
 
 
-
+&nbsp; 
 # Working schema
   * Script server works over SSH server, and use `labadmin-script_server` file to decide the list of script that need be executed by hosts.
   * When hosts boots:
