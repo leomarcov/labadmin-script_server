@@ -11,4 +11,4 @@ Labadmin Script Server is a server repository to automate script execution on ho
     * Connect to server and exec `labadmin-script_server` to query the list of pending scripts.
     
   
-  ## INSTALL
+  ## Install
