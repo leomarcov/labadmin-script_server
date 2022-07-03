@@ -102,26 +102,25 @@ function check_params() {
 #=== FUNCTION ==================================================================
 #        NAME: log
 # DESCRIPTION: write in ${script_path}/log file using format: 
-#              [DATE TIME] [HOSTNAME] [ACTION] [SCRIPT] EXEC_MSG
+#              [DATE TIME] [HOSTNAME] [ACTION] EXEC_MSG
 #  PARAMETERS:
 #		$1: hostname
 #		$2: action
-#		$3: script
+#		$3: script path
 #		$4: exec_msg
 #===============================================================================
 function log() {
     local hn="$1"
 	local a="$2"
-    local s="$3"
+    local sp="$3"
     local em="$4"
 
 	hn_width=8
 	hn="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
     a_width=11
     a="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
-	[ "$s" ] && s="[$s]"$'\t'
-
-	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${s}${em}" >> "${script_path}/log"
+	
+	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${em}" >> "${sp}/log"
 }
 
 
@@ -154,10 +153,10 @@ function action_get() {
 	# Show script
 	exec_msg=$(cat "${script_path}/script" 2>&1)
 	if [ $? -eq 0 ]; then
-		log "$hostname" "$action" "$script"
+		log "$hostname" "$action" "$script_path"
 		exit 0 
 	else
-		log "$hostname" "get_error" "$script" "${exec_msg//$'\n'/ \/ }"
+		log "$hostname" "get_error" "$script_path" "${exec_msg//$'\n'/ \/ }"
 		exit 1
 	fi
 }
@@ -169,7 +168,7 @@ function action_get() {
 # DESCRIPTION: Notify correct execution
 #===============================================================================
 function action_exec_ok() {
-	log "$hostname" "$action" "$script" "$exec_msg"
+	log "$hostname" "$action" "$script_path" "$exec_msg"
 }
 
 
@@ -178,7 +177,7 @@ function action_exec_ok() {
 # DESCRIPTION: Notify error execution
 #===============================================================================
 function action_exec_error() {
-	log "$hostname" "$action" "$script" "$exec_msg" 
+	log "$hostname" "$action" "$script_path" "$exec_msg" 
 }
 
 
