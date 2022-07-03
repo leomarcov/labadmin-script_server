@@ -41,7 +41,7 @@ ssh-keygen
 mkdir -p /home/labadmin/.ssh
 cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
 
-# Private key will be used for agens in hosts
+# Private key will be used for agents in hosts
 ```
 
 
