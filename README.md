@@ -12,7 +12,7 @@ Labadmin Script Server is a server repository to automate script execution on ho
     
   
 # Install
-  * Config SSH server and config as you need
+  * Config SSH server and config as you need. Make sure `PubkeyAuthentication` is allowed.
 ```bash
 apt install openssh-server
 vi /etc/ssh/sshd_config
