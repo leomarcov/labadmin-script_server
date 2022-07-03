@@ -45,6 +45,7 @@ ssh-keygen
 # Public key is pasted to labadmin user authorized_keys file
 mkdir -p /home/labadmin/.ssh
 cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
+chmod 600 /home/labadmin/.ssh/authorized_keys
 
 # Private key will be used for agents in hosts
 ```
