@@ -30,7 +30,7 @@ readonly repositories_path=$(dirname "$(readlink -f "$0")")
 #	$1	Exit code value
 #===============================================================================
 function help() {
-	echo "Usage: $(basename "$0") -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
+	echo -e "Usage: $(basename "$0") -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
 	exit "$1"
 }
 
@@ -67,6 +67,10 @@ function check_params() {
 		;;
 	   esac
 	done
+
+	if [ $# -eq 0 ]; then
+		help 1
+	fi
 
 	[ "$script" ] && readonly script_path="${repository_path}/${script}/"
 
