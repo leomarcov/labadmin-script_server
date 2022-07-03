@@ -12,20 +12,21 @@ Labadmin Script Server is a server repository to automate script execution on ho
     
   
 # Install
-  * Config SSH server and config as you need. Make sure `PubkeyAuthentication` is allowed.
+  * Copy or clone proyect (preferred in `/opt` dir)
+```bash
+cd /opt
+git clone https://github.com/leomarcov/labdmin-script_server
+ ```
+ * Config SSH server and config as you need. Make sure `PubkeyAuthentication` is allowed.
 ```bash
 apt install openssh-server
 vi /etc/ssh/sshd_config
 systemctl restart ssh.service
  ```
-  * Create dedicated user for server
+  * Create dedicated user for server and set permission
 ```bash
 adduser labadmin
- ```
-  * Copy or clone proyect (preferred in `/opt` dir)
-```bash
-cd /opt
-git clone https://github.com/leomarcov/labdmin-script_server
+chown -R labadmin:labadmin /opt/labadmin-script_server 
  ```
   * Generate SSH private and public keys
 ```bash
@@ -33,11 +34,12 @@ ssh-keygen
  ```
   * Copy private and public keys
 ```bash
-# Public key to labadmin user authorized_keys file
-# Private key will be used for agens in hosts
+# Public key is pasted to labadmin user authorized_keys file
 mkdir -p /home/labadmin/.ssh
 cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
- ```
+
+# Private key will be used for agens in hosts
+```
 
 
 
