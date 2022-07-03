@@ -17,6 +17,7 @@
 #  GLOBAL VARIABLES
 #===============================================================================
 # Base path of scripts repositories dirs: linux, w7, w10, etc.
+# Make sure ssh user has write permission to log files!
 readonly repositories_path=$(dirname "$(readlink -f "$0")")		
 
 
