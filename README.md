@@ -1,5 +1,6 @@
 # Labadmin Script Server
 <img align="left" src="https://cdn4.iconfinder.com/data/icons/online-marketing-hand-drawn-vol-1/52/coding__development__programming__html__php__script__webcoding-128.png">
+
 Labadmin Script Server is a server repository to automate script execution on hosts on booting time. Its written in Bash shellscript.
   * Scripts are stored on server and when hosts boots query the list of pending scripts to execute.
   * Pending scripts to execute are selected by:
