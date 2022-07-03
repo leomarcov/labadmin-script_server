@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd /root/debian-openbox/
+git pull
+bash /root/debian-openbox/install -a 34 -y
