@@ -45,7 +45,7 @@ find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;
 ```bash
 ssh-keygen
  ```
-  * Copy private and public keys
+  * Copy private and public keys for client (hosts) authentications
 ```bash
 # Public key is pasted to labadmin user authorized_keys file
 mkdir -p /home/labadmin/.ssh
