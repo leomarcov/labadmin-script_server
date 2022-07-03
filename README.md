@@ -29,8 +29,12 @@ systemctl restart ssh.service
   * Create dedicated user and set permission to install dir
 ```bash
 adduser labadmin
+
+# Set owners permissions
 chown -R root:labadmin /opt/labadmin-script_server
-find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;	# Make sure ssh user has write permission to log files!
+
+# Make sure ssh user has write permission to log files!:
+find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;	
  ```
   * Generate SSH private and public keys
 ```bash
