@@ -21,6 +21,9 @@ git clone https://github.com/leomarcov/labdmin-script_server
 ```bash
 apt install openssh-server
 vi /etc/ssh/sshd_config
+  # Port 58889
+  # PubkeyAuthentication yes
+
 systemctl restart ssh.service
  ```
   * Create dedicated user for server and set permission
