@@ -26,7 +26,7 @@ vi /etc/ssh/sshd_config
 
 systemctl restart ssh.service
  ```
-  * Create dedicated user for server and set permission
+  * Create dedicated user and set permission to install dir
 ```bash
 adduser labadmin
 chown -R labadmin:labadmin /opt/labadmin-script_server 
