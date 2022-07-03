@@ -41,11 +41,11 @@ chown -R root:labadmin /opt/labadmin-script_server
 # Make sure ssh user has write permission to log files!:
 find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;	
  ```
-  * Generate SSH private and public keys
+  * Generate SSH private and public keys for client (hosts) authentications
 ```bash
 ssh-keygen
  ```
-  * Copy private and public keys for client (hosts) authentications
+  * Copy private and public keys
 ```bash
 # Public key is pasted to labadmin user authorized_keys file
 mkdir -p /home/labadmin/.ssh
