@@ -27,3 +27,14 @@ adduser labadmin
 cd /opt
 git clone https://github.com/leomarcov/labdmin-script_server
  ```
+  * Generate SSH private and public keys
+```bash
+ssh-keygen
+ ```
+  * Copy private and public keys
+```bash
+# Public key to labadmin user authorized_keys file
+# Private key will be used for agens in hosts
+mkdir -p /home/labadmin/.ssh
+cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
+ ```
