@@ -13,7 +13,7 @@ Labadmin Script Server is a server repository to automate script execution on ho
   
   ## Install
     * Congig SSH server
-   
+asdfsaf
 ```bash
 apt install openssh-server
  ```
