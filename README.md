@@ -22,3 +22,8 @@ systemctl restart ssh.service
 ```bash
 adduser labadmin
  ```
+  * Copy or clone proyect (preferred in `/opt` dir)
+```bash
+cd /opt
+git clone https://github.com/leomarcov/labdmin-script_server
+ ```
