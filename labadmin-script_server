@@ -127,11 +127,10 @@ function log() {
 #===============================================================================
 function action_list() {
 	IFS2="$IFS"; IFS=$'\n'
-
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
-		re=$(echo "$s" | cut -f1 -d" ")	
-		[[ "$hostname" = $re ]] || continue
+		re=$(echo "$s" | cut -f1 -d" ")		# RE -> script dir name before first space character
+		[[ "$hostname" = $re ]] || continue	# If no match continue
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" || continue
@@ -166,7 +165,7 @@ function action_get() {
 # DESCRIPTION: Notify correct execution
 #===============================================================================
 function action_exec_ok() {
-	log "$hostname" "$action" "$script" "${exec_msg}"
+	log "$hostname" "$action" "$script" "$exec_msg"
 }
 
 
@@ -185,8 +184,8 @@ check_params "$@"
 
 ##### EXEC ACTION
 case "$action" in
-	list)		action_list			;;
-	get)		action_get			;;
-	exec_ok)	action_exec_ok		;;
-	exec_error)	action_exec_ok		;;
+	list)		action_list	;;
+	get)		action_get	;;
+	exec_ok)	action_exec_ok	;;
+	exec_error)	action_exec_ok	;;
 esac
