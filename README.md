@@ -5,13 +5,13 @@ Labadmin Script Server is a server repository to automate script execution on ho
     * Regular expresión according hostname: only host with hostname match regular expresion script are executed.
     * Select script: each script has a select function to personalize if script is executed (each time, only if no had a correct execution, 
 
-## Working schema
+# Working schema
   * Script server works over SSH server, and use `labadmin-script_server` file to decide the list of script that need be executed by hosts.
   * When hosts boots:
     * Connect to server and exec `labadmin-script_server` to query the list of pending scripts.
     
   
-## Install
+# Install
   * Config SSH server and config as you need
 ```bash
 apt install openssh-server
@@ -38,3 +38,12 @@ ssh-keygen
 mkdir -p /home/labadmin/.ssh
 cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
  ```
+
+
+
+&nbsp;  
+# Lincense
+Labadmin license is [GPLv3](LICENSE)
+
+# Contact
+My name is Leonardo Marco. I'm sysadmin teacher in [CIFP Carlos III](https://cifpcarlos3.es/), Cartagena, Murcia (Spain).
