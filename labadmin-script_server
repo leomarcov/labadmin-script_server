@@ -151,12 +151,12 @@ function action_list() {
 #===============================================================================
 function action_get() {
 	# Show script
-	exec_msg=$(cat "${script_path}/script" 2>&1)
+	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
 		log "$hostname" "$action" "$script_path"
 		exit 0 
 	else
-		log "$hostname" "get_error" "$script_path" "${exec_msg//$'\n'/ \/ }"
+		log "$hostname" "get_error" "$script_path"
 		exit 1
 	fi
 }
