@@ -48,7 +48,7 @@ cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
 
 &nbsp;  
 # Lincense
-Labadmin license is [GPLv3](LICENSE)
+Labadmin Script Server license is [GPLv3](LICENSE)
 
 # Contact
 My name is Leonardo Marco. I'm sysadmin teacher in [CIFP Carlos III](https://cifpcarlos3.es/), Cartagena, Murcia (Spain).
