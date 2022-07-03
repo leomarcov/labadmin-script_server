@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#===================================================================================
+# SELECT SCRIPT 
+#         FILE: select 
+#        USAGE: select hostname
+#
+#  DESCRIPTION: Check if hostname is selected for exec this script or not (return 0 or 1)
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#	   LICENSE: GNU General Public License v3.0
+#      VERSION: 2022.06
+#      CREATED: 28.06.2022
+#=================================================================================== 
+
+
+#===============================================================================
+#  GLOBAL VARIABLES
+#===============================================================================
+hostname="$1"
+log_path="$(dirname "${BASH_SOURCE[0]}")/log"
+
+
+# Search in log if hostname had executed this script
+grep "\b${hostname}\b" "$log_path" | grep "EXEC_OK" &>/dev/null
+
+
+[ $? -eq 0 ] && exit 1 || exit 0
