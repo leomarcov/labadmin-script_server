@@ -18,7 +18,7 @@ apt install openssh-server
 vi /etc/ssh/sshd_config
 systemctl restart ssh.service
  ```
-  * Create dedicated user
+  * Create dedicated user for server
 ```bash
 adduser labadmin
  ```
