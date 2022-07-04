@@ -20,7 +20,7 @@ Scripts are organized in repsitories and each time hosts boots query if there ar
   * Copy or clone proyect (preferred in `/opt` dir)
 ```bash
 cd /opt
-git clone https://github.com/leomarcov/labdmin-script_server
+git clone https://github.com/leomarcov/labadmin-script_server
  ```
  * Config SSH server and config as you need. Make sure `PubkeyAuthentication` is allowed.
 ```bash
