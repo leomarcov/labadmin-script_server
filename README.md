@@ -34,6 +34,7 @@ systemctl restart ssh.service
   * Create dedicated user and set permission to install dir
 ```bash
 adduser labadmin
+passwd -l labadmin			# Only login with private key
 
 # Set owners permissions
 chown -R root:labadmin /opt/labadmin-script_server
