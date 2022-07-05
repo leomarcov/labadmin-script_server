@@ -52,6 +52,7 @@ ssh-keygen
 mkdir -p /home/labadmin/.ssh
 cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
 chmod 600 /home/labadmin/.ssh/authorized_keys
+chown -R labadmin:labadmin /home/labadmin/.ssh
 
 # Private key is used for each agent client. Copy and config this key in hosts
 ```
