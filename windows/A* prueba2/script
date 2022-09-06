@@ -1,0 +1,2 @@
+$lstat = @("Unlicensed", "Licensed", "OOB Grace", "OOT Grace", "Non-Genuine Grace", "Notification", "Extended Grace")
+Get-WmiObject SoftwareLicensingProduct -ComputerName "$env:COMPUTERNAME" | where {$_.PartialProductKey} | select Name, ApplicationId, @{N="LicenseStatus"; E={$lstat["$($_.LicenseStatus)"]}}
