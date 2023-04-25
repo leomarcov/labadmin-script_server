@@ -100,7 +100,7 @@ function check_params() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: log
+#        NAME: log_file
 # DESCRIPTION: write in ${script_path}/log file using format: 
 #              [DATE TIME] [HOSTNAME] [ACTION] EXEC_MSG
 #  PARAMETERS:
@@ -109,7 +109,7 @@ function check_params() {
 #		$3: script path
 #		$4: exec_msg
 #===============================================================================
-function log() {
+function log_file() {
     local hn="$1"
 	local a="$2"
     local sp="$3"
@@ -121,6 +121,21 @@ function log() {
     a="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${em}" >> "${sp}/log"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: log_mail
+# DESCRIPTION: write in ${script_path}/log file using format: 
+#              [DATE TIME] [HOSTNAME] [ACTION] EXEC_MSG
+#  PARAMETERS:
+#		$1: hostname
+#		$2: action
+#		$3: script path
+#		$4: exec_msg
+#===============================================================================
+function log_mail() {
+
 }
 
 
@@ -153,10 +168,10 @@ function action_get() {
 	# Show script
 	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
-		log "$hostname" "$action" "$script_path"
+		log_file "$hostname" "$action" "$script_path"
 		exit 0 
 	else
-		log "$hostname" "get_error" "$script_path"
+		log_file "$hostname" "get_error" "$script_path"
 		exit 1
 	fi
 }
@@ -168,7 +183,7 @@ function action_get() {
 # DESCRIPTION: Notify correct execution
 #===============================================================================
 function action_exec_ok() {
-	log "$hostname" "$action" "$script_path" "$exec_msg"
+	log_file "$hostname" "$action" "$script_path" "$exec_msg"
 }
 
 
@@ -177,7 +192,7 @@ function action_exec_ok() {
 # DESCRIPTION: Notify error execution
 #===============================================================================
 function action_exec_error() {
-	log "$hostname" "$action" "$script_path" "$exec_msg" 
+	log_file "$hostname" "$action" "$script_path" "$exec_msg" 
 }
 
 
