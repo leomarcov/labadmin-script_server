@@ -203,5 +203,5 @@ case "$action" in
 	list)		action_list	;;
 	get)		action_get	;;
 	exec_ok)	action_exec_ok	;;
-	exec_error)	action_exec_ok	;;
+	exec_error)	action_exec_error	;;
 esac
