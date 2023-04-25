@@ -120,7 +120,11 @@ function log() {
     a_width=11
     a="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
+	# Log in file
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${em}" >> "${sp}/log"
+	
+	# Send mail log
+	
 }
 
 
