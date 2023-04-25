@@ -128,7 +128,7 @@ function log() {
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "[SCRIPT][$hn][$sn][ERROR]" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "[script-server][$hn][$sn][ERROR]" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
