@@ -118,19 +118,20 @@ function log() {
     local em="$4"
 	local error=""
 
-	[ "$a" = "exec_error" ] && error="true"
+	# Check if error
+	[[ "${a,,}" = *error* ]] && error="true"
 	
 	hn_width=8
 	hn="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
     a_width=11
     a="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
-	# Log in file
+	# Save file log
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${em}" >> "${sp}/log"
 	
 	# Send mail log
-	sn="$(basename "$sp")"	# Script name
 	if [ "$error" ]; then
+		sn="$(basename "$sp")"		# Script name
 		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "[script-server][$hn][$sn][ERROR]" -a "From: $(hn)<$(hn)@carlos3.com>" "$log_mail"
 	fi
 }
