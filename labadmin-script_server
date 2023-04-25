@@ -21,7 +21,7 @@
 readonly repositories_path=$(dirname "$(readlink -f "$0")")		
 
 # LOAD CONFIG VARIABLES
-source "${repositories_pat}/config"
+source "${repositories_path}/config"
 
 
 
