@@ -1,0 +1,16 @@
+#!/bin/bash
+#===================================================================================
+# LABADMIN SCRIPT SERVER CONFIG
+#         FILE: config
+#  DESCRIPTION: Labadmin script server client config variables
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#      LICENSE: GNU General Public License v3.0
+#      VERSION: 2023.04
+#      CREATED: 25.04.2023
+#=================================================================================== 
+
+#===============================================================================
+#  GLOBAL CONFIG VARIABLES
+#===============================================================================
+readonly log_mail="logs.carlos3@gmail.com"						# Email to send log errors
