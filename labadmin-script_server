@@ -110,13 +110,16 @@ function check_params() {
 #		$2: action
 #		$3: script path
 #		$4: exec_msg
-#===============================================================================
+#==========sp=====================================================================
 function log() {
     local hn="$1"
 	local a="$2"
     local sp="$3"
     local em="$4"
+	local error=""
 
+	[ "$a" = "exec_error" ] && error="true"
+	
 	hn_width=8
 	hn="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
     a_width=11
@@ -126,9 +129,11 @@ function log() {
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn}${a}${em}" >> "${sp}/log"
 	
 	# Send mail log
-	
+	sn="$(basename "$sp")"	# Script name
+	if [ "$error" ]; then
+		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "[script-server][$hn][$sn][ERROR]" -a "From: $(hn)<$(hn)@carlos3.com>" "$log_mail"
+	fi
 }
-
 
 
 #=== FUNCTION ==================================================================
