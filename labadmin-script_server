@@ -143,7 +143,9 @@ function action_list() {
 		# Check if hostname match with script REGEX
 		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
 		[[ "$hostname" = $re ]] || continue		# If no match continue
-		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If disabled (no perms) continue
+		
+		# Check if script is disabled
+		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If no perms continue
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" || continue
