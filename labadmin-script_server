@@ -141,8 +141,9 @@ function action_list() {
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
-		re=$(echo "$s" | cut -f1 -d" ")		# RE -> script dir name before first space character
-		[[ "$hostname" = $re ]] || continue	# If no match continue
+		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
+		[[ "$hostname" = $re ]] || continue		# If no match continue
+		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If disabled (no perms) continue
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" || continue
