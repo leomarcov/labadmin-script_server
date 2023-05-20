@@ -31,13 +31,14 @@ vi /etc/ssh/sshd_config
 
 systemctl restart ssh.service
  ```
-  * Create dedicated user and set permission to install dir
+  * Create dedicated user for agent and set permission to install dir
 ```bash
-adduser labadmin
-passwd -l labadmin			# Only login with private key
+adduser lss-agent
+passwd -l lss-agent			# Only login with private key
 
 # Set owners permissions
-chown -R root:labadmin /opt/labadmin-script_server
+chown -R root:lss-agent /opt/labadmin-script_server
+chmod g+s /opt/labadmin-script_server/linux /opt/labadmin-script_server/windows
 
 # Make sure ssh user has write permission to log files!:
 find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;	
