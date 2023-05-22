@@ -40,8 +40,9 @@ passwd -ld lss-agent			# Only login with private key
 ```bash
 adduser lss-admin
 passwd -ld lss-admin			# OPTONAL: Only login with private key
-
-# Set owners permissions for agent and admin user
+```
+  * Set permissions for agent and admin user
+```bash
 chown -R root:lss-agent /opt/labadmin-script_server
 chorn -R lss-admin /opt/labadmin-script_server/linux /opt/labadmin-script_server/windows
 chmod g+s /opt/labadmin-script_server/linux /opt/labadmin-script_server/windows
