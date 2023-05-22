@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #===================================================================================
 # LABADMIN SCRIPT SERVER
-#         FILE: labadmin-script_server
-#        USAGE: labadmin-script_server -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
+#         FILE: lss-srv
+#        USAGE: lss-srv -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
 #
 #  DESCRIPTION: Labadmin script server manager
 #               Manage actions to do: list pending scripts, show script code, save exec status (exec_ok or exec_error)
