@@ -33,10 +33,8 @@ systemctl restart ssh.service
  ```
   * Create dedicated user for agent and admin
 ```bash
-adduser lss-agent
-passwd -ld lss-agent			# Only login with private key
-adduser lss-admin
-passwd -ld lss-admin			# OPTONAL: Only login with private key
+adduser --disable-password lss-agent 			# Only login with private key
+adduser --disable-password lss-admin  			# Only login with private key
 ```
   * Set permissions for agent and admin user
 ```bash
