@@ -51,11 +51,11 @@ ssh-keygen
  ```
   * Copy private and public keys
 ```bash
-# Public key is pasted to labadmin user authorized_keys file
-mkdir -p /home/labadmin/.ssh
-cat id_rsa.pub >> /home/labadmin/.ssh/authorized_keys
-chmod 600 /home/labadmin/.ssh/authorized_keys
-chown -R labadmin:labadmin /home/labadmin/.ssh
+# Public key is pasted to lss-agent user authorized_keys file
+mkdir -p /home/lss-agent/.ssh
+cat id_rsa.pub >> /home/lss-agent/.ssh/authorized_keys
+chmod 600 /home/lss-agent/.ssh/authorized_keys
+chown -R lss-agent:lss-agent /home/lss-agent/.ssh
 
 # Private key is used for each agent client. Copy and config this key in hosts
 ```
