@@ -35,7 +35,7 @@ systemctl restart ssh.service
 ```bash
 adduser lss-agent
 passwd -ld lss-agent			# Only login with private key
-
+```
   * Create dedicated user for admin scripts
 ```bash
 adduser lss-admin
