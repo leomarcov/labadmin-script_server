@@ -26,15 +26,15 @@ git clone https://github.com/leomarcov/labadmin-script_server
 ```bash
 apt install openssh-server
 vi /etc/ssh/sshd_config
-  # Port 58889
-  # PubkeyAuthentication yes
+  Port 58889
+  PubkeyAuthentication yes
 
 systemctl restart ssh.service
  ```
   * Create dedicated user for agent and admin
 ```bash
-adduser --disable-password lss-agent 			# Only login with private key
-adduser --disable-password lss-admin  			# Only login with private key
+adduser --disabled-password lss-agent 			# Only login with private key
+adduser --disabled-password lss-admin  			# Only login with private key
 ```
   * Set permissions for agent and admin user
 ```bash
