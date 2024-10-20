@@ -163,13 +163,16 @@ function check_mac_hostname() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	local fixed_actions=""
+	# CHECK REMOTE HOSTNAME-MAC MATCHES AND LIST ACTION LSS-SETHOSTNAME
+	new_hostname=$(check_mac_hostname "$mac" "$hostname")
+	if [ $? -ne 0 ]; then
+		echo "LSS-SETHOSTNAME"
+		return 
+	fi
 
-	# Check if remote hostname match with MAC address
-	new_hostname=$(check_mac_hostname "$mac" "$hostname") || fixed_actions="$fixed_actions LSS-SETHOSTNAME"
-	
+	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
-	for s in "$fixed_actions" $(ls "$repository_path"); do
+	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
 		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
 		[[ "$hostname" = $re ]] || continue		# If no match continue
@@ -189,6 +192,9 @@ function action_list() {
 #=== FUNCTION ==================================================================
 #        NAME: action_get-sethostname
 # DESCRIPTION: Show script code for change hostname
+# PARAMETERS:
+#		$1: mac
+#		$2: repository
 #===============================================================================
 function action_get-sethostname() {
 	local hostname="$1"
@@ -219,7 +225,14 @@ fi
 # DESCRIPTION: Show script code
 #===============================================================================
 function action_get() {
-	# Show script
+	# SHOW CODE FOR LSS-SETHOSTNAME
+	if [ "$script" = "LSS-SETHOSTNAME" ]; then
+		action_get-sethostname "$mac" "$repository"
+		log "$mac" "$hostname" "$action" "$script_path"
+		exit 0
+	fi
+
+	# SHOW SCRIPT CODE FOR FILE
 	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
 		log "$mac" "$hostname" "$action" "$script_path"
