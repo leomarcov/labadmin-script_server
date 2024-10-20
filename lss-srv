@@ -144,12 +144,32 @@ function log() {
 
 
 #=== FUNCTION ==================================================================
+#        NAME: check_mac_hostname
+# DESCRIPTION: Check if mac of hostname match. 
+#              $?=0 if match
+#              $?!=0 if not match and output hostname of given mac
+# PARAMETERS:
+#		$1: mac
+#		$2: hostname
+#===============================================================================
+function check_mac_hostname() {
+	return 0
+}
+
+
+
+#=== FUNCTION ==================================================================
 #        NAME: action_list
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
+	local fixed_actions=""
+
+	# Check if remote hostname match with MAC address
+	new_hostname=$(check_mac_hostname "$mac" "$hostname") || fixed_actions="$fixed_actions LSS-SETHOSTNAME"
+	
 	IFS2="$IFS"; IFS=$'\n'
-	for s in $(ls "$repository_path"); do
+	for s in "$fixed_actions" $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
 		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
 		[[ "$hostname" = $re ]] || continue		# If no match continue
@@ -166,6 +186,33 @@ function action_list() {
 	IFS="$IFS2"
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: action_get-sethostname
+# DESCRIPTION: Show script code for change hostname
+#===============================================================================
+function action_get-sethostname() {
+	local hostname="$1"
+	local repository="$2"
+
+if [ "$repository" = "linux" ]; then
+echo '
+hostname="'"$hostname"'"
+if [ "$(hostname)" != "${hostname}" ]; then
+	hn_old="$(cat /etc/hostname | awk "{print \$1}")"
+
+	echo  "${hostname}" > /etc/hostname
+	sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
+fi
+'
+elif [ "$repository" = "windows" ]; then
+echo '
+$hostname="'"$hostname"'"
+if($env:COMPUTERNAME -cne $hostname) { Rename-Computer -NewName $hostname -Force }
+'
+fi
+
+}
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_get
@@ -175,7 +222,7 @@ function action_get() {
 	# Show script
 	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
-		 "$hostname" "$action" "$script_path"
+		log "$mac" "$hostname" "$action" "$script_path"
 		exit 0 
 	else
 		log "$mac" "$hostname" "get_error" "$script_path"
