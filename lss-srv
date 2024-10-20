@@ -2,7 +2,7 @@
 #===================================================================================
 # LABADMIN SCRIPT SERVER
 #         FILE: lss-srv
-#        USAGE: lss-srv -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
+#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
 #
 #  DESCRIPTION: Labadmin script server manager
 #               Manage actions to do: list pending scripts, show script code, save exec status (exec_ok or exec_error)
@@ -50,6 +50,9 @@ function check_params() {
 		h)			
 			readonly hostname="$OPTARG"
 		;;
+		M)
+			readonly mac="$OPTARG"
+		;;
 		r)
 			readonly repository="$OPTARG"
 			readonly repository_path="${repositories_path}/${repository}/"
@@ -78,6 +81,10 @@ function check_params() {
 
 	if [ ! "$hostname" ]; then
 		echo "Hostname not present"
+		help 2
+	elif [ ! "$mac ]; then
+		echo "MAC not present"
+		
 		help 2
 	elif [ ! "$repository" ]; then
 	    echo "Repository not present"
