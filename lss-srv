@@ -32,7 +32,7 @@ source "${repositories_path}/config"
 #	$1	Exit code value
 #===============================================================================
 function help() {
-	echo -e "Usage: $(basename "$0") -h hostname -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
+	echo -e "Usage: $(basename "$0") -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
 	exit "$1"
 }
 
@@ -51,7 +51,7 @@ function check_params() {
 			readonly hostname="$OPTARG"
 		;;
 		M)
-			readonly mac="$OPTARG"
+			readonly mac=$(echo "${OPTARG,,}" | tr "-" ":")
 		;;
 		r)
 			readonly repository="$OPTARG"
@@ -82,10 +82,9 @@ function check_params() {
 	if [ ! "$hostname" ]; then
 		echo "Hostname not present"
 		help 2
-	elif [ ! "$mac ]; then
-		echo "MAC not present"
-		
-		help 2
+	elif if [ ! "$mac" ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
+		echo "Incorrect MAC or not present"
+		#help 2
 	elif [ ! "$repository" ]; then
 	    echo "Repository not present"
 		help 2 
@@ -111,31 +110,35 @@ function check_params() {
 #=== FUNCTION ==================================================================
 #        NAME: log
 # DESCRIPTION: write in ${script_path}/log file using format: 
-#              [DATE TIME] [HOSTNAME] [ACTION] EXEC_MSG
+#              [DATE TIME] [MAC] [HOSTNAME] [ACTION] EXEC_MSG
+#			   and send mail log
 #  PARAMETERS:
-#		$1: hostname
-#		$2: action
-#		$3: script path
-#		$4: exec_msg
+#		$1: mac
+#		$2: hostname
+#		$3: action
+#		$4: script path
+#		$5: exec_msg
 #==========sp=====================================================================
 function log() {
-    local hn="$1"				# hostname
-	local a="$2"				# action
-    local sp="$3"				# script path
-    local em="$4"				# exec message
+	local mac="$1"				# mac
+	local hn="$2"				# hostname
+	local a="$3"				# action
+    local sp="$4"				# script path
+    local em="$5"				# exec message
 	sn="$(basename "$sp")"		# script name
-	
-	hn_width=8
-	hn2="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
-    a_width=11
-    a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
+
+	local m2="[${mac}] "
+	local hn_width=8
+	local hn2="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
+    local a_width=11
+    local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	# Save file log
-	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${hn2}${a2}${em}" >> "${sp}/log"
+	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nMAC: ${mac}\nHostname: ${hn}\nScript: ${sn}\nAction: ${a}\nError msg: ${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
@@ -172,10 +175,10 @@ function action_get() {
 	# Show script
 	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
-		log "$hostname" "$action" "$script_path"
+		 "$hostname" "$action" "$script_path"
 		exit 0 
 	else
-		log "$hostname" "get_error" "$script_path"
+		log "$mac" "$hostname" "get_error" "$script_path"
 		exit 1
 	fi
 }
@@ -187,7 +190,7 @@ function action_get() {
 # DESCRIPTION: Notify correct execution
 #===============================================================================
 function action_exec_ok() {
-	log "$hostname" "$action" "$script_path" "$exec_msg"
+	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg"
 }
 
 
@@ -196,7 +199,7 @@ function action_exec_ok() {
 # DESCRIPTION: Notify error execution
 #===============================================================================
 function action_exec_error() {
-	log "$hostname" "$action" "$script_path" "$exec_msg" 
+	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg" 
 }
 
 
