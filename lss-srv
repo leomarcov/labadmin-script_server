@@ -164,7 +164,7 @@ function check_mac_hostname() {
 #===============================================================================
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME
-	if (!check_mac_hostname $mac $hostname); then
+	if ! check_mac_hostname "$mac" "$hostname"; then
 		log "$mac" "$hostname" "list_error" "Invalid MAC-HOSTNAME"
 		exit 1
 	fi
