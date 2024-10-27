@@ -44,7 +44,7 @@ function help() {
 #	$@	All parameter from command line
 #===============================================================================
 function check_params() {
-	while getopts ":h:r:a:s:m:" option
+	while getopts ":h:M:r:a:s:m:" option
 	do		
 		case $option in
 		h)			
