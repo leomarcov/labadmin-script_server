@@ -16,12 +16,11 @@
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-# Base path of scripts repositories dirs: linux, w7, w10, etc.
-# Make sure ssh user has read permissions and write permission in log files!
-readonly repositories_path=$(dirname "$(readlink -f "$0")")		
+# LSS path
+readonly lss_path=$(dirname "$(readlink -f "$0")")		
 
 # LOAD CONFIG VARIABLES
-source "${repositories_path}/config"
+source "${lss_path}/config"
 
 
 
