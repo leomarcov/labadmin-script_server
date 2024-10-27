@@ -39,8 +39,8 @@ adduser --disabled-password lss-admin  			# Only login with private key
   * Set permissions for agent and admin user
 ```bash
 chown -R root:lss-agent /opt/labadmin-script_server
-chown -R lss-admin:lss-agent /opt/labadmin-script_server/linux /opt/labadmin-script_server/windows
-chmod g+s /opt/labadmin-script_server/linux /opt/labadmin-script_server/windows
+chown -R lss-admin:lss-agent /opt/labadmin-script_server/repositories/* 
+chmod g+s /opt/labadmin-script_server/repositories/*
 
 # Make sure ssh user has write permission to log files!:
 find /opt/labadmin-script_server/ -type f -name log -exec chmod g+w {} \;	
