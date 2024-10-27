@@ -103,7 +103,7 @@ function check_params() {
 	elif [ ! -d "$repository_path" ] || [ ! -r "$repository_path" ]; then
 		echo "Cant access repository path: $repository_path"
 		exit 2
-	elif [ "$script" ] && ([ ! -d "$script_path ] || [ ! -r "$script_path" ]); then
+	elif [ "$script" ] && ([ ! -d "$script_path" ] || [ ! -r "$script_path" ]); then
 		echo "Cant access script path: $script_path"
 		exit 2
 	fi
