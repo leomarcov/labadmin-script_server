@@ -82,7 +82,7 @@ function check_params() {
 	if [ ! "$hostname" ]; then
 		echo "Hostname not present"
 		help 2
-	elif if [ ! "$mac" ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
+	elif [ ! "$mac" ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
 		echo "Incorrect MAC or not present"
 		#help 2
 	elif [ ! "$repository" ]; then
