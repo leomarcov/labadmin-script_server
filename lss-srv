@@ -145,9 +145,9 @@ function log() {
 
 #=== FUNCTION ==================================================================
 #        NAME: check_mac_hostname
-# DESCRIPTION: Check if mac of hostname match. 
+# DESCRIPTION: Check if mac and hostname matches 
 #              $?=0 if match
-#              $?!=0 if not match and output hostname of given mac
+#              $?!=0 if not match
 # PARAMETERS:
 #		$1: mac
 #		$2: hostname
@@ -163,11 +163,10 @@ function check_mac_hostname() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	# CHECK REMOTE HOSTNAME-MAC MATCHES AND LIST ACTION LSS-SETHOSTNAME
-	new_hostname=$(check_mac_hostname "$mac" "$hostname")
-	if [ $? -ne 0 ]; then
-		echo "LSS-SETHOSTNAME"
-		return 
+	# CHECK REMOTE MAC-HOSTNAME
+	if (!check_mac_hostname $mac $hostname); then
+		log "$mac" "$hostname" "list_error" "Invalid MAC-HOSTNAME"
+		exit 1
 	fi
 
 	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
@@ -189,50 +188,13 @@ function action_list() {
 	IFS="$IFS2"
 }
 
-#=== FUNCTION ==================================================================
-#        NAME: action_get-sethostname
-# DESCRIPTION: Show script code for change hostname
-# PARAMETERS:
-#		$1: mac
-#		$2: repository
-#===============================================================================
-function action_get-sethostname() {
-	local hostname="$1"
-	local repository="$2"
-
-if [ "$repository" = "linux" ]; then
-echo '
-hostname="'"$hostname"'"
-if [ "$(hostname)" != "${hostname}" ]; then
-	hn_old="$(cat /etc/hostname | awk "{print \$1}")"
-
-	echo  "${hostname}" > /etc/hostname
-	sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
-fi
-'
-elif [ "$repository" = "windows" ]; then
-echo '
-$hostname="'"$hostname"'"
-if($env:COMPUTERNAME -cne $hostname) { Rename-Computer -NewName $hostname -Force }
-'
-fi
-
-}
-
 
 #=== FUNCTION ==================================================================
 #        NAME: action_get
 # DESCRIPTION: Show script code
 #===============================================================================
 function action_get() {
-	# SHOW CODE FOR LSS-SETHOSTNAME
-	if [ "$script" = "LSS-SETHOSTNAME" ]; then
-		action_get-sethostname "$mac" "$repository"
-		log "$mac" "$hostname" "$action" "$script_path"
-		exit 0
-	fi
-
-	# SHOW SCRIPT CODE FOR FILE
+	# Show script
 	cat "${script_path}/script" 2>&1
 	if [ $? -eq 0 ]; then
 		log "$mac" "$hostname" "$action" "$script_path"
