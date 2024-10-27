@@ -84,7 +84,7 @@ function check_params() {
 		help 2
 	elif [ ! "$mac" ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
 		echo "Incorrect MAC or not present"
-		#help 2
+		help 2
 	elif [ ! "$repository" ]; then
 	    echo "Repository not present"
 		help 2 
