@@ -9,7 +9,7 @@ declare -A LAB 					# LOC[lab_id] = lab long name
 declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
 declare -A HN 					# HN[lab_id] = lab hostname prefix
-declare -A HOSTS_SELECTED		# List of hosts selected
+declare -A hosts_colors			# List of hosts selected to show un color
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
 
 # LOAD INVENTORY CONFIG FILE
@@ -118,8 +118,8 @@ function inventory_draw_map {
 				if [ ! "$mac" ]; then 
 					color="${S_B}${C_LR}";
 				# Green ID (HOST are inHOSTS_SELECTED)
-				elif [ "${HOSTS_SELECTED["$hn"]}" ]; then 
-					color="${S_B}${C_LG}"
+				elif [ "${hosts_colors["$hn"]}" ]; then 
+					color="${hosts_colors["$hn"]}"
 					count_hosts_sel=$((count_hosts_sel+1))
 				# White ID (MAC not found in arp file)
 				else 
@@ -234,12 +234,24 @@ function check_params() {
 			D_flag="true"
 			DIST="$OPTARG"
 		;;
-		H) 
-			H_flag="true"
+		G) 
+			G_flag="true"
 			for h in $OPTARG; do
-				HOSTS_SELECTED["$h"]="true"
+				hosts_colors["$h"]="${S_B}${C_G}"
 			done
 		;;
+		R) 
+			R_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_R}"
+			done
+		;;
+		B) 
+			B_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_B}"
+			done
+		;;				
 		?)
 			echo "Incorrect option: $OPTARG"
 			exit 2
@@ -251,4 +263,3 @@ function check_params() {
 
 check_params "$@"
 inventory_draw_grid
-
