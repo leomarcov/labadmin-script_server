@@ -13,6 +13,7 @@ declare -A HOSTS_SELECTED		# List of hosts selected
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
 
 # LOAD INVENTORY CONFIG FILE
+echo AAA${inventory_path}		
 source ${inventory_path}		
 
 
