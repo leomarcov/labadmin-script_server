@@ -228,7 +228,7 @@ function inventory_draw_grid {
 #	$@	All parameter from command line
 #===============================================================================
 function check_params() {
-	while getopts ":D:H:" option; do		
+	while getopts ":D:G:R:B:" option; do		
 		case $option in
 		D)			
 			D_flag="true"
