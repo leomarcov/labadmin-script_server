@@ -12,12 +12,8 @@ declare -A HN 					# HN[lab_id] = lab hostname prefix
 declare -A HOSTS_SELECTED		# List of hosts selected
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
 
-
-mkdir "$labadmin_tmp_path" &>/dev/null
-[ ! -d "$labadmin_tmp_path" ] && labadmin "Cant create tmp directory $labadmin_tmp_path" 1
-chmod 700 "$labadmin_tmp_path"
-source ${inventory_path}
-
+# LOAD INVENTORY CONFIG FILE
+source ${inventory_path}		
 
 
 #===============================================================================
