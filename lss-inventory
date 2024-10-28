@@ -3,21 +3,22 @@
 #### CONFIG VARIABLES
 readonly labadmin_tmp_path="/tmp/labadmin-$(id -u)"
 readonly labadmin_path="$(dirname "$(readlink -f "$0")")/"
-readonly inventory_path="$labadmin_path/inventories/c3.inventory"		    			# Labs configs directory path
-readonly arp_file="${labadmin_tmp_path}/arpscan"						# Temp file for save arp-scan output
+readonly inventory_path="$labadmin_path/inventory"		    	# Labs configs directory path
 
 #### INIT
 declare -A LAB 					# LOC[lab_id] = lab long name
 declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
 declare -A HN 					# HN[lab_id] = lab hostname prefix
+declare -A HOSTS_SELECTED		# List of hosts selected
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
+
 
 mkdir "$labadmin_tmp_path" &>/dev/null
 [ ! -d "$labadmin_tmp_path" ] && labadmin "Cant create tmp directory $labadmin_tmp_path" 1
 chmod 700 "$labadmin_tmp_path"
 source ${inventory_path}
-cursor_hide
+
 
 
 #===============================================================================
@@ -82,8 +83,7 @@ B_W="\e[107m"           # Background LIGHT WHITE
 declare -A lab_color
 level_color=("$C_G" "$C_LB" "$C_LY" "$C_D")
 lab_color[" "]="${S_D}${C_N}"
-l=0; for p in $(echo "$DIST" | tr -s " " "_"); do for lab in $(echo "$p" | tr -s "_" " "); do lab_color[$lab]=${level_color[$l]}; echo $lab $l; done; l=$((l+1)); done
-
+l=0; for p in $(echo "$DIST" | tr -s " " "_"); do for lab in $(echo "$p" | tr -s "_" " "); do lab_color[$lab]=${level_color[$l]}; done; l=$((l+1)); done
 
 
 #=== FUNCTION ==================================================================
@@ -112,8 +112,8 @@ function inventory_draw_map {
 
 	# Print map
 	map=$(echo "$map" | sed '/^$/d' )
-	arp_out=$(cat "$arp_file" 2>/dev/null)
 	c=$((c+1))
+
 	while read r; do
 		cursor_move-right "$c"
 		for h in $r; do
@@ -123,14 +123,14 @@ function inventory_draw_map {
 				# Red ID (MAC not found in config file)
 				if [ ! "$mac" ]; then 
 					color="${S_B}${C_LR}";
-				# Green ID (MAC found in arp file)
-				elif echo "$arp_out" | grep -qi "$mac"; then 
+				# Green ID (HOST are inHOSTS_SELECTED)
+				elif [ "${HOSTS_SELECTED["$hn"]}" ]; then 
 					color="${S_B}${C_LG}"
-					count_hosts_on=$((count_hosts_on+1))
+					count_hosts_sel=$((count_hosts_sel+1))
 				# White ID (MAC not found in arp file)
 				else 
 					color="${S_R}"
-					count_hosts_off=$((count_hosts_off+1))
+					count_hosts_unsel=$((count_hosts_unsel+1))
 				fi
 				[[ "$h" = 00 ]] && color="${color}${S_B}"
 				echo -en "${color}$h${S_R} "
@@ -155,11 +155,12 @@ function inventory_draw_map {
 #  $grid_file_height[]		
 #  $grid_column_width[]
 #  $grid_total_width
+#  $grid_total_height
 #===============================================================================
 function inventory_calculate_grid_size() {
 	local DIST="$1"
 	local dist_l=1 dist_c=1
-	unset grid_file_height grid_column_width grid_total_width
+	unset grid_file_height grid_column_width grid_total_width grid_total_height; grid_total_height=3
 
 	# Loop each file and columns of DIST 
 	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do  	
@@ -170,6 +171,7 @@ function inventory_calculate_grid_size() {
 		[ ${grid_column_width[$dist_c]:-0} -lt $w ] && grid_column_width[$dist_c]=$w
 		dist_c=$((dist_c+1))
 	done
+		grid_total_height=$((grid_total_height+3+grid_file_height[$dist_l]))
 		dist_l=$((dist_l+1)); dist_c=1
 	done
 	grid_total_width=$(($(echo ${grid_column_width[*]} | tr " " "+")+${#grid_column_width[*]}*3))
@@ -196,16 +198,18 @@ function inventory_draw_grid {
 	fi
 
 	# SHOW TITLE
-	echo -e "${S_D}┌$(seq -s"─" $(($grid_total_width))| tr -d "[0-9]")┐"
-	echo -en "│  ${S_R}${S_B}LABADMIN   ${S_R}${S_D}|${S_R}  $TITLE${S_R}${S_D}  |  ${#MAP[*]} maps · ${#MAC[*]} hosts · ${C_G}${count_hosts_on:-"?"}${C_D} on · ${C_LR}${count_hosts_off:-"?"}${C_D} off"; 
-	cursor_move-begin; cursor_move-right $((grid_total_width)); echo -e "${S_D}│"; 
-	echo -e "${S_D}└$(seq -s"─" $(($grid_total_width))| tr -d "[0-9]")┘"
-	count_hosts_on=0
-	count_hosts_off=0
+	count_hosts_sel=0
+	count_hosts_unsel=0
+	count_maps=0
+	header_widht=65; [ "$header_widht" -lt $grid_total_width ] && header_widht=$grid_total_width
+	echo -e "${S_D}┌$(seq -s"─" $(($header_widht))| tr -d "[0-9]")┐"
+	echo -en "│  ${S_R}${S_B}LABADMIN   ${S_R}${S_D}|${S_R}  $TITLE${S_R}${S_D}"; cursor_move-begin; cursor_move-right $((header_widht)); echo -e "${S_D}│"; 
+	echo -e "${S_D}└$(seq -s"─" $(($header_widht))| tr -d "[0-9]")┘"
 
 	# PRINT MAPS
 	local dist_l=1 dist_c=1 c=1
 	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do 
+		count_maps=$((count_maps+1))
 		[ $dist_c -gt 1 ] && c=$((c+3+grid_column_width[$((dist_c-1))]))
 		inventory_draw_map $lab $c ${grid_column_width[$dist_c]}
 		dist_c=$((dist_c+1))
@@ -213,71 +217,44 @@ function inventory_draw_grid {
 		seq $((3+grid_file_height[$dist_l])) | tr -d "[0-9]"
 		dist_l=$((dist_l+1)); dist_c=1; c=1;
 	done
-	 
-	cursor_move-pos $grid_map_y 1
-	update_arpscan &
-	show_menu
+
+	# SHOW COUNTS IN HEADER 
+	if [ "$LINES" -ge "$grid_total_height" ]; then	
+		cursor_save; cursor_move-pos 2 $((19+${#TITLE}))
+		echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "$H_flag" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
+		cursor_restore
+	fi
 }
 
 
-function update_arpscan {
-	arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)" 		# In background is better to avoid > directly
-	[ $? -ne 0 ] && echo -n "    ! Failed to scan network hosts (arp-scan exit error)" 
-	echo "${arp_out}" > "$arp_file"
+#=== FUNCTION ==================================================================
+#        NAME: check_params
+# DESCRIPTION: Checks input parameters and load values
+#  PARAMETERS:
+#	$@	All parameter from command line
+#===============================================================================
+function check_params() {
+	while getopts ":D:H:" option; do		
+		case $option in
+		D)			
+			D_flag="true"
+			DIST="$OPTARG"
+		;;
+		H) 
+			H_flag="true"
+			for h in $OPTARG; do
+				HOSTS_SELECTED["$h"]="true"
+			done
+		;;
+		?)
+			echo "Incorrect option: $OPTARG"
+			exit 2
+		;;
+	   esac
+	done
 }
 
 
-
-function show_mac {
-	cursor_move-pos $(($LINES-2)) 1
-	read -p "HOST: " o
-	cursor_move-pos $(($LINES-1)) 1
-	echo ${MAC[$o]}
-
-}
-
-function action_show_inventory_file {
-	less "$inventory_path"
-}
-function action_edit_inventory_file {
-	vi "$inventory_path"
-}
-
-
-function show_menu {
-	cursor_move-pos $LINES 1
-	echo -en " \
-m ${B_LB}show mac${S_R}  \
-s ${B_LB}show labs file${S_R}  \
-e ${B_LB}edit labs file${S_R}  \
-q ${B_LB}exit${S_R}"
-}
-
-function quit {
-	cursor_show
-	echo; echo
-	exit $1
-}
-
-
+check_params "$@"
 inventory_draw_grid
-
-while true; do
-	read -s -n 1 key
-	case "$key" in 
-		"") 	inventory_draw_grid  		;;
-		q|x) 	quit 0					;;
-		s)		action_show_inventory_file	;;
-		e)		action_edit_inventory_file	;;
-		m)		show_mac				;;
-	esac 
-done
-
-
-
-
-
-
-
-
 
