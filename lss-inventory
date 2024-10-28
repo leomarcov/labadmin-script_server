@@ -228,25 +228,25 @@ function inventory_draw_grid {
 #	$@	All parameter from command line
 #===============================================================================
 function check_params() {
-	while getopts ":D:G:R:B:" option; do		
+	while getopts ":d:g:r:b:" option; do
 		case $option in
-		D)			
+		d)			
 			D_flag="true"
 			DIST="$OPTARG"
 		;;
-		G) 
+		g) 
 			G_flag="true"
 			for h in $OPTARG; do
 				hosts_colors["$h"]="${S_B}${C_LG}"
 			done
 		;;
-		R) 
+		r) 
 			R_flag="true"
 			for h in $OPTARG; do
 				hosts_colors["$h"]="${S_B}${C_R}"
 			done
 		;;
-		B) 
+		b) 
 			B_flag="true"
 			for h in $OPTARG; do
 				hosts_colors["$h"]="${S_B}${C_B}"
