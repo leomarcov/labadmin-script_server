@@ -16,11 +16,8 @@
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-# LSS path
-readonly lss_path=$(dirname "$(readlink -f "$0")")		
-
-# LOAD CONFIG VARIABLES
-source "${lss_path}/config"
+readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
+source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 
 
 
