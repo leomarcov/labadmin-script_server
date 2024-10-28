@@ -280,9 +280,13 @@ function action_create() {
     read -r -p "  Regular expresion: " re
     read -r -p "  Description: " d
     local f="$repository_path/${re} ${d}"
+
+	# Create directory and files and set permissions
     mkdir "$f"
-	chmod o-rwx "$f"
+    chmod 750 "$f"                               # Start disabled
     touch "$f/log" "$f/script" "$f/select"
+    chmod g+w "$f/log"
+
 echo '#!/usr/bin/env bash
 #===================================================================================
 # SELECT SCRIPT
@@ -346,8 +350,6 @@ function select_custom() {
 # Exec select function according $select_type content
 "select_${select_type}"' > "$f/select"
 
-    chmod ug+w "$f/log" 
-	chmod u-rwx "$f"		 # Start disabled
 	echo -e "  Script directory: ${S_B}$f${S_R}/"
 	echo
 }
@@ -552,7 +554,7 @@ function action_disable() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/"
 	echo -e "  Disabling script ${S_B}${f}${S_R}"
-	chmod u-rwx "$f"
+	chmod 750 "$f"
 	echo
 }
 
@@ -564,7 +566,7 @@ function action_enable() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/"
 	echo -e "  Enabling script ${S_B}${f}${S_R}"
-	chmod u+rwx "$f"
+	chmod 755 "$f"
 	echo
 }
 
