@@ -237,7 +237,7 @@ function check_params() {
 		G) 
 			G_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_G}"
+				hosts_colors["$h"]="${S_B}${C_LG}"
 			done
 		;;
 		R) 
