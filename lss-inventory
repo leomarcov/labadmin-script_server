@@ -3,7 +3,7 @@
 #### CONFIG VARIABLES
 readonly labadmin_tmp_path="/tmp/labadmin-$(id -u)"
 readonly labadmin_path="$(dirname "$(readlink -f "$0")")/"
-readonly inventory_path="$labadmin_path/inventory"		    			# Labs configs directory path
+readonly inventory_path="$labadmin_path/inventories/c3.inventory"		    			# Labs configs directory path
 readonly arp_file="${labadmin_tmp_path}/arpscan"						# Temp file for save arp-scan output
 
 #### INIT
