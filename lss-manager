@@ -76,7 +76,7 @@ function show_menu() {
 		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0
-		[ "$(stat -c "%a" "$script_path" | rev | cut -c 1-2)" = "00" ] && d="true" || d=""
+		[ "$(stat -c "%a" "$script_path" | rev | cut -c 1)" = "0" ] && d="true" || d=""
 		c=""; [ "$d" ] && c="${S_D}"; [ "$s" = "${script_name}" ] && c="${C_Y}"
 
 		menu="$menu\n  $([ "$d" ] && echo ${C_R})[$i]${S_R}\t${c}${s/ /$'\t'}${S_R}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
@@ -345,11 +345,8 @@ function select_custom() {
 # Exec select function according $select_type content
 "select_${select_type}"' > "$f/select"
 
-    local u="$(stat -c "%U" "$repository_path")"
-    local g="$(stat -c "%G" "$repository_path")"
-    chown -R ${u}.${g} "$f"
     chmod g+w "$f/log" 
-	chmod go-rwx "$f"		 # Start disabled
+	chmod o-rwx "$f"		 # Start disabled
 	echo -e "  Script directory: ${S_B}$f${S_R}/"
 	echo
 }
@@ -554,7 +551,7 @@ function action_disable() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/"
 	echo -e "  Disabling script ${S_B}${f}${S_R}"
-	chmod go-rwx "$f"
+	chmod o-rwx "$f"
 	echo
 }
 
@@ -566,7 +563,7 @@ function action_enable() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/"
 	echo -e "  Enabling script ${S_B}${f}${S_R}"
-	chmod go+rx "$f"
+	chmod o+rx "$f"
 	echo
 }
 
