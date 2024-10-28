@@ -215,7 +215,7 @@ function inventory_draw_grid {
 	# SHOW COUNTS IN HEADER 
 	if [ "$LINES" -ge "$grid_total_height" ]; then	
 		cursor_save; cursor_move-pos 2 $((19+${#TITLE}))
-		echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "$hosts_colors" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
+		echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "${hosts_colors[*]}" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
 		cursor_restore
 	fi
 }
