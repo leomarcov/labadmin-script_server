@@ -15,3 +15,4 @@
 #===============================================================================
 readonly log_mail="logs.carlos3@gmail.com"							# Email to send log errors
 readonly repositories_path="${lss_path}/repositories/"				# Base path of scripts repositories dirs: linux, w7, w10, etc.
+readonly inventories_path="${lss_path}/repositories/"				# Base path of inventories config files
