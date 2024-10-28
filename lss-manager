@@ -598,9 +598,9 @@ function action_..() {
 #===============================================================================
 function main()  {
 	clear
-	echo -e "${S_D} +----------------------------------------------+"
-	echo -e " |${S_B}            LABADMIN SCRIPT SERVER ${S_D}           |"
-	echo -e "${S_D} +----------------------------------------------+${S_R}"
+	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
+	echo -e " │${S_B}            LABADMIN SCRIPT SERVER ${S_D}           │"
+	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
 
 	change_repository "linux" 	# Default repository linux
 
