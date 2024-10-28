@@ -85,7 +85,7 @@ function show_menu() {
 	IFS="$IFS2"
 	echo -en "\e[1A"
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
-	local bar="  $(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")"
+	local bar="  $(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"
 	echo -e "$menu"
 	echo
@@ -599,7 +599,7 @@ function action_..() {
 function main()  {
 	clear
 	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
-	echo -e " │${S_B}            LABADMIN SCRIPT SERVER ${S_D}           │"
+	echo -e " │${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
 	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
 
 	change_repository "linux" 	# Default repository linux
