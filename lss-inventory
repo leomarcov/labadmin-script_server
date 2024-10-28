@@ -1,0 +1,283 @@
+#!/usr/bin/env bash
+
+#### CONFIG VARIABLES
+readonly labadmin_tmp_path="/tmp/labadmin-$(id -u)"
+readonly labadmin_path="$(dirname "$(readlink -f "$0")")/"
+readonly inventory_path="$labadmin_path/inventory"		    			# Labs configs directory path
+readonly arp_file="${labadmin_tmp_path}/arpscan"						# Temp file for save arp-scan output
+
+#### INIT
+declare -A LAB 					# LOC[lab_id] = lab long name
+declare -A MAP 					# MAP[lab_id] = map host distribution
+declare -A MAC 					# MAC[hostname] = mac address of hostname
+declare -A HN 					# HN[lab_id] = lab hostname prefix
+declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
+
+mkdir "$labadmin_tmp_path" &>/dev/null
+[ ! -d "$labadmin_tmp_path" ] && labadmin "Cant create tmp directory $labadmin_tmp_path" 1
+chmod 700 "$labadmin_tmp_path"
+source ${inventory_path}
+cursor_hide
+
+
+#===============================================================================
+#  COLORS AND TEXT
+#===============================================================================
+S_R="\e[0m"            	# Reset all attributes
+S_B="\e[1m"             # Style BOLD
+S_D="\e[2m"             # Style DIM
+S_U="\e[4m"            	# Style UNDERLINE
+S_I="\e[7m"             # Style INVERTED
+S_DL="\e[K"             # Style DELETE TO END OF LINE
+
+cursor_save()		 { echo -en "\e[s"; }			# Cursor SAVE POSITION
+cursor_restore()	 { echo -en "\e[u"; }			# Cursor RESTORE POSITION
+cursor_hide()		 { echo -en "\e[?25l"; }		# Cursor HIDE CURSOR
+cursor_show()		 { echo -en "\e[?25h"; }		# Cursor SHOW CURSOR
+cursor_move-up()	 { echo -en "\e[${1}A"; }		# Cursor MOVE UP $1 LINES
+cursor_move-down()	 { echo -en "\e[${1}B"; }		# Cursor MOVE DOWN $1 LINES
+cursor_move-left()	 { echo -en "\e[${1}D"; }		# Cursor MOVE LEFT $1 COLS
+cursor_move-right()  { echo -en "\e[${1}C"; }		# Cursor MOVE RIGHT $1 COLS
+cursor_move-begin()  { echo -en "\r"; }             # Cursor MOVE BEGIN POSITION IN CURRENT LINE
+cursor_move-pos()    { echo -en "\e[${1};${2}H"; }  # Cursor MOVE LINE $1 COL $2
+
+C_D="\e[39m"            # Color DEFAULT
+C_R="\e[31m"            # Color RED
+C_BR="\e[1m\e[31m"      # Color BOLD RED
+C_LR="\e[91m"           # Color LIGHT RED
+C_G="\e[32m"            # Color GREEN
+C_BG="\e[1m\e[32m"      # Color BOLD GREEN
+C_LG="\e[92m"           # Color LIGHT GREEN
+C_Y="\e[33m"            # Color YELLOW
+C_BY="\e[1m\e[33m"      # Color BOLD YELLOW
+C_LY="\e[93m"           # Color LIGHT YELLOW
+C_B="\e[34m"            # Color BLUE
+C_BB="\e[1m\e[34m"      # Color BOLD BLUE
+C_LB="\e[94m"           # Color LIGHT BLUE
+C_M="\e[35m"            # Color MAGENTA
+C_BM="\e[1m\e[35m"      # Color BOLD MAGENTA
+C_LM="\e[95m"           # Color LIGHT MAGENTA
+C_C="\e[36m"            # Color CYAN
+C_BC="\e[1m\e[36m"      # Color BOLD CYAN
+C_LC="\e[96m"           # Color LIGHT CYAN
+C_N="\e[90m"            # Color GREY
+C_LN="\e[37m"           # Color LIGHT GREY
+B_R="\e[41m"            # Background RED
+B_G="\e[42m"            # Background GREEN
+B_Y="\e[43m"            # Background YELLOW
+B_B="\e[44m"            # Background BLUE
+B_M="\e[45m"            # Background MAGENTA
+B_C="\e[46m"            # Background CYAN
+B_LG="\e[47m"           # Background LIGHT GREY
+B_DG="\e[100m"          # Background DARK GREY
+B_LR="\e[101m"          # Background LIGHT RED
+B_LG="\e[102m"          # Background LIGHT GREEN
+B_LY="\e[103m"          # Background LIGHT YELLOW
+B_LB="\e[104m"          # Background LIGHT BLUE
+B_LM="\e[105m"          # Background LIGHT MAGENTA
+B_LC="\e[106m"          # Background LIGHT CYAN
+B_W="\e[107m"           # Background LIGHT WHITE
+
+# LAB COLORS ACCORDING GRID LINE
+declare -A lab_color
+level_color=("$C_G" "$C_LB" "$C_LY" "$C_D")
+lab_color[" "]="${S_D}${C_N}"
+l=0; for p in $(echo "$DIST" | tr -s " " "_"); do for lab in $(echo "$p" | tr -s "_" " "); do lab_color[$lab]=${level_color[$l]}; echo $lab $l; done; l=$((l+1)); done
+
+
+
+#=== FUNCTION ==================================================================
+# NAME: invetory_draw_map
+# DESCRIPTION: draw single lab map on grid specific column
+# PARAMS:
+#  $1 	lab id to draw
+#  $2	column
+#  $3	width
+#===============================================================================
+function inventory_draw_map {
+	local lab_id="$1"
+	local c="$2"
+	local w="$3"
+	local map="${MAP[$lab_id]}"
+	[ ! "$map" ] && lab_id=" "
+
+	# Print header
+	cursor_move-begin; cursor_move-right "$c"
+	echo -e "${lab_color[$lab_id]}${S_D}┌$(seq -s"─" $(($w+1))| tr -d "[0-9]")┐${S_R}";
+	cursor_move-right "$c"
+	echo -e "  ${S_B}${lab_id:0:$(($w-2))}${S_R}";
+	cursor_move-right "$c"
+	echo -e "${lab_color[$lab_id]}${S_D}└$(seq -s"─" $(($w+1))| tr -d "[0-9]")┘${S_R}";	
+	local l=3
+
+	# Print map
+	map=$(echo "$map" | sed '/^$/d' )
+	arp_out=$(cat "$arp_file" 2>/dev/null)
+	c=$((c+1))
+	while read r; do
+		cursor_move-right "$c"
+		for h in $r; do
+			if [ "$h" -eq "$h" ] &>/dev/null; then
+				hn="${HN[$lab_id]}${h}"
+				mac=${MAC["$hn"]}
+				# Red ID (MAC not found in config file)
+				if [ ! "$mac" ]; then 
+					color="${S_B}${C_LR}";
+				# Green ID (MAC found in arp file)
+				elif echo "$arp_out" | grep -qi "$mac"; then 
+					color="${S_B}${C_LG}"
+					count_hosts_on=$((count_hosts_on+1))
+				# White ID (MAC not found in arp file)
+				else 
+					color="${S_R}"
+					count_hosts_off=$((count_hosts_off+1))
+				fi
+				[[ "$h" = 00 ]] && color="${color}${S_B}"
+				echo -en "${color}$h${S_R} "
+			else 
+				echo -en "${S_D}$h${S_R} "
+			fi
+		done
+		echo
+		l=$((l+1))
+	done <<<$(echo "$map")
+	cursor_move-up $l
+}
+
+
+#=== FUNCTION ==================================================================
+# NAME: inventory_calculate_grid_size
+# DESCRIPTION: calculate DIST sizes (column widths and file heights)
+# PARAMS:
+#  $1 	DIST 
+#
+# GLOBAL VARIABLES:
+#  $grid_file_height[]		
+#  $grid_column_width[]
+#  $grid_total_width
+#===============================================================================
+function inventory_calculate_grid_size() {
+	local DIST="$1"
+	local dist_l=1 dist_c=1
+	unset grid_file_height grid_column_width grid_total_width
+
+	# Loop each file and columns of DIST 
+	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do  	
+		h=$(echo "${MAP[$lab]}" | wc -l)	# current lab height
+		w=$(echo "${MAP[$lab]}" | wc -L)	# current lab width
+		[ "$w" -lt 12 ] && w=12				# min  lab width
+		[ ${grid_file_height[$dist_l]:-0} -lt $h ] && grid_file_height[$dist_l]=$h
+		[ ${grid_column_width[$dist_c]:-0} -lt $w ] && grid_column_width[$dist_c]=$w
+		dist_c=$((dist_c+1))
+	done
+		dist_l=$((dist_l+1)); dist_c=1
+	done
+	grid_total_width=$(($(echo ${grid_column_width[*]} | tr " " "+")+${#grid_column_width[*]}*3))
+}
+
+
+#=== FUNCTION ==================================================================
+# NAME: print_map_grid
+# DESCRIPTION: draw inventory lab maps grid
+#===============================================================================
+function inventory_draw_grid {
+	clear
+
+	# CALCULATE GRID SIZE
+	DIST_CURRENT="$DIST"
+	inventory_calculate_grid_size "$DIST_CURRENT"
+
+	# NOT ENOUGHT COLUMNS! -> ADJUST DIST TO WIDTH
+	if [ "$COLUMNS" -lt $grid_total_width ]; then
+		grid_max_width=$(echo ${grid_column_width[*]} | tr " " "\n" | sort -n | tail -1)
+		grid_cols=$((COLUMNS/grid_max_width))
+		DIST_CURRENT=$(i=0; for l in $DIST; do i=$((i+1)); echo -n "$l "; [ $((i%grid_cols)) -eq 0 ] && echo ; done)
+		inventory_calculate_grid_size "$DIST_CURRENT"
+	fi
+
+	# SHOW TITLE
+	echo -e "${S_D}┌$(seq -s"─" $(($grid_total_width))| tr -d "[0-9]")┐"
+	echo -en "│  ${S_R}${S_B}LABADMIN   ${S_R}${S_D}|${S_R}  $TITLE${S_R}${S_D}  |  ${#MAP[*]} maps · ${#MAC[*]} hosts · ${C_G}${count_hosts_on:-"?"}${C_D} on · ${C_LR}${count_hosts_off:-"?"}${C_D} off"; 
+	cursor_move-begin; cursor_move-right $((grid_total_width)); echo -e "${S_D}│"; 
+	echo -e "${S_D}└$(seq -s"─" $(($grid_total_width))| tr -d "[0-9]")┘"
+	count_hosts_on=0
+	count_hosts_off=0
+
+	# PRINT MAPS
+	local dist_l=1 dist_c=1 c=1
+	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do 
+		[ $dist_c -gt 1 ] && c=$((c+3+grid_column_width[$((dist_c-1))]))
+		inventory_draw_map $lab $c ${grid_column_width[$dist_c]}
+		dist_c=$((dist_c+1))
+	done
+		seq $((3+grid_file_height[$dist_l])) | tr -d "[0-9]"
+		dist_l=$((dist_l+1)); dist_c=1; c=1;
+	done
+	 
+	cursor_move-pos $grid_map_y 1
+	update_arpscan &
+	show_menu
+}
+
+
+function update_arpscan {
+	arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)" 		# In background is better to avoid > directly
+	[ $? -ne 0 ] && echo -n "    ! Failed to scan network hosts (arp-scan exit error)" 
+	echo "${arp_out}" > "$arp_file"
+}
+
+
+
+function show_mac {
+	cursor_move-pos $(($LINES-2)) 1
+	read -p "HOST: " o
+	cursor_move-pos $(($LINES-1)) 1
+	echo ${MAC[$o]}
+
+}
+
+function action_show_inventory_file {
+	less "$inventory_path"
+}
+function action_edit_inventory_file {
+	vi "$inventory_path"
+}
+
+
+function show_menu {
+	cursor_move-pos $LINES 1
+	echo -en " \
+m ${B_LB}show mac${S_R}  \
+s ${B_LB}show labs file${S_R}  \
+e ${B_LB}edit labs file${S_R}  \
+q ${B_LB}exit${S_R}"
+}
+
+function quit {
+	cursor_show
+	echo; echo
+	exit $1
+}
+
+
+inventory_draw_grid
+
+while true; do
+	read -s -n 1 key
+	case "$key" in 
+		"") 	inventory_draw_grid  		;;
+		q|x) 	quit 0					;;
+		s)		action_show_inventory_file	;;
+		e)		action_edit_inventory_file	;;
+		m)		show_mac				;;
+	esac 
+done
+
+
+
+
+
+
+
+
+
