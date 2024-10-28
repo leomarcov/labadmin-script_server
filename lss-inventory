@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 #### CONFIG VARIABLES
-readonly labadmin_tmp_path="/tmp/labadmin-$(id -u)"
-readonly labadmin_path="$(dirname "$(readlink -f "$0")")/"
-readonly inventory_path="$labadmin_path/inventory"		    	# Labs configs directory path
+readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
+source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 
 #### INIT
 declare -A LAB 					# LOC[lab_id] = lab long name
