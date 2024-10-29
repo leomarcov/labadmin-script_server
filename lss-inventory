@@ -10,6 +10,7 @@ declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
 declare -A HN 					# HN[lab_id] = lab hostname prefix
 declare -A hosts_colors			# List of hosts selected to show un color
+decalre -A colors_hosts			# Count of hosts of each color
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
 source ${inventory_path}		
 
@@ -115,11 +116,12 @@ function inventory_draw_map {
 				mac=${MAC["$hn"]}
 				# Red ID (MAC not found in config file)
 				if [ ! "$mac" ]; then 
-					color="${S_B}${C_LR}";
-				# Green ID (HOST are inHOSTS_SELECTED)
+					color="${S_D}";
+				# Color host
 				elif [ "${hosts_colors["$hn"]}" ]; then 
 					color="${hosts_colors["$hn"]}"
 					count_hosts_sel=$((count_hosts_sel+1))
+					colors_hosts["$color"]=$((${colors_hosts["$color"]}+1))
 				# White ID (MAC not found in arp file)
 				else 
 					color="${S_R}"
@@ -214,7 +216,9 @@ function inventory_draw_grid {
 	# SHOW COUNTS IN HEADER 
 	if [ "$LINES" -ge "$grid_total_height" ]; then	
 		cursor_save; cursor_move-pos 2 $((19+${#TITLE}))
-		echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "${hosts_colors[*]}" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
+		#echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "${hosts_colors[*]}" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
+		echo -en " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts" 
+		[ "${hosts_colors[*]}" ] && for c in "${!colors_hosts[@]}"; do echo -en "${c}${colors_hosts["$c"]}${S_C} ·"; done; echo ${count_hosts_unsel}"
 		cursor_restore
 	fi
 }
@@ -286,12 +290,6 @@ function action_map() {
 				hosts_colors["$h"]="${S_B}${C_LG}"
 			done
 		;;
-		r) 
-			R_flag="true"
-			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_R}"
-			done
-		;;
 		b) 
 			B_flag="true"
 			for h in $OPTARG; do
@@ -303,7 +301,13 @@ function action_map() {
 			for h in $OPTARG; do
 				hosts_colors["$h"]="${S_B}${C_Y}"
 			done
-		;;	
+		;;
+		r) 
+			R_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_R}"
+			done
+		;;
 		?)
 			echo "Incorrect option: $OPTARG"
 			exit 2
