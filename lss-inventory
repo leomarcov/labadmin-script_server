@@ -219,10 +219,11 @@ function inventory_draw_grid {
 		#echo -e " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts $( [ "${hosts_colors[*]}" ] && echo "(${S_R}${S_B}${C_LG}${count_hosts_sel:-"?"}${C_D}${S_R}${S_D}+${S_R}${count_hosts_unsel:-"?"}${C_D}${S_D})")"; 
 		echo -en " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts " 
 		if [ "${hosts_colors[*]}" ]; then
+			echo -n "( "
 			for c in "${!colors_hosts[@]}"; do 
-				echo -en "${c}${colors_hosts["$c"]}${S_C} ·"
+				echo -en "${c}${colors_hosts["$c"]}${S_C} · "
 			done
-			echo "${count_hosts_unsel}"
+			echo "${S_D}${C_D}${count_hosts_unsel} )"
 		fi
 		cursor_restore
 	fi
