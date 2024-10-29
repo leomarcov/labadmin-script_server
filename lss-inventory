@@ -292,25 +292,25 @@ function action_map() {
 		g) 
 			G_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${C_LG}"
+				hosts_colors["$h"]="${S_B}${C_LG}"
 			done
 		;;
 		b) 
 			B_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${C_B}"
+				hosts_colors["$h"]="${S_B}${C_B}"
 			done
 		;;
 		y) 
 			Y_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${C_Y}"
+				hosts_colors["$h"]="${S_B}${C_Y}"
 			done
 		;;
 		r) 
 			R_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${C_R}"
+				hosts_colors["$h"]="${S_B}${C_R}"
 			done
 		;;
 		?)
