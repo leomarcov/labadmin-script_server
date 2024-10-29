@@ -334,7 +334,7 @@ function select_always() {
 #===============================================================================
 function select_once() {
     # Search in log if hostname had executed OK this script
-    grep -F "[${hostname}]" "$log_path" | grep "EXEC_OK" &>/dev/null
+    grep -F "[${hostname}]" "$log_path" | grep -F "[EXEC_OK]" &>/dev/null
     [ $? -eq 0 ] && exit 1 || exit 0
 }
 
