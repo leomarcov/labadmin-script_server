@@ -275,6 +275,7 @@ function action_map() {
 			if [ "$re" ] && [ "$re" != "*" ]; then
 				local DIST2=""
 				for d in $DIST; do
+					d="${HN["$d"]}"
 					[[ "$d" = $re ]] && DIST2="${DIST2} $d"
 				done
 				[ "$DIST2" ] && DIST="$DIST2"
