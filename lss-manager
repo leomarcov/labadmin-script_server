@@ -309,7 +309,7 @@ echo '#!/usr/bin/env bash
 #===============================================================================
 #  CONFIG SELECT TYPE BEAHVIOR
 #===============================================================================
-readonly select_type="once"     # allways|once|custom
+readonly select_type="once"     # always|once|custom
 
 
 
@@ -321,10 +321,10 @@ readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
 #=== FUNCTION ==================================================================
-#        NAME: select_allways
+#        NAME: select_always
 # DESCRIPTION: select script for exec everytime
 #===============================================================================
-function select_allways() {
+function select_always() {
     exit 0
 }
 
@@ -334,7 +334,7 @@ function select_allways() {
 #===============================================================================
 function select_once() {
     # Search in log if hostname had executed OK this script
-    grep "\b${hostname}\b" "$log_path" | grep "EXEC_OK" &>/dev/null
+    grep -F "[${hostname}]" "$log_path" | grep "EXEC_OK" &>/dev/null
     [ $? -eq 0 ] && exit 1 || exit 0
 }
 
