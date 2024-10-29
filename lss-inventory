@@ -298,13 +298,13 @@ function action_map() {
 }
 
 
-
-
 #=== FUNCTION ==================================================================
 #        NAME: exec_action
 # DESCRIPTION: exec function of selected action
 #===============================================================================
 function exec_action() {
+	[ ! "$action" ] && { action_h; exit 1}
+
 	action_function="action_${action}"
 	if [ "$(type -t "$action_function")" != "function" ]; then
 		echo -e "  Unrecognized action: $action\n"
@@ -312,6 +312,29 @@ function exec_action() {
 	fi
 	"$action_function" "$@"
 }
+
+#=== FUNCTION ==================================================================
+#        NAME: action_help
+# DESCRIPTION: action_h alias
+#===============================================================================
+function action_help() {
+	action_h
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: action_help
+# DESCRIPTION: action to show help
+#===============================================================================
+function action_h() {
+	echo -e "
+   Global actions:
+    ${S_B}map${S_R}\tShow map hosts
+    ${S_B}get-mac${S_R}\tGet mac from hostname
+    ${S_B}get-hostname${S_R}\tGet hostname from mac
+    ${S_B}check-mac-hostname${S_R}\tCheck if mac and hostname matches
+    " | column -L -t -s $'\t' 
+}
+
 
 # EXEC FUNCTION ACTION
 action="$1"
