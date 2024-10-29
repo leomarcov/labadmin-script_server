@@ -326,7 +326,7 @@ function action_help() {
 # DESCRIPTION: action to show help
 #===============================================================================
 function action_h() {
-	echo -e " $(basename "$0") ACTION [PARAMS...]"
+	echo -e " ${S_B}$(basename "$0")${S_R} ACTION [PARAMS...]\n"
 	echo -e "Actions:
     ${S_B}help${S_R}\tShow help
     ${S_B}map${S_R}\tShow map hosts
