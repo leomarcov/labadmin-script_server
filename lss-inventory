@@ -263,7 +263,7 @@ function action_get-hostname() {
 #  PARAMETERS:
 #===============================================================================
 function action_map() {
-	while getopts ":d:g:r:b:" option; do
+	while getopts ":d:g:r:b:y:" option; do
 		case $option in
 		d)			
 			D_flag="true"
