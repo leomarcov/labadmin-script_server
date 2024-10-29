@@ -326,14 +326,15 @@ function action_help() {
 # DESCRIPTION: action to show help
 #===============================================================================
 function action_h() {
-	echo -e " Labadmin inventary manager
+	echo -e "Labadmin inventary manager
+
 ${S_B}USAGE${S_R}
   $(basename "$0")${S_R} ACTION [PARAMS...]
 
 ${S_B}ACTIONS${S_R}
     ${S_B}help${S_R}\tShow help
-    ${S_B}map${S_R}\tShow map hosts
-    ${S_B}get-mac${S_R}\tGet mac from hostname
+    ${S_B}map${S_R}\t\tShow map hosts
+    ${S_B}get-mac${S_R}\t\tGet mac from hostname
     ${S_B}get-hostname${S_R}\tGet hostname from mac
     "
 }
