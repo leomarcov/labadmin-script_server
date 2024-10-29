@@ -285,7 +285,7 @@ function action_create() {
     mkdir "$f"
     chmod 750 "$f"                               # Start disabled
     touch "$f/log" "$f/script" "$f/select"
-    chmod g+w "$f/log"
+    chmod go+w "$f/log"
 
 echo '#!/usr/bin/env bash
 #===================================================================================
