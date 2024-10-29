@@ -481,7 +481,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	"${lss-inventory_path}"
+	"${lssinventory_path}"
 }
 
 #=== FUNCTION ==================================================================
