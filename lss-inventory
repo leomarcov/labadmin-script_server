@@ -4,16 +4,15 @@
 readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
 source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 
-#### INIT
+#### LOAD INVENTORY CONFIG FILE
 declare -A LAB 					# LOC[lab_id] = lab long name
 declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
 declare -A HN 					# HN[lab_id] = lab hostname prefix
 declare -A hosts_colors			# List of hosts selected to show un color
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
-
-# LOAD INVENTORY CONFIG FILE
 source ${inventory_path}		
+
 
 #===============================================================================
 #  COLORS AND TEXT
@@ -220,14 +219,50 @@ function inventory_draw_grid {
 	fi
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: get_MAC
+# DESCRIPTION: get MAC from a hostname
+#  PARAMETERS:
+#	$1	hostname to get MAC
+#===============================================================================
+function action_get-mac() {
+	local hn="$1"
+	local m="${MAC["$hn"]}"
+
+	if [ "$m" ]; then
+		echo "$m"
+		return 0
+	else
+		echo "No MAC found for hostname $hn" 1>&2
+		return 1
+	fi
+}
 
 #=== FUNCTION ==================================================================
-#        NAME: check_params
-# DESCRIPTION: Checks input parameters and load values
+#        NAME: get_hostname
+# DESCRIPTION: get hostname from a MAC
 #  PARAMETERS:
-#	$@	All parameter from command line
+#	$1	MAC to get hostname
 #===============================================================================
-function check_params() {
+function action_get-hostname() {
+	local m="$1"
+	for hn in "${!MAC[@]}"; do
+		cm="${MAC["$hn"]}"
+		if [ "${cm,,}" = "${m,,}" ]; then
+			echo "$hn"
+			return 0
+		fi
+	done
+	echo "No hostname found for MAC $m" 1>&2
+	return 1
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: action_map
+# DESCRIPTION: draw map
+#  PARAMETERS:
+#===============================================================================
+function action_map() {
 	while getopts ":d:g:r:b:" option; do
 		case $option in
 		d)			
@@ -258,8 +293,28 @@ function check_params() {
 		;;
 	   esac
 	done
+
+	inventory_draw_grid
 }
 
 
-check_params "$@"
-inventory_draw_grid
+
+
+#=== FUNCTION ==================================================================
+#        NAME: exec_action
+# DESCRIPTION: exec function of selected action
+#===============================================================================
+function exec_action() {
+	action_function="action_${action}"
+	if [ "$(type -t "$action_function")" != "function" ]; then
+		echo -e "  Unrecognized action: $action\n"
+		return 1
+	fi
+	"$action_function" "$@"
+}
+
+# EXEC FUNCTION ACTION
+action="$1"
+shift 
+exec_action "$@"
+
