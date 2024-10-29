@@ -458,7 +458,7 @@ function action_status() {
 	i=1; n_get=0; n_ok=0; n_error=0; n_pending=0
 	pad1="         "; pad2="                         " 
 	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
-		h_log=$(grep -F "$h" "$f")
+		h_log=$(grep -F "[$h]" "$f")
 		h_last=$(echo "$h_log" | tail -1 | cut -f1,2 -d" " | tr -d "[]")
 		h_get=$(echo "$h_log" | grep -Fc "[GET]")
 		h_ok=$(echo "$h_log" | grep -Fc "[EXEC_OK]")
