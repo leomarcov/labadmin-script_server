@@ -367,9 +367,9 @@ function action_delete() {
         local f="$repository_path/${script_name}/"
         echo -e "  Removing script ${S_B}${f}${S_R}"
         rm -rf "$f"
+		action_..
     fi  
     echo
-	action_..
 }
 
 
