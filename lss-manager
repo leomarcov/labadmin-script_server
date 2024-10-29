@@ -497,7 +497,7 @@ function action_map() {
 		fi
 	done
 	
-	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr"
+	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 }
 
 #=== FUNCTION ==================================================================
