@@ -245,10 +245,10 @@ function action_get-mac() {
 #	$1	MAC to get hostname
 #===============================================================================
 function action_get-hostname() {
-	local m="$1"
+	local m="${1,,} | tr "-" ":"
 	for hn in "${!MAC[@]}"; do
 		cm="${MAC["$hn"]}"
-		if [ "${cm,,}" = "${m,,}" ]; then
+		if [ "${cm,,}" = "${m}" ]; then
 			echo "$hn"
 			return 0
 		fi
@@ -326,12 +326,12 @@ function action_help() {
 # DESCRIPTION: action to show help
 #===============================================================================
 function action_h() {
-	echo -e "
-   Global actions:
+	echo -e "$(basename "$0") ACTION [PARAMS...]
+   Actions:
+	${S_B}help${S_R}\tShow help
     ${S_B}map${S_R}\tShow map hosts
     ${S_B}get-mac${S_R}\tGet mac from hostname
     ${S_B}get-hostname${S_R}\tGet hostname from mac
-    ${S_B}check-mac-hostname${S_R}\tCheck if mac and hostname matches
     " | column -L -t -s $'\t' 
 }
 
