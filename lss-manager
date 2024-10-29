@@ -286,6 +286,7 @@ function action_create() {
     chmod 750 "$f"                               # Start disabled
     touch "$f/log" "$f/script" "$f/select"
     chmod a+w "$f/log"
+	[ $(id -u) -eq 0 ] && chown -R lss-admin:lss-admin "$f"
 
 echo '#!/usr/bin/env bash
 #===================================================================================
