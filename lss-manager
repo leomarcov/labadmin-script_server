@@ -483,6 +483,8 @@ function action_status() {
 function action_map() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/log"
+
+	# Select hosts to color
 	local hg="" hr="" hy="" h_log=""
 	for h in $(awk '{print $3}' "$f" | sort -u | sed -E 's/^\[||\]$//g'); do
 		h_log=$(grep -F "[$h]" "$f" | tail -1)
@@ -494,6 +496,7 @@ function action_map() {
 			hy="${hy} ${h}"
 		fi
 	done
+	
 	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr"
 }
 
