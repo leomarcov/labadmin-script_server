@@ -303,7 +303,7 @@ function action_map() {
 # DESCRIPTION: exec function of selected action
 #===============================================================================
 function exec_action() {
-	[ ! "$action" ] && { action_h; exit 1}
+	[ ! "$action" ] && { action_h; exit 1; }
 
 	action_function="action_${action}"
 	if [ "$(type -t "$action_function")" != "function" ]; then
