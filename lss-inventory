@@ -245,7 +245,9 @@ function action_get-mac() {
 #	$1	MAC to get hostname
 #===============================================================================
 function action_get-hostname() {
+echo AAA$1
 	local m="${1,,}" | tr "-" ":"
+echo BBB$m
 	for hn in "${!MAC[@]}"; do
 		cm="${MAC["$hn"]}"
 		if [ "${cm,,}" = "${m}" ]; then
