@@ -286,7 +286,13 @@ function action_map() {
 			for h in $OPTARG; do
 				hosts_colors["$h"]="${S_B}${C_B}"
 			done
-		;;				
+		;;
+		y) 
+			Y_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_Y}"
+			done
+		;;	
 		?)
 			echo "Incorrect option: $OPTARG"
 			exit 2
