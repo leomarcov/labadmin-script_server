@@ -221,9 +221,9 @@ function inventory_draw_grid {
 		if [ "${hosts_colors[*]}" ]; then
 			echo -n "( "
 			for c in "${!colors_hosts[@]}"; do 
-				echo -en "${c}${colors_hosts["$c"]}${S_C} · "
+				echo -en "${c}${colors_hosts["$c"]}${S_C} "
 			done
-			echo "${S_D}${C_D}${count_hosts_unsel} )"
+			echo -e "${S_D}${C_D}${count_hosts_unsel} )"
 		fi
 		cursor_restore
 	fi
