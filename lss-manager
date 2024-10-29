@@ -486,9 +486,9 @@ function action_map() {
 	local hg="" hr="" hy="" h_log=""
 	for h in $(awk '{print $3}' "$f" | sort -u | sed -E 's/^\[||\]$//g'); do
 		h_log=$(grep -F "[$h]" "$f" | tail -1)
-		if echo "$h_log" | grep -F "[EXEC_OK]"; then
+		if echo "$h_log" | grep -qF "[EXEC_OK]"; then
 			hg="${hg} ${h}"
-		elif echo "$h_log" | grep -F "[EXEC_ERROR]"; then
+		elif echo "$h_log" | grep -qF "[EXEC_ERROR]"; then
 			hr="${hr} ${h}"
 		else
 			hy="${hy} ${h}"
