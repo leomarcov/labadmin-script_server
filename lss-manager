@@ -16,7 +16,7 @@
 #  GLOBAL VARIABLES
 #===============================================================================
 readonly lss_path=$(dirname "$(readlink -f "$0")")
-readonly lss-inventory_path="${lss_path}/lss-inventory"
+readonly lssinventory_path="${lss_path}/lss-inventory"
 source "${lss_path}/config"
 
 
@@ -481,7 +481,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	echo AA"${lss-inventory_path}"
+	"${lss-inventory_path}"
 }
 
 #=== FUNCTION ==================================================================
