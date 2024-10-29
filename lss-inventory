@@ -10,7 +10,7 @@ declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
 declare -A HN 					# HN[lab_id] = lab hostname prefix
 declare -A hosts_colors			# List of hosts selected to show un color
-decalre -A colors_hosts			# Count of hosts of each color
+declare -A colors_hosts			# Count of hosts of each color
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
 source ${inventory_path}		
 
