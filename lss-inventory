@@ -263,11 +263,21 @@ function action_get-hostname() {
 #  PARAMETERS:
 #===============================================================================
 function action_map() {
-	while getopts ":d:g:r:b:y:" option; do
+	while getopts ":d:g:r:b:y:D:" option; do
 		case $option in
 		d)			
-			D_flag="true"
+			d_flag="true"
 			DIST="$OPTARG"
+		D)	
+			D_flag="true"
+			local re="$OPTARG"
+			if [ "$re" ] && [ "$re" != "*" ]; then
+				local DIST2=""
+				for d in $DIST; do
+					[[ "$d" = $re ]] && DIST2="${DIST2} $d"
+				done
+				[ "$DIST2" ] && DIST="$DIST2"
+			fi
 		;;
 		g) 
 			G_flag="true"
