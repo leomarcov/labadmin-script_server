@@ -72,13 +72,13 @@ function show_menu() {
 		script_path="${repository_path}/${s}"
 		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
 
-		se=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d= | tr -d \" | cut -f1 -d" ")
-		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0
-		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0
-		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0
-		[ "$(stat -c "%a" "$script_path" | rev | cut -c 1)" = "0" ] && d="true" || d=""
-		c1=""; c2="${S_R}"; [ "$d" ] && { c1="${C_R}"; c2="${S_D}"; }
-		sel=" "; [ "$s" = "${script_name}" ] && sel="*"
+		se=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d= | tr -d \" | cut -f1 -d" ")	# select script type
+		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0				# get count
+		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0				# ok count
+		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0				# error count
+		[ "$(stat -c "%a" "$script_path" | rev | cut -c 1)" = "0" ] && d="true" || d=""						# disabled
+		c1=""; c2="${S_R}${C_R}"; [ "$d" ] && { c1="${C_R}"; c2="${C_R}${S_D}"; }										# color 1 and color 2
+		sel=" "; [ "$s" = "${script_name}" ] && sel="*"														# current script selected
 
 		menu="$menu\n ${sel}${c1}[$i]\t${c2}${s/ /$'\t'}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
 		i=$((i+1))
