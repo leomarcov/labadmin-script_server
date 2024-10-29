@@ -16,6 +16,7 @@
 #  GLOBAL VARIABLES
 #===============================================================================
 readonly lss_path=$(dirname "$(readlink -f "$0")")
+readonly lss-inventory_path="${lss_path}/lss-inventory"
 source "${lss_path}/config"
 
 
@@ -139,7 +140,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  log  status  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  log  status  map  log-clean  log-wipe  ls  script  select
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -249,7 +250,8 @@ function action_h() {
    Script actions:
     ${S_B}bash${S_R}\tOpen Bash in selected script directory
     ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
-    ${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
+    ${S_B}map${S_R}\tShow exec stats in a map
+	${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
     ${S_B}log-wipe${S_R}\tWipe log file of selected script
     ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
     ${S_B}script${S_R}\tShow script file of selected script
@@ -474,6 +476,13 @@ function action_status() {
 }
 
 
+#=== FUNCTION ==================================================================
+#        NAME: action_map
+# DESCRIPTION: action to show exec status map of selected script
+#===============================================================================
+function action_map() {
+	"${lss-inventory_path}"
+}
 
 #=== FUNCTION ==================================================================
 #        NAME: action_script
