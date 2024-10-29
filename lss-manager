@@ -463,12 +463,12 @@ function action_status() {
 		h_get=$(echo "$h_log" | grep -Fc "[GET]")
 		h_ok=$(echo "$h_log" | grep -Fc "[EXEC_OK]")
 		h_error=$(echo "$h_log" | grep -Fc "[EXEC_ERROR]")
-		h_pending="                "; echo "$h_log" | tail -1 | grep -vqiF "[EXEC_OK]" && h_pending="  ${C_R}PENDING!${S_R}      "
+		h_pending="                   "; echo "$h_log" | tail -1 | grep -vqiF "[EXEC_OK]" && h_pending="  ${C_R}PENDING!${S_R}         "
 		n_get=$((n_get+h_get)); n_ok=$((n_ok+h_ok)); n_error=$((n_error+h_error)); [ "$h_pending" ] && n_pending=$((n_pending+1))
 		echo -e "${S_D}${pad1:${#i}}$i${S_R}  ${h}$([ "$h_get" -gt 0 ] && echo "${C_Y}")${pad2:$((${#h}+${#h_get}))}  ${h_get}${S_R} GET$([ "${h_ok}" -gt 0 ] && echo "${C_G}")${pad1:${#h_ok}}${h_ok}${S_R} OK$([ "$h_error" -gt 0 ] && echo "${C_R}")${pad1:${#h_error}}${h_error}${S_R} ERRORS${h_pending}${S_D}${h_last}${S_R}"
 		i=$((i+1))
 	done
-	echo -e "${S_D}  ----------------------------------------------------------------------------------${S_R}"
+	echo -e "${S_D}  ------------------------------------------------------------------------------------${S_R}"
 	echo -e "${pad1}    ${pad2:${#n_get}}${C_Y}${n_get}${S_R} GET${pad1:${#n_ok}}${C_G}${n_ok}${S_R} OK${pad1:${#n_error}}${C_R}${n_error}${S_R} ERRORS   ${C_R}${n_pending}${S_R} PENDING!"
 	echo
 }
