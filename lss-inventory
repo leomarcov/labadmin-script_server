@@ -326,9 +326,9 @@ function action_help() {
 # DESCRIPTION: action to show help
 #===============================================================================
 function action_h() {
-	echo -e "$(basename "$0") ACTION [PARAMS...]
-   Actions:
-	${S_B}help${S_R}\tShow help
+	echo -e " $(basename "$0") ACTION [PARAMS...]"
+	echo -e "Actions:
+    ${S_B}help${S_R}\tShow help
     ${S_B}map${S_R}\tShow map hosts
     ${S_B}get-mac${S_R}\tGet mac from hostname
     ${S_B}get-hostname${S_R}\tGet hostname from mac
