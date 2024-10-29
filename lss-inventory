@@ -220,7 +220,7 @@ function inventory_draw_grid {
 		if [ "${hosts_colors[*]}" ]; then
 			echo -n "("
 			for c in "${!colors_hosts[@]}"; do 
-				echo -en "${c}${colors_hosts["$c"]}${S_C}+"
+				echo -en "${c}${colors_hosts["$c"]}${C_D}+"
 			done
 			echo -e "${S_D}${C_D}${count_hosts_unsel}${S_R}${S_D})${S_R}"
 		fi
@@ -292,25 +292,25 @@ function action_map() {
 		g) 
 			G_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_LG}"
+				hosts_colors["$h"]="${C_LG}"
 			done
 		;;
 		b) 
 			B_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_B}"
+				hosts_colors["$h"]="${C_B}"
 			done
 		;;
 		y) 
 			Y_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_Y}"
+				hosts_colors["$h"]="${C_Y}"
 			done
 		;;
 		r) 
 			R_flag="true"
 			for h in $OPTARG; do
-				hosts_colors["$h"]="${S_B}${C_R}"
+				hosts_colors["$h"]="${C_R}"
 			done
 		;;
 		?)
