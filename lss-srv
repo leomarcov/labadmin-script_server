@@ -173,7 +173,7 @@ function action_list() {
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
 		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
-		[[ "$hostname" = $re ]] || continue		# If no match continue
+		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
 		# Check if script is disabled
 		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If no perms continue
