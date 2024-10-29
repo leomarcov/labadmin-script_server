@@ -481,7 +481,20 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	bash "${lssinventory_path}" map
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/log"
+	local hg="" hr="" hy="" h_log=""
+	for h in $(awk '{print $3}' "$f" | sort -u | sed -E 's/^\[||\]$//g'); do
+		h_log=$(grep -F "[$h]" "$f" | tail -1)
+		if echo "$h_log" | grep -F "[EXEC_OK]"; then
+			hg="${hg} ${h}"
+		elif echo "$h_log" | grep -F "[EXEC_ERROR]"; then
+			hr="${hr} ${h}"
+		else
+			hy="${hy} ${h}"
+		fi
+	done
+	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr"
 }
 
 #=== FUNCTION ==================================================================
