@@ -43,7 +43,7 @@ chmod 750 /opt/labadmin-script_server
 chown -R lss-admin:lss-admin /opt/labadmin-script_server/repositories/
 
 # Make sure ssh user has write permission to log files!:
-find /opt/labadmin-script_server/repositories/ -type f -name log -exec chmod go+w {} \;	
+find /opt/labadmin-script_server/repositories/ -type f -name log -exec chmod a+w {} \;	
  ```
   * Generate SSH private and public keys for client (hosts) authentications
 ```bash
