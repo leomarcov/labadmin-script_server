@@ -201,6 +201,7 @@ function action_list() {
 
 		# If hostname match error skip all script except $sethostname_script
 		[ "$hostname" != "$hostname_inventory" ] && [ "$sn" != "$sethostname_script" ] && continue
+		[ "$sn" = "$sethostname_script" ] && continue
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
