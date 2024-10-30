@@ -1,0 +1,64 @@
+
+#===================================================================================
+# SELECT SCRIPT
+#         FILE: select
+#        USAGE: select hostname mac hostname_match
+#
+#  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
+#               Use select_type variable to config select beahvior.
+#               Optionaly compelte select_custom() for custom selection
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#      LICENSE: GNU General Public License v3.0
+#      VERSION: 2024.10
+#      CREATED: 01.06.2022
+#===================================================================================                                                                                                                                                                                                        
+
+
+#===============================================================================
+#  CONFIG SELECT TYPE BEAHVIOR
+#===============================================================================
+readonly select_type="custom"     # always|once|custom
+
+
+
+#===============================================================================
+#  GLOBAL VARIABLES
+#===============================================================================
+readonly hostname="$1"              # Current host local hostname
+readonly mac="$2"                   # Current hot MAC
+readonly hostname_match="$3"        # Correct hostname for MAC
+readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
+
+
+#=== FUNCTION ==================================================================
+#        NAME: select_always
+# DESCRIPTION: select script for exec everytime
+#===============================================================================
+function select_always() {
+    exit 0
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: select_once
+# DESCRIPTION: select script for exec only once time (first exec ok)
+#===============================================================================
+function select_once() {
+    # Search in log if hostname had executed OK this script
+    grep -F "[${hostname}]" "$log_path" | grep -F "[EXEC_OK]" &>/dev/null
+    [ $? -eq 0 ] && exit 1 || exit 0
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: select_custom
+# DESCRIPTION: select script for custom code
+#===============================================================================
+function select_custom() {
+   [ ! "$hostname_match" ] && exit 1
+   [ "$hostname" = "$hostname_match" ] && exit 1
+    exit 0
+}
+
+# Exec select function according $select_type content
+"select_${select_type}"
