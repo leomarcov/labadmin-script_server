@@ -196,7 +196,7 @@ function action_list() {
 		local re="${s%% *}"				# RE -> script dir name before first space character
 		local sn="${s#* }"				# SN -> script dir name afetr first space character
 
-		# If hostname error match skip all script except $hostname_script
+		# If hostname match error skip all script except $hostname_script
 		[ "$hostname_inventory" ] && [ "$sn" != "$hostname_script" ] && continue
 
 		# Check if hostname match with script REGEX
