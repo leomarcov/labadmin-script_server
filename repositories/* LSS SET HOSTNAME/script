@@ -1,6 +1,0 @@
-hostname="LSS-SET-HOSTNAME"
-
-[ "$(hostname)" = "$hostname" ] && exit 0
-hn_old="$(cat /etc/hostname | awk '{print $1}')"
-echo  "${hostname}" > /etc/hostname
-sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
