@@ -2,10 +2,10 @@
 #===================================================================================
 # LABADMIN SCRIPT SERVER
 #         FILE: lss-srv
-#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
+#        USAGE: lss-srv -h hostname -M mac -r repository_name -a hostname|list|get|exec_ok|exec_error [-s script] [-m exec_message]
 #
 #  DESCRIPTION: Labadmin script server manager
-#               Manage actions to do: list pending scripts, show script code, save exec status (exec_ok or exec_error)
+#               Manage actions to do: check hostname-mac, list pending scripts, show script code, save exec status (exec_ok or exec_error)
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
@@ -17,6 +17,7 @@
 #  GLOBAL VARIABLES
 #===============================================================================
 readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
+readonly lssinventory_path="${lss_path}/lss-inventory"		# lss-inventory path
 source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 
 
@@ -28,7 +29,7 @@ source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 #	$1	Exit code value
 #===============================================================================
 function help() {
-	echo -e "Usage: $(basename "$0") -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
+	echo -e "Usage: $(basename "$0") -h hostname -M mac -r repository_name -a hostname|list|get|exec_ok|exec_error [-s script] [-m exec_message]"
 	exit "$1"
 }
 
@@ -87,7 +88,7 @@ function check_params() {
 	elif [ ! "$action" ]; then
 	    echo "Action not present"
 		help 2  
-	elif  [[ "$action" != @(list|get|exec_ok|exec_error) ]]; then
+	elif  [[ "$action" != @(hostname|list|get|exec_ok|exec_error) ]]; then
 	    echo "Invalid action value"
 		help 2  
 	elif [[ "$action" = @(get|exec_ok|exec_error) ]] && [ ! "$script" ]; then
@@ -143,16 +144,26 @@ function log() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: check_mac_hostname
+#        NAME: action_hostname
 # DESCRIPTION: Check if mac and hostname matches 
-#              $?=0 if match
-#              $?!=0 if not match
-# PARAMETERS:
-#		$1: mac
-#		$2: hostname
 #===============================================================================
-function check_mac_hostname() {
-	return 0
+function action_hostname() {
+	local hn=$("${lssinventory_path}" get-hostname "$mac")
+
+	# Check error get-hostname
+	if [ $? -ne 0 ]; then
+		log "$mac" "$hostname" "hostname_error" "" "Error get-hostname for mac: $mac"
+		exit 2
+	fi
+
+	# Check error match hostname
+	if [ "$hostname" != "$hn" ]; then
+		echo "$hn"
+		log "$mac" "$hostname" "hostname_nomatch" "" "Incorrect hostname for $mac: $hostname -> $hn"
+		exit 1
+	fi
+	
+	exit 0
 }
 
 
@@ -162,13 +173,6 @@ function check_mac_hostname() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	# CHECK REMOTE MAC-HOSTNAME
-	if ! check_mac_hostname "$mac" "$hostname"; then
-		log "$mac" "$hostname" "list_error" "Invalid MAC-HOSTNAME"
-		exit 1
-	fi
-
-	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
@@ -229,9 +233,10 @@ check_params "$@"
 
 
 ##### EXEC ACTION
-case "$action" in
-	list)		action_list	;;
-	get)		action_get	;;
-	exec_ok)	action_exec_ok	;;
+case "$action" 
+	hostname)	action_hostname		;;
+	list)		action_list			;;
+	get)		action_get			;;
+	exec_ok)	action_exec_ok		;;
 	exec_error)	action_exec_error	;;
 esac
