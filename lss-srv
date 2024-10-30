@@ -192,17 +192,19 @@ function check_hostname() {
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
 	check_hostname "$hostname" "$mac" 
+echo AAA$?
 
 	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		local re="${s%% *}"				# RE -> script dir name before first space character
 		local sn="${s#* }"				# SN -> script dir name afetr first space character
-
+echo BBB$s
 		# If hostname match error skip all script except $sethostname_script
 		[ "$hostname" != "$hostname_inventory" ] && [ "$sn" != "$sethostname_script" ] && continue
-		[ "$sn" = "$sethostname_script" ] && continue
-
+echo CCC
+[ "$sn" = "$sethostname_script" ] && continue
+echo DDD
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
