@@ -71,10 +71,18 @@ function show_menu() {
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
 	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
-	i=1; IFS2="$IFS"; IFS=$'\n'
 
+	local sld="" sl="" slh=""
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
-		s=$(basename "$s")
+		s=$(basename "$s"); sp="${repository_path}/${s}"
+		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
+		[ -e "${sp}/hide" ] && { slh="$slh"$'\n'"$s"; continue; }
+		sl="$sl"$'\n'"$s"
+	done
+
+	unset scripts
+	i=1; IFS2="$IFS"; IFS=$'\n'
+	for s in $sld $sl $slh; do
 		script_path="${repository_path}/${s}"
 
 		# Skip hidden
