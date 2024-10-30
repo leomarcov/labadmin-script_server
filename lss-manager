@@ -57,13 +57,16 @@ C_LN="\e[37m"           # Color LIGHT GREY
 #        NAME: show_menu
 # DESCRIPTION: show list of repository script and resume log stats
 #
+# PARAMETERS
+#	$1 		-a show all scripts (included hidden)
+#
 # GLOBAL VARIABLES WRITEEN
 #	$scripts[]
 #===============================================================================
 function show_menu() {
 	# Show hidden?
 	unset show_hide
-	[ "$1" = -h ] && show_hide="true"
+	[ "$1" = -a ] && show_all="true"
 
 	# Refresh script list
 	echo
@@ -76,7 +79,7 @@ function show_menu() {
 		script_path="${repository_path}/${s}"
 
 		# Skip hidden
-		[ "$show_hide" ] && [ -e "${script_path}/hide" ] && continue
+		[ ! "$show_all" ] && [ -e "${script_path}/hide" ] && continue
 
 		scripts[$i]="$s"		# Update scripts[] found		
 		
@@ -164,7 +167,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list_all"
+		action="list"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -249,7 +252,7 @@ function action_help() {
 function action_h() {
 	echo -e "
    Global actions:
-    ${S_B}list${S_R}\tList all scripts and stats
+    ${S_B}list${S_R}\tList all scripts and stats (hidden included)
     ${S_B}create${S_R}\tCreate new script folder with default template files
     ${S_B}cd <n>${S_R}\tSelect script number <n>
     ${S_B}<n>${S_R}\tSelect script number <n>
@@ -280,7 +283,7 @@ function action_h() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list_all() {
-	show_menu -h
+	show_menu -a
 }
 
 #=== FUNCTION ==================================================================
