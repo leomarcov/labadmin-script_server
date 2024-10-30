@@ -120,12 +120,13 @@ function check_params() {
 #		$5: exec_msg
 #==========sp=====================================================================
 function log() {
-	local m="$1"				# mac
-	local hn="$2"				# hostname
-	local a="$3"				# action
-    local sp="$4"				# script path
-    local em="$5"				# exec message
-	[ "$sp" ] && sn="$(basename "$sp")" || sn="labadmin-script-server"		# script name
+	local m="$1"							# mac
+	local hn="$2"							# hostname
+	local a="$3"							# action
+    local sp="$4"							# script path
+    local em="$5"							# exec message
+	local sn="labadmin-script-server"		# script name
+	[ "$sp" ] && sn="$(basename "$sp")"
 
 	local m2="[${m}] "
 	local hn_width=8
