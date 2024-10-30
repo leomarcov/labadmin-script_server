@@ -83,8 +83,7 @@ function show_menu() {
 
 	unset scripts
 	i=1; 
-	for s in $sld $sl $'\n'$slh; do
-		echo AAA${s}BBB; echo -n "$s" | hexdump -C
+	for s in $sld $sl $slh; do
 		[ "$s" = " " ] && echo -e "${S_D}--------------------------------------------------------" && continue
 		script_path="${repository_path}/${s}"
 
