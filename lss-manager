@@ -68,7 +68,6 @@ function show_menu() {
 	unset show_hide
 	[ "$1" = -a ] && show_all="true"
 
-	# Refresh script list
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
 	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
@@ -134,7 +133,7 @@ function change_repository() {
 	unset scripts
 
 	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu	
+	show_menu
 	return 0
 }
 
@@ -167,7 +166,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list"
+		action="list_nohide"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -279,19 +278,19 @@ function action_h() {
 }
 
 #=== FUNCTION ==================================================================
-#        NAME: action_list
-# DESCRIPTION: action to show scripts menu
+#        NAME: action_list_nohide
+# DESCRIPTION: action to show scripts menu (hidden not included)
 #===============================================================================
-function action_list_all() {
-	show_menu -a
+function action_list_nohide() {
+	show_menu
 }
 
 #=== FUNCTION ==================================================================
 #        NAME: action_list
-# DESCRIPTION: action to show scripts menu
+# DESCRIPTION: action to show all scripts menu (hidden included)
 #===============================================================================
 function action_list() {
-	show_menu
+	show_menu -a
 }
 
 
