@@ -84,6 +84,7 @@ function show_menu() {
 	unset scripts
 	i=1; 
 	for s in $sld $sl $'\n' $slh; do
+		echo AAA${s}BBB
 		script_path="${repository_path}/${s}"
 
 		# Skip hidden
