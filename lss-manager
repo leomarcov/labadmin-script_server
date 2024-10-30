@@ -295,7 +295,7 @@ echo '#!/usr/bin/env bash
 #===================================================================================
 # SELECT SCRIPT
 #         FILE: select
-#        USAGE: select hostname
+#        USAGE: select hostname mac hostname_match
 #
 #  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
 #               Use select_type variable to config select beahvior.
@@ -303,8 +303,8 @@ echo '#!/usr/bin/env bash
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #      LICENSE: GNU General Public License v3.0
-#      VERSION: 2022.06
-#      CREATED: 01.05.2023
+#      VERSION: 2024.10
+#      CREATED: 01.06.2022
 #===================================================================================                                                                                                                                                                                                        
 
 
@@ -318,7 +318,9 @@ readonly select_type="once"     # always|once|custom
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly hostname="$1"
+readonly hostname="$1"              					# Current host local hostname
+readonly mac="$2"                  						# Current hot MAC
+readonly hostname_match="$3"        					# Correct hostname for MAC
 readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
@@ -349,7 +351,6 @@ function select_custom() {
     echo "Complete select_custom function"
     exit 1
 }
-
 
 # Exec select function according $select_type content
 "select_${select_type}"' > "$f/select"
