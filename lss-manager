@@ -511,8 +511,11 @@ function action_map() {
 			hy="${hy} ${h}"
 		fi
 	done
-	echo AAA${hy[*]}
-	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
+	if [ "$action_params" ]; then
+		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -d "$action_params"
+	else
+		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
+	fi
 }
 
 #=== FUNCTION ==================================================================
