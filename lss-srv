@@ -154,7 +154,7 @@ function action_hostname() {
 	# Check hostnames activated?
 	[ ! "$check_hostnames" ] && exit 0
 
-	# Get hostname from inventary for $mac host
+	# Get hostname from inventory for $mac host
 	hn=$(bash "${lssinventory_path}" get-hostname "$mac")
 
 	# Check error get-hostname
@@ -166,7 +166,7 @@ function action_hostname() {
 	# Check error match hostname
 	if [ "$hostname" != "$hn" ]; then
 		echo "$hn"
-		log "$mac" "$hostname" "hostname_nomatch" "" "Incorrect hostname for $mac: $hostname -> $hn"
+		log "$mac" "$hostname" "hostname_nomatch" "" "No match hostname for $mac: $hostname -> $hn"
 		exit 1
 	fi
 	
@@ -183,7 +183,7 @@ function action_list() {
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
-		re=$(echo "$s" | cut -f1 -d" ")			# RE -> script dir name before first space character
+		re="${s%% *}									# RE -> script dir name before first space character
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
 		# Check if script is disabled
