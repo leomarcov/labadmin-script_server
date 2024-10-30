@@ -164,7 +164,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list"
+		action="list_all"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -275,13 +275,20 @@ function action_h() {
     " | column -L -t -s $'\t' 
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: action_list
+# DESCRIPTION: action to show scripts menu
+#===============================================================================
+function action_list_all() {
+	show_menu -h
+}
 
 #=== FUNCTION ==================================================================
 #        NAME: action_list
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	show_menu -h
+	show_menu
 }
 
 
