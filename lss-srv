@@ -153,11 +153,23 @@ function log() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	# Check hostname-mac match
+	# CHECK REMOTE MAC-HOSTNAME 
 	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$mac")
+	if [ $? -ne 0 ]; then
+		log "$mac" "$hostname" "get-hostname_error" "" "Error get-hostname for mac: $mac"
+		exit 1
+	fi
+	if [ "$hostname" != "$hostname_inventory" ]; then
+		local hn_error="true"
+		log "$mac" "$hostname" "match-hostname_error" "" "Match hostname error for $mac: $hostname -> $hn"
+	fi
 
+	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
+		# 
+		[ "$hn_error" ] && [ "$
+
 		# Check if hostname match with script REGEX
 		re="${s%% *}"									# RE -> script dir name before first space character
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
