@@ -150,7 +150,8 @@ function log() {
 #  PARAMETERS:
 #		$1: mac
 #		$2: hostname
-# GLOBAL VARIABLES USED:
+#
+# GLOBAL VARIABLES MODIFIED
 #		$hostname_inventory		hostname inventory name if no matches given mac-hostname, empty if matches
 #===============================================================================
 function check_hostname() {
