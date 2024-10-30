@@ -148,13 +148,11 @@ function log() {
 # DESCRIPTION: Check if mac and hostname matches 
 #===============================================================================
 function action_hostname() {
-	local hn=$(bash "${lssinventory_path}" get-hostname "$mac")
-echo CCC$?
+	hn=$(bash "${lssinventory_path}" get-hostname "$mac")
+
 	# Check error get-hostname
 	if [ $? -ne 0 ]; then
-echo AAA
 		log "$mac" "$hostname" "hostname_error" "" "Error get-hostname for mac: $mac"
-echo BBB
 		exit 2
 	fi
 
