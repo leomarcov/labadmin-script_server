@@ -62,7 +62,7 @@ C_LN="\e[37m"           # Color LIGHT GREY
 #===============================================================================
 function show_menu() {
 	# Show hidden?
-	[ "$1" -eq -h ] && local show_hide="true"
+	[ "$1" = -h ] && local show_hide="true"
 
 	# Refresh script list
 	echo
