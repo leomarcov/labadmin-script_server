@@ -251,7 +251,7 @@ function action_help() {
 function action_h() {
 	echo -e "
    Global actions:
-    ${S_B}list${S_R}\tList all scripts and stats (hidden included)
+    ${S_B}list [-h]${S_R}\tList all scripts and stats (-h load hidden scripts)
     ${S_B}create${S_R}\tCreate new script folder with default template files
     ${S_B}cd <n>${S_R}\tSelect script number <n>
     ${S_B}<n>${S_R}\tSelect script number <n>
