@@ -62,7 +62,8 @@ C_LN="\e[37m"           # Color LIGHT GREY
 #===============================================================================
 function show_menu() {
 	# Show hidden?
-	[ "$1" = -h ] && local show_hide="true"
+	unset show_hide
+	[ "$1" = -h ] && show_hide="true"
 
 	# Refresh script list
 	echo
@@ -131,7 +132,6 @@ function change_repository() {
 
 	echo -e "\n  ${repository^^} REPOSITORY"
 	show_menu	
-
 	return 0
 }
 
