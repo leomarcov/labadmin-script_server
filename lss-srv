@@ -135,7 +135,7 @@ function log() {
     local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	# Save file log
-	[ "$sp" ] && echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
+	[ "$sp" ] && echo -e "[$(date "+%Y-%m-%d_%H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
