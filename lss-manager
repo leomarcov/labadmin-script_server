@@ -283,7 +283,8 @@ function action_h() {
 # DESCRIPTION: action to show all scripts menu (hidden included)
 #===============================================================================
 function action_list() {
-	show_menu
+	[[ "$action_params" = @(-h|hide|hidden) ]] && local p="-a"
+	show_menu "$p"
 }
 
 
