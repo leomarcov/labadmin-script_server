@@ -195,7 +195,7 @@ function check_hostname() {
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
 	check_hostname "$hostname" "$mac" 
-
+echo AAA $hostname BBB $mac CCC $hostname_inventory
 	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
