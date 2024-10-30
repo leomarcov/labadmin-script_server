@@ -204,13 +204,14 @@ function action_list() {
 
 		# If hostname match error skip all script except $sethostname_script
 		[ "$hostname" != "$hostname_inventory" ] && [ "$sn" != "$sethostname_script" ] && continue
-		[ "$sn" = "$sethostname_script" ] && continue
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
-		
+
+echo AAA $script_path
 		# Check if script is disabled
 		[ -e "${script_path}/disable" ] && continue		
+echo BBB
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
