@@ -1,0 +1,3 @@
+$hostname="[LSS-SET-HOSTNAME]"
+
+if($env:COMPUTERNAME -cne $hostname) { Rename-Computer -NewName $hostname -Force }
