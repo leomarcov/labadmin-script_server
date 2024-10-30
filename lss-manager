@@ -512,11 +512,8 @@ function action_map() {
 		fi
 	done
 	if [ "$action_params" ]; then
-		if echo "$action_params" | grep -F "*"; then
-			bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "$action_params"
-		else
-			bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -d "$action_params"
-		if
+		local d="d"; echo "$action_params" | grep -qF "*" && d="d"
+		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
 	else
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 	fi
