@@ -196,8 +196,6 @@ function action_list() {
 
 		# If hostname error match skip all script except $hostname_script
 		[ "$hostname_inventory" ] && [ "$sn" != "$hostname_script" ] && continue
-		echo AAA $hostname_inventory BBB $sn CCC $hostname_script DDD
-
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
@@ -206,8 +204,9 @@ function action_list() {
 		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If no perms continue
 
 		# Check if hostname is selected
+echo AAA
 		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
-		
+		echo BBB
 		# List script
 		echo "$s"
 	done
