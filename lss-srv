@@ -55,6 +55,7 @@ function check_params() {
 			readonly repository_path="${repositories_path}/${repository}/"
 		;;
 		a)
+echo AAA$action BBB
 			readonly action="$OPTARG"
 		;;
 		s)
