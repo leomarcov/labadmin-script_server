@@ -73,6 +73,7 @@ function show_menu() {
 	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
 	local sld="" sl="" slh=""
+	IFS2="$IFS"; IFS=$'\n'
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
@@ -81,7 +82,7 @@ function show_menu() {
 	done
 
 	unset scripts
-	i=1; IFS2="$IFS"; IFS=$'\n'
+	i=1; 
 	for s in $sld $sl $slh; do
 		script_path="${repository_path}/${s}"
 
