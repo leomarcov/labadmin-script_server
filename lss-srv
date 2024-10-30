@@ -149,17 +149,21 @@ function log() {
 #		$2: hostname
 #
 # GLOBAL VARIABLES MODIFIED
-#		$hostname_inventory		hostname inventory name if no matches given mac-hostname, empty if matches
+#		$hostname_inventory		hostname inventory name for given mac
+#
+# EXIT CODE
+#		0 if found hostname for mac and matches
+#		1 if found hostname for mac but match error
 #===============================================================================
 function check_hostname() {
 	local hn="$1"
 	local m="$2"
+	unset hostname_inventory
 
 	# Check hostnames is enabled in config file?
 	[ ! "$check_hostnames" ] && return 0
 
 	# Get hostname from inventory for $mac host
-	unset hostname_inventory
 	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")
 
 	# Check error get-hostname
@@ -194,7 +198,7 @@ function action_list() {
 		local sn="${s#* }"				# SN -> script dir name afetr first space character
 
 		# If hostname match error skip all script except $sethostname_script
-		[ "$hostname_inventory" ] && [ "$sn" != "$sethostname_script" ] && continue
+		[ "$hostname" != "$hostname_inventory" ] && [ "$sn" != "$sethostname_script" ] && continue
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
