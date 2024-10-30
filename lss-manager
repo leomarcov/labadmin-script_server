@@ -61,18 +61,25 @@ C_LN="\e[37m"           # Color LIGHT GREY
 #	$scripts[]
 #===============================================================================
 function show_menu() {
+	# Show hidden?
+	[ "$1" -eq -h ] && local show_hide="true"
+
 	# Refresh script list
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
 	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
 	i=1; IFS2="$IFS"; IFS=$'\n'
 
-	for s in $(stat -c "%a %Y %n" "${repository_path}"/* | cut -c 2-| sort | cut -f3- -d " "); do
+	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s")
-		scripts[$i]="$s"		# Update scripts[] found
 		script_path="${repository_path}/${s}"
-		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
 
+		# Skip hidden
+		[ "$show_hide" ] && [ -e "${script_path}/hide" ] && continue
+
+		scripts[$i]="$s"		# Update scripts[] found		
+		
+		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
 		se=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d= | tr -d \" | cut -f1 -d" ")	# select script type
 		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0				# get count
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0				# ok count
@@ -274,7 +281,7 @@ function action_h() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	show_menu
+	show_menu -h
 }
 
 
