@@ -149,7 +149,7 @@ function log() {
 #===============================================================================
 function action_hostname() {
 	local hn=$(bash "${lssinventory_path}" get-hostname "$mac")
-echo CCC
+echo CCC$?
 	# Check error get-hostname
 	if [ $? -ne 0 ]; then
 echo AAA
