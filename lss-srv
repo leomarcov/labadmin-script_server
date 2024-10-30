@@ -183,7 +183,7 @@ function action_list() {
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		# Check if hostname match with script REGEX
-		re="${s%% *}									# RE -> script dir name before first space character
+		re="${s%% *}"									# RE -> script dir name before first space character
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
 		# Check if script is disabled
