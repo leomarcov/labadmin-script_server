@@ -519,6 +519,7 @@ function action_map() {
 		# Show maps according script RE
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 	fi
+	echo
 }
 
 #=== FUNCTION ==================================================================
