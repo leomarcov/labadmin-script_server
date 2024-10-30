@@ -261,7 +261,7 @@ function action_h() {
    Script actions:
     ${S_B}bash${S_R}\tOpen Bash in selected script directory
     ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
-    ${S_B}map${S_R}\tShow exec stats in a map
+    ${S_B}map [LAB...]${S_R}\tShow exec stats in a map. Optionaly show only a list of LABS
     ${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
     ${S_B}log-wipe${S_R}\tWipe log file of selected script
     ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
