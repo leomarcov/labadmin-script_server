@@ -1,4 +1,4 @@
-hostname="LSS-SET-HOSTNAME"
+hostname="LSS-HOSTNAME-REPLACE"
 
 [ "$(hostname)" = "$hostname" ] && exit 0
 hn_old="$(cat /etc/hostname | awk '{print $1}')"
