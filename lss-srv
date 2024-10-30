@@ -206,7 +206,7 @@ function action_list() {
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
 		# Check if script is disabled
-		[ -e "${script_path}/disable ] && continue		
+		[ -e "${script_path}/disable" ] && continue		
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
