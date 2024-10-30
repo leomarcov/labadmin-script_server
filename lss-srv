@@ -59,7 +59,7 @@ function check_params() {
 		;;
 		s)
 			readonly script="$OPTARG"
-			readonly script_path="${repository_path}/${script
+			readonly script_path="${repository_path}/${script}"
 		;;
 		m) 
 			readonly exec_msg="$OPTARG"
