@@ -134,6 +134,7 @@ function log() {
     local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	# Save file log
+	[ ! "${sp}" ] && sp="${lss_path}"
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
 	
 	# Send mail log
@@ -148,6 +149,10 @@ function log() {
 # DESCRIPTION: Check if mac and hostname matches 
 #===============================================================================
 function action_hostname() {
+	# Check hostnames activated?
+	[ ! "$check_hostnames" ] && exit 0
+
+	# Get hostname from inventary for $mac host
 	hn=$(bash "${lssinventory_path}" get-hostname "$mac")
 
 	# Check error get-hostname
