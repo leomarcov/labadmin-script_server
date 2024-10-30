@@ -499,7 +499,7 @@ function action_map() {
 			hy="${hy} ${h}"
 		fi
 	done
-	
+	echo AAA${hy[*]}
 	bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 }
 
