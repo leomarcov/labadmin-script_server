@@ -55,7 +55,7 @@ C_LN="\e[37m"           # Color LIGHT GREY
 
 #=== FUNCTION ==================================================================
 #        NAME: show_menu
-# DESCRIPTION: show list of repository script and resume log stats
+# DESCRIPTION: show list of repository scripts and resume log stats
 #
 # PARAMETERS
 #	$1 		-a show all scripts (included hidden)
@@ -166,7 +166,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list_nohide"
+		action="list"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -277,20 +277,13 @@ function action_h() {
     " | column -L -t -s $'\t' 
 }
 
-#=== FUNCTION ==================================================================
-#        NAME: action_list_nohide
-# DESCRIPTION: action to show scripts menu (hidden not included)
-#===============================================================================
-function action_list_nohide() {
-	show_menu
-}
 
 #=== FUNCTION ==================================================================
 #        NAME: action_list
 # DESCRIPTION: action to show all scripts menu (hidden included)
 #===============================================================================
 function action_list() {
-	show_menu -a
+	show_menu
 }
 
 
