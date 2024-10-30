@@ -126,6 +126,8 @@ function log() {
     local sp="$4"				# script path
     local em="$5"				# exec message
 	sn="$(basename "$sp")"		# script name
+	
+	[ ! "${sp}" ] && { sp="${lss_path}"; sn="labadmin-script-server"; }
 
 	local m2="[${m}] "
 	local hn_width=8
@@ -134,7 +136,7 @@ function log() {
     local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	# Save file log
-	[ ! "${sp}" ] && sp="${lss_path}"
+
 	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
 	
 	# Send mail log
