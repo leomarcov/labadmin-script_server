@@ -173,7 +173,7 @@ function check_hostname() {
 
 	# Check error match-hostname
 	if [ "$hn" != "$hostname_inventory" ]; then
-		log "$m" "$hn" "match-hostname_error" "" "Match hostname error for $mac: $hn -> $hostname_inventory"
+		# log "$m" "$hn" "match-hostname_error" "" "Match hostname error for $mac: $hn -> $hostname_inventory"
 		return 1
 	fi
 
@@ -222,6 +222,7 @@ function action_list() {
 function action_get() {
 	# Show script
 	cat "${script_path}/script" 2>&1
+
 	if [ $? -eq 0 ]; then
 		log "$mac" "$hostname" "$action" "$script_path"
 		exit 0 
