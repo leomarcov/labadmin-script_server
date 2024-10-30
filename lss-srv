@@ -193,9 +193,11 @@ function action_list() {
 	for s in $(ls "$repository_path"); do
 		local re="${s%% *}"				# RE -> script dir name before first space character
 		local sn="${s#* }"				# SN -> script dir name afetr first space character
-		echo AAA $hostname_inventory BBB $sn CCC $hostname_script DDD
+
 		# If hostname error match skip all script except $hostname_script
 		[ "$hostname_inventory" ] && [ "$sn" != "$hostname_script" ] && continue
+		echo AAA $hostname_inventory BBB $sn CCC $hostname_script DDD
+
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
