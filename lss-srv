@@ -79,9 +79,12 @@ function check_params() {
 	if [ ! "$hostname" ]; then
 		echo "Hostname not present"
 		help 2
-#	elif [ ! "$mac" ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
-#		echo "Incorrect MAC or not present"
-#		help 2
+	elif [ ! "$mac" ]; then
+		mac="00:00:00:00:00:00"
+		unset check_hostnames
+	elif [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
+		echo "Incorrect MAC or not present"
+		help 2
 	elif [ ! "$repository" ]; then
 	    echo "Repository not present"
 		help 2 
@@ -220,8 +223,17 @@ function action_list() {
 # DESCRIPTION: Show script code
 #===============================================================================
 function action_get() {
-	# Show script
-	cat "${script_path}/script" 2>&1
+	local sn="${script#* }"				# SN -> script dir name afetr first space character
+
+	# Show sethostname script -> insert new hostname in script code
+	if [ "$sn" = "$sethostname_script" ]; then
+		check_hostname "$hostname" "$mac"
+		cat "${script_path}/script" | sed "s/$(echo "${sethostname_script}" | tr " " "-")/${hostname_inventory}/g" 2>&1
+
+	# Show regular script
+	else
+		cat "${script_path}/script" 2>&1
+	fi
 
 	if [ $? -eq 0 ]; then
 		log "$mac" "$hostname" "$action" "$script_path"
