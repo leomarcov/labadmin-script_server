@@ -195,7 +195,7 @@ function check_hostname() {
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
 	check_hostname "$hostname" "$mac" 
-echo AAA $hostname BBB $mac CCC $hostname_inventory
+
 	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
@@ -204,7 +204,7 @@ echo AAA $hostname BBB $mac CCC $hostname_inventory
 		local sp="${repository_path}/${s}"			# script path
 
 		# Check if list only set hostname script
-		[ "$hostname" != "$hostname_inventory" ] && [ -e "${sp}/hostname" ] && continue
+		[ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
