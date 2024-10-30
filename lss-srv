@@ -125,9 +125,7 @@ function log() {
 	local a="$3"				# action
     local sp="$4"				# script path
     local em="$5"				# exec message
-	sn="$(basename "$sp")"		# script name
-	
-	[ ! "${sp}" ] && { sp="${lss_path}"; sn="labadmin-script-server"; }
+	[ "$sp" ] && sn="$(basename "$sp")" || sn="labadmin-script-server"		# script name
 
 	local m2="[${m}] "
 	local hn_width=8
@@ -136,8 +134,7 @@ function log() {
     local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
 	
 	# Save file log
-
-	echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
+	[ "$sp" ] && echo -e "[$(date "+%Y-%m-%d %H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
@@ -146,6 +143,41 @@ function log() {
 }
 
 
+#=== FUNCTION ==================================================================
+#        NAME: check_hostname
+# DESCRIPTION: Check if mac and hostname matches from inventory data
+#  PARAMETERS:
+#		$1: mac
+#		$2: hostname
+# GLOBAL VARIABLES USED:
+#		$hostname_inventory		hostname inventory name if no matches given mac-hostname, empty if matches
+#===============================================================================
+function check_hostname() {
+	local hostname="$1"
+	local mac="$2"
+
+	# Check hostnames is enabled in config file?
+	[ ! "$check_hostnames" ] && return 0
+
+	# Get hostname from inventory for $mac host
+	unset hostname_inventory
+	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$mac")
+
+	# Check error get-hostname
+	if [ $? -ne 0 ]; then
+		log "$mac" "$hostname" "get-hostname_error" "" "Error get-hostname for mac: $mac"
+		exit 1
+	fi
+
+	# Check error match-hostname
+	if [ "$hostname" != "$hn" ]; then
+		log "$mac" "$hostname" "match-hostname_error" "" "Match hostname error for $mac: $hostname -> $hn"
+		return 1
+	fi
+
+	unset hostname_inventory
+	return 0
+}
 
 
 #=== FUNCTION ==================================================================
@@ -154,24 +186,18 @@ function log() {
 #===============================================================================
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
-	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$mac")
-	if [ $? -ne 0 ]; then
-		log "$mac" "$hostname" "get-hostname_error" "" "Error get-hostname for mac: $mac"
-		exit 1
-	fi
-	if [ "$hostname" != "$hostname_inventory" ]; then
-		local hn_error="true"
-		log "$mac" "$hostname" "match-hostname_error" "" "Match hostname error for $mac: $hostname -> $hn"
-	fi
+	check_hostname "$hostname" "$mac" 
 
 	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
-		# 
-		[ "$hn_error" ] && [ "$
+		local re="${s%% *}"				# RE -> script dir name before first space character
+		local sn="${s#* }"				# SN -> script dir name afetr first space character
+		
+		# If hostname error match skip all script except $hostname_script
+		[ "$hostname_inventory" ] && [ "$sn" != "$hostname_script" ] && continue
 
 		# Check if hostname match with script REGEX
-		re="${s%% *}"									# RE -> script dir name before first space character
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 		
 		# Check if script is disabled
