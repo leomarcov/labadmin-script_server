@@ -152,7 +152,9 @@ function action_hostname() {
 
 	# Check error get-hostname
 	if [ $? -ne 0 ]; then
+echo AAA
 		log "$mac" "$hostname" "hostname_error" "" "Error get-hostname for mac: $mac"
+echo BBB
 		exit 2
 	fi
 
