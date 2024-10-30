@@ -14,7 +14,6 @@
 #  GLOBAL CONFIG VARIABLES
 #===============================================================================
 readonly log_mail="logs.carlos3@gmail.com"								# Email to send log errors
-readonly check_hostnames="true"											# Empty value when check hostnames always return no error 
 readonly repositories_path="${lss_path}/repositories/"					# Base path of scripts repositories dirs: linux, w7, w10, etc.
 readonly inventories_path="${lss_path}/inventories/"					# Base path of inventories config files
 readonly inventory_path="${inventories_path}/default.inventory"			# Inventory config file used
