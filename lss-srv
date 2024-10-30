@@ -70,12 +70,9 @@ function check_params() {
 	   esac
 	done
 
-	if [ $# -eq 0 ]; then
-		help 1
-	fi
-
-	[ "$script" ] && readonly script_path="${repository_path}/${script}/"
+	[ $# -eq 0 ] && help 1															# Show help
 	[ ! "$mac" ] { mac="00:00:00:00:00:00"; unset check_hostnames; }				# Allow agent empty MAC value (for agent backwards compatibility) 
+	[ "$script" ] && readonly script_path="${repository_path}/${script}/"
 
 	if [ ! "$hostname" ]; then
 		echo "Hostname not present"
