@@ -383,6 +383,7 @@ function action_delete() {
         echo -e "  Removing script ${S_B}${f}${S_R}"
         rm -rf "$f"
 		action_..
+		show_menu
     fi  
     echo
 }
