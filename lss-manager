@@ -83,13 +83,10 @@ function show_menu() {
 
 	unset scripts
 	i=1; 
-	for s in $sld $sl $'\n' $slh; do
-		[ "$s" = $'\n' ] && echo -e "${S_D}--------------------------------------------------------" && continue
+	for s in $sld $sl $slh; do
 		script_path="${repository_path}/${s}"
-
 		# Skip hidden
 		[ ! "$show_all" ] && [ -e "${script_path}/hide" ] && continue
-
 		scripts[$i]="$s"		# Update scripts[] found		
 		
 		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
