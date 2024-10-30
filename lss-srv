@@ -59,6 +59,7 @@ function check_params() {
 		;;
 		s)
 			readonly script="$OPTARG"
+			readonly script_path="${repository_path}/${script
 		;;
 		m) 
 			readonly exec_msg="$OPTARG"
@@ -68,12 +69,14 @@ function check_params() {
 			exit 2
 		;;
 	   esac
-	done
+	done													
 
-	[ $# -eq 0 ] && help 1															# Show help
-	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }				# Allow agent empty MAC value (for agent backwards compatibility) 
-	[ "$script" ] && readonly script_path="${repository_path}/${script}/"
-	if [ ! "$hostname" ]; then
+	# Allow agent empty MAC value (for agent backwards compatibility) 
+	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }				
+
+	if [ $# -eq 0 ]; then
+		help 1
+	elif [ ! "$hostname" ]; then
 		echo "Hostname not present"
 		help 2
 	elif [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
