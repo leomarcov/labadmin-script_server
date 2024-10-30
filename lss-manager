@@ -114,6 +114,8 @@ function change_repository() {
 	local r="$1"
 	# Check if exist repository
 	[ ! -d "${repositories_path}/${r}" ] && return 1
+	[[ $(readlink -f "${repositories_path}/${r}") = $(readlink -f "${repositories_path}") ]] && return 1		# Check if try directory outside repositories_path
+	[[ $(readlink -f "${repositories_path}/${r}") != $(readlink -f "${repositories_path}")* ]] && return 1		# Check if try directory outside repositories_path
 
 	repository="$r"
 	repository_path="${repositories_path}/${repository}/"
