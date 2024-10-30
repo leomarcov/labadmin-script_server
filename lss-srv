@@ -204,7 +204,7 @@ function action_list() {
 		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If no perms continue
 
 		# Check if hostname is selected
-echo AAA
+echo AAA $hostname BBB $mac CCC $hostname_inventory
 		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
 		echo BBB
 		# List script
