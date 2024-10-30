@@ -54,10 +54,9 @@ function select_once() {
 # DESCRIPTION: select script for custom code
 #===============================================================================
 function select_custom() {
-	echo AAA $hostname_match B $hostname C $mac
-   [ ! "$hostname_match" ] && exit 0
-   [ "$hostname" = "$hostname_match" ] && exit 0
-    exit 1
+   [ ! "$hostname_match" ] && exit 1
+   [ "$hostname" = "$hostname_match" ] && exit 1
+    exit 0
 }
 
 # Exec select function according $select_type content
