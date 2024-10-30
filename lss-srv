@@ -208,10 +208,8 @@ function action_list() {
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${re,,} ]] || continue		# If no match continue
 
-echo AAA $script_path
 		# Check if script is disabled
-		[ -e "${script_path}/disable" ] && continue		
-echo BBB
+		[ -e "${repository_path}/${s}/disable" ] && continue		
 
 		# Check if hostname is selected
 		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
