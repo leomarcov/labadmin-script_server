@@ -64,29 +64,22 @@ C_LN="\e[37m"           # Color LIGHT GREY
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	# Show hidden?
-	unset show_hide
-	[ "$1" = -a ] && show_all="true"
-
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
 	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
-	local sld="" sl="" slh=""
+	local sld="" sl=""
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
-		[ -e "${sp}/hide" ] && { slh="$slh"$'\n'"$s"; continue; }
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
 		sl="$sl"$'\n'"$s"
 	done
 
 	unset scripts
 	i=1; 
-	for s in $sld $sl $slh; do
+	for s in $sld $sl; do
 		script_path="${repository_path}/${s}"
-		# Skip hidden
-		[ ! "$show_all" ] && [ -e "${script_path}/hide" ] && continue
 		scripts[$i]="$s"		# Update scripts[] found		
 		
 		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
@@ -158,7 +151,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  hide  unhide  log  status  map  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  log  status  map  log-clean  log-wipe  ls  script  select
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -276,7 +269,6 @@ function action_h() {
     ${S_B}select${S_R}\tShow select file of selected script
     ${S_B}disable${S_R}\tDisable selected script
     ${S_B}enable${S_R}\tEnable selected script
-    ${S_B}hide${S_R}\tHide selected script
 	${S_B}delete${S_R}\tDelete selected script
     ${S_B}set-name${S_R}\tChange name of selected script
     ${S_B}set-RE${S_R}\tChange RE of selected script
@@ -287,11 +279,10 @@ function action_h() {
 
 #=== FUNCTION ==================================================================
 #        NAME: action_list
-# DESCRIPTION: action to show all scripts menu (hidden included)
+# DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	[[ "$action_params" = @(-h|hide|hidden) ]] && local p="-a"
-	show_menu "$p"
+	show_menu
 }
 
 
@@ -626,31 +617,6 @@ function action_enable() {
 	rm -rf "${f}/disable"
 	echo
 }
-
-#=== FUNCTION ==================================================================
-#        NAME: action_hide
-# DESCRIPTION: action to hide selected script
-#===============================================================================
-function action_hide() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Hidding script ${S_B}${f}${S_R}"
-	touch "${f}/hide"
-	echo
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_unhide
-# DESCRIPTION: action to unhide selected script (assign permissions)
-#===============================================================================
-function action_unhide() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Unhidding script ${S_B}${f}${S_R}"
-	rm -rf "${f}/hide"
-	echo
-}
-
 
 
 #=== FUNCTION ==================================================================
