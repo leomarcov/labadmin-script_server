@@ -233,7 +233,7 @@ check_params "$@"
 
 
 ##### EXEC ACTION
-case "$action" 
+case "$action" in
 	hostname)	action_hostname		;;
 	list)		action_list			;;
 	get)		action_get			;;
