@@ -153,25 +153,25 @@ function log() {
 #		$hostname_inventory		hostname inventory name if no matches given mac-hostname, empty if matches
 #===============================================================================
 function check_hostname() {
-	local hostname="$1"
-	local mac="$2"
+	local hn="$1"
+	local m="$2"
 
 	# Check hostnames is enabled in config file?
 	[ ! "$check_hostnames" ] && return 0
 
 	# Get hostname from inventory for $mac host
 	unset hostname_inventory
-	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$mac")
+	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")
 
 	# Check error get-hostname
 	if [ $? -ne 0 ]; then
-		log "$mac" "$hostname" "get-hostname_error" "" "Error get-hostname for mac: $mac"
+		log "$m" "$hn" "get-hostname_error" "" "Error get-hostname for mac: $m"
 		exit 1
 	fi
 
 	# Check error match-hostname
-	if [ "$hostname" != "$hn" ]; then
-		log "$mac" "$hostname" "match-hostname_error" "" "Match hostname error for $mac: $hostname -> $hn"
+	if [ "$hn" != "$hostname_inventory" ]; then
+		log "$m" "$hn" "match-hostname_error" "" "Match hostname error for $mac: $hn -> $hostname_inventory"
 		return 1
 	fi
 
@@ -204,7 +204,7 @@ function action_list() {
 		[ ! -x "${repository_path}/${s}/" ] || [ ! -r "${repository_path}/${s}/" ] && continue		# If no perms continue
 
 		# Check if hostname is selected
-		bash "${repository_path}/${s}/select" "$hostname" || continue
+		bash "${repository_path}/${s}/select" "$hostname" "$mac" "$hostname_inventory" || continue
 		
 		# List script
 		echo "$s"
