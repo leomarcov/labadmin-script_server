@@ -404,8 +404,8 @@ ${S_B}USAGE${S_R}
   $(basename "$0")${S_R} ACTION [PARAMS...]
 
 ${S_B}ACTIONS${S_R}
-    ${S_B}help${S_R}                Show help
-    ${S_B}map [PARAMS...]${S_R}\t\t\tShow map hosts
+    ${S_B}help${S_R}                    Show help
+    ${S_B}map [PARAMS...]${S_R}              Show map hosts
      ${S_B}-S${S_R}					Color online hosts (with arp-scan)
      ${S_B}-d <LAB DIST>${S_R}		Show only LABS in DIST arg
      ${S_B}-D <LAB RE>${S_R}			Show only LABS matches with RE
