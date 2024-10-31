@@ -379,7 +379,7 @@ function exec_action() {
 
 	action_function="action_${action}"
 	if [ "$(type -t "$action_function")" != "function" ]; then
-		echo -e "  Unrecognized action: $action\n"
+		echo -e "  Unrecognized action: $action"
 		return 1
 	fi
 	"$action_function" "$@"
