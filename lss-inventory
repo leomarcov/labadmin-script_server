@@ -277,7 +277,8 @@ function action_map() {
 		A)
 			echo "Scaning network..."
     		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
-    		[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
+			[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
+    		echo "Complete!"
 
 			for m in "${MAC[@]}"; do
 				echo "$arp_scan" | grep -qi "$m" && hosts_colors["$h"]="${S_B}${C_LG}"
