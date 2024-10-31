@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+#===================================================================================
+# LABADMIN SCRIPT SERVER INVENTORY
+#         FILE: lss-inventory
+#        USAGE: lss-inventory ACTION [PARAMS...]
+#
+#  DESCRIPTION: Labadmin script server inventory to manage asociation of hostnames-MAC
+#               Manage actions to do: show maps, get MAC->hostname and hostname->, get labadmin config files
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#	   LICENSE: GNU General Public License v3.0
+#      VERSION: 2024.10
+#      CREATED: 2024.10.31
+#=================================================================================== 
+
+
 #===============================================================================
 #  CONFIG VARIABLES
 #===============================================================================
@@ -19,7 +34,7 @@ declare -A HN 					# HN[lab_id] = lab hostname prefix
 declare -A hosts_colors			# List of hosts selected to show un color
 declare -A colors_hosts			# Count of hosts of each color
 declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
-source ${inventory_path}		
+source ${inventory_path}		# Load inventory file
 
 
 #===============================================================================
@@ -85,6 +100,10 @@ declare -A lab_color
 level_color=("$C_G" "$C_LB" "$C_LY" "$C_D")
 lab_color[" "]="${S_D}${C_N}"
 l=0; for p in $(echo "$DIST" | tr -s " " "_"); do for lab in $(echo "$p" | tr -s "_" " "); do lab_color[$lab]=${level_color[$l]}; done; l=$((l+1)); done
+
+
+
+
 
 
 #=== FUNCTION ==================================================================
@@ -236,52 +255,21 @@ function inventory_draw_grid {
 }
 
 #=== FUNCTION ==================================================================
-#        NAME: get_MAC
-# DESCRIPTION: get MAC from a hostname
-#  PARAMETERS:
-#	$1	hostname to get MAC
-#===============================================================================
-function action_get-mac() {
-	local hn="$1"
-	local m="${MAC["$hn"]}"
-
-	if [ "$m" ]; then
-		echo "$m"
-		return 0
-	else
-		echo "No MAC found for hostname $hn" 1>&2
-		return 1
-	fi
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: get_hostname
-# DESCRIPTION: get hostname from a MAC
-#  PARAMETERS:
-#	$1	MAC to get hostname
-#===============================================================================
-function action_get-hostname() {
-	local m=$(echo "${1,,}" | tr "-" ":")
-	for hn in "${!MAC[@]}"; do
-		cm="${MAC["$hn"]}"
-		if [ "${cm,,}" = "${m}" ]; then
-			echo "$hn"
-			return 0
-		fi
-	done
-	echo "No hostname found for MAC $m" 1>&2
-	return 1
-}
-
-#=== FUNCTION ==================================================================
 #        NAME: action_map
 # DESCRIPTION: draw map
 #  PARAMETERS:
+#		-S					Color online hosts (with arp-scan)
+#		-d <LAB DIST>		Show only LABS in DIST arg
+#		-D <LAB RE>			Show only LABS matches with RE
+#		-g <HOST LIST>		Color green HOST LIST
+#		-b <HOST LIST>		Color blue HOST LIST
+#		-y <HOST LIST>		Color yellow HOST LIST
+#		-r <HOST LIST>		Color red HOST LIST
 #===============================================================================
 function action_map() {
-	while getopts ":d:g:r:b:y:D:A" option; do
+	while getopts ":d:g:r:b:y:D:S" option; do
 		case $option in
-		A)
+		S)
 			echo -n "Scaning network..."
     		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
 			[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
@@ -341,6 +329,47 @@ function action_map() {
 }
 
 
+
+
+#=== FUNCTION ==================================================================
+#        NAME: get_MAC
+# DESCRIPTION: get MAC from a hostname
+#  PARAMETERS:
+#	$1	hostname to get MAC
+#===============================================================================
+function action_get-mac() {
+	local hn="$1"
+	local m="${MAC["$hn"]}"
+
+	if [ "$m" ]; then
+		echo "$m"
+		return 0
+	else
+		echo "No MAC found for hostname $hn" 1>&2
+		return 1
+	fi
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: get_hostname
+# DESCRIPTION: get hostname from a MAC
+#  PARAMETERS:
+#	$1	MAC to get hostname
+#===============================================================================
+function action_get-hostname() {
+	local m=$(echo "${1,,}" | tr "-" ":")
+	for hn in "${!MAC[@]}"; do
+		cm="${MAC["$hn"]}"
+		if [ "${cm,,}" = "${m}" ]; then
+			echo "$hn"
+			return 0
+		fi
+	done
+	echo "No hostname found for MAC $m" 1>&2
+	return 1
+}
+
+
 #=== FUNCTION ==================================================================
 #        NAME: exec_action
 # DESCRIPTION: exec function of selected action
@@ -375,8 +404,15 @@ ${S_B}USAGE${S_R}
   $(basename "$0")${S_R} ACTION [PARAMS...]
 
 ${S_B}ACTIONS${S_R}
-    ${S_B}help${S_R}\tShow help
-    ${S_B}map${S_R}\t\tShow map hosts
+    ${S_B}help${S_R}\t\tShow help
+    ${S_B}map${S_R}\t\t\tShow map hosts
+            ${S_B}-S${S_R}					Color online hosts (with arp-scan)
+            ${S_B}-d <LAB DIST>${S_R}		Show only LABS in DIST arg
+            ${S_B}-D <LAB RE>${S_R}			Show only LABS matches with RE
+            ${S_B}-g <HOST LIST>${S_R}		Color green HOST LIST
+            ${S_B}-b <HOST LIST>${S_R}		Color blue HOST LIST
+            ${S_B}-y <HOST LIST>${S_R}		Color yellow HOST LIST
+            ${S_B}-r <HOST LIST>${S_R}		Color red HOST LIST
     ${S_B}get-mac${S_R}\t\tGet mac from hostname
     ${S_B}get-hostname${S_R}\tGet hostname from mac
     "
