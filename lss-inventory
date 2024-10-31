@@ -406,13 +406,13 @@ ${S_B}USAGE${S_R}
 ${S_B}ACTIONS${S_R}
     ${S_B}help${S_R}                      Show help
     ${S_B}map [PARAMS...]${S_R}           Show map hosts
-     ${S_B}-S${S_R}                        Color online hosts (with arp-scan)
-     ${S_B}-d <LAB DIST>${S_R}             Show only LABS in DIST arg
-     ${S_B}-D <LAB RE>${S_R}               Show only LABS matches with RE
-     ${S_B}-g <HOST LIST>${S_R}            Color green HOST LIST (space separated)
-     ${S_B}-b <HOST LIST>${S_R}            Color blue HOST LIST (space separated)
-     ${S_B}-y <HOST LIST>${S_R}            Color yellow HOST LIST (space separated)
-     ${S_B}-r <HOST LIST>${S_R}            Color red HOST LIST (space separated)
+      ${S_B}-S${S_R}                        Color online hosts (with arp-scan)
+      ${S_B}-d <LAB DIST>${S_R}             Show only LABS in DIST arg
+      ${S_B}-D <LAB RE>${S_R}               Show only LABS matches with RE
+      ${S_B}-g <HOST LIST>${S_R}            Color green HOST LIST (space separated)
+      ${S_B}-b <HOST LIST>${S_R}            Color blue HOST LIST (space separated)
+      ${S_B}-y <HOST LIST>${S_R}            Color yellow HOST LIST (space separated)
+      ${S_B}-r <HOST LIST>${S_R}            Color red HOST LIST (space separated)
     ${S_B}get-mac${S_R}                   Get mac from hostname
     ${S_B}get-hostname${S_R}              Get hostname from mac
     "
