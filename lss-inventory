@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
+#===============================================================================
+#  CONFIG VARIABLES
+#===============================================================================
+# Inventories repository path
+readonly inventories_path=$(dirname "$(readlink -f "$0")")				
 
-#### CONFIG VARIABLES
-readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
-source "${lss_path}/config"									# LOAD CONFIG VARIABLES
+# Inventory file to use, by default get first .default file in $invenrories_path
+readonly inventory_path=$(ls "$inventories_path"/*.default "$inventories_path"/* 2>/devnull| head -1)
 
-#### LOAD INVENTORY CONFIG FILE
+
+#===============================================================================
+#  LOAD CONFIG
+#===============================================================================
 declare -A LAB 					# LOC[lab_id] = lab long name
 declare -A MAP 					# MAP[lab_id] = map host distribution
 declare -A MAC 					# MAC[hostname] = mac address of hostname
