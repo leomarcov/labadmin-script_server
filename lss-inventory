@@ -371,21 +371,6 @@ function action_get-hostname() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: exec_action
-# DESCRIPTION: exec function of selected action
-#===============================================================================
-function exec_action() {
-	[ ! "$action" ] && { action_h; exit 1; }
-
-	action_function="action_${action}"
-	if [ "$(type -t "$action_function")" != "function" ]; then
-		echo -e "  Unrecognized action: $action"
-		return 1
-	fi
-	"$action_function" "$@"
-}
-
-#=== FUNCTION ==================================================================
 #        NAME: action_help
 # DESCRIPTION: action_h alias
 #===============================================================================
@@ -413,13 +398,26 @@ ${S_B}ACTIONS${S_R}
         ${S_B}-b <HOST LIST>${S_R}          Hightlight blue HOST LIST (space separated)
         ${S_B}-y <HOST LIST>${S_R}          Hightlight yellow HOST LIST (space separated)
         ${S_B}-r <HOST LIST>${S_R}          Hightlight red HOST LIST (space separated)
-    ${S_B}get-mac${S_R}                   Get mac from hostname
-    ${S_B}get-hostname${S_R}              Get hostname from mac
+    ${S_B}get-mac <hostname>${S_R}        Get mac from hostname
+    ${S_B}get-hostname <MAC>${S_R}        Get hostname from mac
     "
 }
 
 
+
+#=== FUNCTION ==================================================================
+#        NAME: exec_action
+# DESCRIPTION: exec function of selected action
+#===============================================================================
+function exec_action() {
+	action_function="action_${action}"
+	if [ ! "$action" ] || [ "$(type -t "$action_function")" != "function" ]; then
+		[ "$action" ] && echo -e "  Unrecognized action: $action"
+		exit 1
+	fi
+	"$action_function" "$@"
+}
+
 # EXEC FUNCTION ACTION
-action="$1"
-shift 
+action="$1"; shift 
 exec_action "$@"
