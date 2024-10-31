@@ -51,7 +51,7 @@ ssh-keygen
  ```
   * Copy private and public keys
 ```bash
-# Public key is pasted to lss-agent user authorized_keys file
+# Public key must be inserted into lss-agent user authorized_keys file
 mkdir -p /home/lss-agent/.ssh
 cat id_rsa.pub >> /home/lss-agent/.ssh/authorized_keys
 chmod 600 /home/lss-agent/.ssh/authorized_keys
