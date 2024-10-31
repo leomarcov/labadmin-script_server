@@ -1,7 +1,24 @@
-# Organizacion name to show in header
+#!/usr/bin/env bash
+#===================================================================================
+# LABADMIN INVENTORY DATA FILE TEST
+#  DESCRIPTION: Template file to config inventory labs data
+#  CONFIG VARIABLES:
+#		TITLE	Organizacion name to show in header
+#		DIST	Labs distribution grid (each <lab_id> spaces separated and distributed en lines)
+#		LAB[]	Labs short names names ->	LAB[<lab_id>]=<lab name>
+#		HN[]	Labs hostnames -> 			LABS[<lab_id>]=<hostname>
+#		MAP[]	Labs maps -> 				MAP[<lab_id]=<lab map>
+#		MAC[]	Hosts MACS ->				MAC[<hostname>]=<mac>
+#
+#      AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#	   LICENSE: GNU General Public License v3.0
+#      VERSION: 2024.10
+#      CREATED: 2024.10.31
+#=================================================================================== 
+#=================================================================================== 
+
 TITLE="LSS TEST INVENTORY"
 
-# Labs grid distribution
 DIST="A21 A22 ___ A23
       A11 ___ A12 A13"
 
