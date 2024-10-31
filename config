@@ -15,7 +15,6 @@
 #===============================================================================
 readonly log_mail="logs.carlos3@gmail.com"								# Email to send log errors
 check_hostnames="true"													# Empty value -> no check and hostnames from inventory data
-check
+
 readonly repositories_path="${lss_path}/repositories/"					# Base path of scripts repositories dirs: linux, w7, w10, etc.
-readonly inventories_path="${lss_path}/inventories/"					# Base path of inventories config files
-readonly inventory_path="${inventories_path}/default.inventory"			# Inventory config file used
+
