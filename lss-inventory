@@ -21,7 +21,7 @@
 readonly inventories_path="$(dirname "$(readlink -f "$0")")/inventories"		
 
 # Default inventory_path -> first *default*.inventory file in $invenrories_path or first *.inventory file
-readonly inventory_path=$(ls "$inventories_path"/*default*.inventory "$inventories_path"/*.inventory 2>/devnull | head -1)
+readonly inventory_path=$(ls "$inventories_path"/*default*.inventory "$inventories_path"/*.inventory 2>/dev/null | head -1)
 
 
 if [ ! -r "$inventory_path" ] || [ ! -f "$inventory_path" ]; then
