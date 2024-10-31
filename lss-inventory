@@ -272,7 +272,7 @@ function action_get-hostname() {
 #  PARAMETERS:
 #===============================================================================
 function action_map() {
-	while getopts ":d:g:r:b:y:D:" option; do
+	while getopts ":d:g:r:b:y:D:A:" option; do
 		case $option in
 		A)
 			echo "Scaning network..."
