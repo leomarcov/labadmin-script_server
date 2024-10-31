@@ -18,4 +18,4 @@ check_hostnames="true"													# Empty value for no set hostnames from inven
 
 readonly repositories_path="${lss_path}/repositories/"					# Base path of scripts repositories dirs: linux, w7, w10, etc.
 readonly inventories_path="${lss_path}/inventories/"					# Base path of inventories config files
-readonly inventory_path="${inventories_path}/test.inventory"			# Inventory config file used
+readonly inventory_path="${inventories_path}/default.inventory"			# Inventory config file used
