@@ -1,6 +1,7 @@
+# Organizacion name to show in header
 TITLE="LSS TEST INVENTORY"
 
-# Lab grid distribution
+# Labs grid distribution
 DIST="A21 A22 ___ A23
       A12 ___ A12 A13"
 
