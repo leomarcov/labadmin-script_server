@@ -258,15 +258,16 @@ function inventory_draw_grid {
 #        NAME: action_map
 # DESCRIPTION: draw map
 #  PARAMETERS:
-#		-S					Color online hosts (with arp-scan)
-#		-d <LAB DIST>		Show only LABS in DIST arg
-#		-D <LAB RE>			Show only LABS matches with RE
-#		-g <HOST LIST>		Color green HOST LIST
-#		-b <HOST LIST>		Color blue HOST LIST
-#		-y <HOST LIST>		Color yellow HOST LIST
-#		-r <HOST LIST>		Color red HOST LIST
+     -S                      Check network and hightlight online hosts 
+     -d <LAB DIST>           Show only list of LABS
+     -D <LAB RE>             Show only LABS matches with RE
+     -g <HOST LIST>          Hightlight green HOST LIST (space separated)
+     -b <HOST LIST>          Hightlight blue HOST LIST (space separated)
+     -y <HOST LIST>          Hightlight yellow HOST LIST (space separated)
+     -r <HOST LIST>          Hightlight red HOST LIST (space separated)
 #===============================================================================
 function action_map() {
+	# Check action_map params
 	while getopts ":d:g:r:b:y:D:S" option; do
 		case $option in
 		S)
@@ -325,6 +326,7 @@ function action_map() {
 	   esac
 	done
 
+	# Draw grid
 	inventory_draw_grid
 }
 
