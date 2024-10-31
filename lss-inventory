@@ -20,8 +20,9 @@
 # Inventories repository path
 readonly inventories_path="$(dirname "$(readlink -f "$0")")/inventories"		
 
-# Inventory file to use, by default get first *default*.inventory file in $invenrories_path
+# Default inventory_path -> first *default*.inventory file in $invenrories_path or first *.inventory file
 readonly inventory_path=$(ls "$inventories_path"/*default*.inventory "$inventories_path"/*.inventory 2>/devnull | head -1)
+
 
 if [ ! -r "$inventory_path" ] || [ ! -f "$inventory_path" ]; then
 	echo "Cant access inventory file $inventory_path"
