@@ -274,6 +274,15 @@ function action_get-hostname() {
 function action_map() {
 	while getopts ":d:g:r:b:y:D:" option; do
 		case $option in
+		A)
+			echo "Scaning network..."
+    		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
+    		[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
+
+			for m in "${MAC[@]}"; do
+				echo "$arp_scan" | grep -qi "$m" && hosts_colors["$h"]="${S_B}${C_LG}"
+			done
+		;;
 		d)			
 			d_flag="true"
 			DIST="$OPTARG"
