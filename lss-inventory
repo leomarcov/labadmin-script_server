@@ -3,7 +3,7 @@
 #  CONFIG VARIABLES
 #===============================================================================
 # Inventories repository path
-readonly inventories_path=$(dirname "$(readlink -f "$0")")				
+readonly inventories_path="$(dirname "$(readlink -f "$0")")/inventories"		
 
 # Inventory file to use, by default get first .default file in $invenrories_path
 readonly inventory_path=$(ls "$inventories_path"/*.default "$inventories_path"/* 2>/devnull| head -1)
