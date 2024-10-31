@@ -275,10 +275,10 @@ function action_map() {
 	while getopts ":d:g:r:b:y:D:A" option; do
 		case $option in
 		A)
-			echo "Scaning network..."
+			echo -n "Scaning network..."
     		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
 			[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
-    		echo "Complete!"
+    		echo "   Complete!"
 
 			for h in "${!MAC[@]}"; do
 				echo "$arp_out" | grep -qi "${MAC["$h"]}" && hosts_colors["$h"]="${S_B}${C_LG}"
