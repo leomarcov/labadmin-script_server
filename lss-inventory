@@ -412,7 +412,7 @@ ${S_B}ACTIONS${S_R}
 function exec_action() {
 	action_function="action_${action}"
 	if [ ! "$action" ] || [ "$(type -t "$action_function")" != "function" ]; then
-		[ "$action" ] && echo -e "  Unrecognized action: $action"
+		[ "$action" ] && echo -e "  Unrecognized action: $action" || action_h
 		exit 1
 	fi
 	"$action_function" "$@"
