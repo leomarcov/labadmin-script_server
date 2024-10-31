@@ -1,1 +1,3 @@
-
+To config inventory file:
+  * Set filename to: *default*.inventory or *.inventory (first match is selected)
+  * Or edit $inventory_path variable in lss-inventory file
