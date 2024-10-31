@@ -281,7 +281,7 @@ function action_map() {
     		echo "Complete!"
 
 			for m in "${MAC[@]}"; do
-				echo "$arp_scan" | grep -qi "$m" && hosts_colors["$h"]="${S_B}${C_LG}"
+				echo "$arp_out" | grep -qi "$m" && hosts_colors["$h"]="${S_B}${C_LG}"
 			done
 		;;
 		d)			
