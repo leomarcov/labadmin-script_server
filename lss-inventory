@@ -258,13 +258,13 @@ function inventory_draw_grid {
 #        NAME: action_map
 # DESCRIPTION: draw map
 #  PARAMETERS:
-     -S                      Check network and hightlight online hosts 
-     -d <LAB DIST>           Show only list of LABS
-     -D <LAB RE>             Show only LABS matches with RE
-     -g <HOST LIST>          Hightlight green HOST LIST (space separated)
-     -b <HOST LIST>          Hightlight blue HOST LIST (space separated)
-     -y <HOST LIST>          Hightlight yellow HOST LIST (space separated)
-     -r <HOST LIST>          Hightlight red HOST LIST (space separated)
+#    -S                      Check network and hightlight online hosts 
+#    -d <LAB DIST>           Show only list of LABS
+#    -D <LAB RE>             Show only LABS matches with RE
+#    -g <HOST LIST>          Hightlight green HOST LIST (space separated)
+#    -b <HOST LIST>          Hightlight blue HOST LIST (space separated)
+#    -y <HOST LIST>          Hightlight yellow HOST LIST (space separated)
+#    -r <HOST LIST>          Hightlight red HOST LIST (space separated)
 #===============================================================================
 function action_map() {
 	# Check action_map params
