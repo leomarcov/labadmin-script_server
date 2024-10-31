@@ -387,4 +387,3 @@ ${S_B}ACTIONS${S_R}
 action="$1"
 shift 
 exec_action "$@"
-
