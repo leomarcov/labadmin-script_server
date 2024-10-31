@@ -3,7 +3,7 @@ TITLE="LSS TEST INVENTORY"
 
 # Labs grid distribution
 DIST="A21 A22 ___ A23
-      A12 ___ A12 A13"
+      A11 ___ A12 A13"
 
 
 ################################################################
