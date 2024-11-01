@@ -145,40 +145,26 @@ function log() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: check_hostname
-# DESCRIPTION: Check if mac and hostname matches from inventory data
+#        NAME: get_hostname_inventory
+# DESCRIPTION: Get hostname from inventory given MAC and write in global variable hostname_inventory
 #  PARAMETERS:
 #		$1: mac
-#		$2: hostname
 #
 # GLOBAL VARIABLES MODIFIED
 #		$hostname_inventory		hostname inventory name for given mac
 #
 # EXIT CODE
-#		0 if found hostname for mac and matches
-#		1 if found hostname for mac but match error
+#		0 if found hostname for mac
+#		1 if not found hostname for mac
 #===============================================================================
-function check_hostname() {
-	local hn="$1"
-	local m="$2"
+function get_hostname_inventory() {
+	local m="$1"
 	unset hostname_inventory
 
-	# Get hostname from inventory for $mac host
+	# Call to lss-inventory
 	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")
-
-	# Check error get-hostname
-	if [ $? -ne 0 ]; then
-		log "$m" "$hn" "get-hostname_error" "" "Error get-hostname for mac: $m"
-		exit 1
-	fi
-
-	# Check error match-hostname
-	if [ "$hn" != "$hostname_inventory" ]; then
-		# log "$m" "$hn" "match-hostname_error" "" "Match hostname error for $mac: $hn -> $hostname_inventory"
-		return 1
-	fi
-
-	return 0
+	
+	return $?
 }
 
 
@@ -187,8 +173,10 @@ function check_hostname() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	# CHECK REMOTE MAC-HOSTNAME 
-	[ "$check_hostnames" ] && check_hostname "$hostname" "$mac" 
+	# GET INVENTORY HOSTNAME (exit on error)
+	if [ "$check_hostnames" ]; then
+		get_hostname_inventory "$mac" || { log "$m" "$hostname" "get-hostname_error" "" "Error get-hostname for mac: $m"; exit 1; }
+	fi
 
 	# LIST PENDING SCRIPTS
 	IFS2="$IFS"; IFS=$'\n'
@@ -198,8 +186,8 @@ function action_list() {
 		local sp="${repository_path}/${s}"			# script path
 
 		# Check hostnames?
-		[ ! "$check_hostname" ] && [ -e "${sp}/hostname" ] && continue														# check_hostnames disabled -> skip hostname script
-		[ "$check_hostname" ]   && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
+		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue														# check_hostnames disabled -> skip hostname script
+		[ "$check_hostnames" ]   && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
