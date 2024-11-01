@@ -2,7 +2,7 @@
 #===================================================================================
 # SELECT SCRIPT
 #         FILE: select
-#        USAGE: select hostname mac hostname_match
+#        USAGE: select hostname mac hostname_inventory
 #
 #  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
 #               Use select_type variable to config select beahvior.
@@ -27,7 +27,7 @@ readonly select_type="custom"     # always|once|custom
 #===============================================================================
 readonly hostname="$1"              # Current host local hostname
 readonly mac="$2"                   # Current hot MAC
-readonly hostname_match="$3"        # Correct hostname for MAC
+readonly hostname_inventory="$3"    # Correct hostname for MAC
 readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
@@ -55,7 +55,7 @@ function select_once() {
 # DESCRIPTION: select script for custom code
 #===============================================================================
 function select_custom() {
-	[ "$hostname" != "$hostname_match" ] && exit 0
+	[ "$hostname" != "$hostname_inventory" ] && exit 0
 	grep -F "[${hostname}]" "$log_path" | grep -qF "[EXEC_OK]" || exit 0
     exit 1
 }
