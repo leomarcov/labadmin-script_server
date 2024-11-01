@@ -6,7 +6,7 @@
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #      LICENSE: GNU General Public License v3.0
-#      VERSION: 2023.04
+#      VERSION: 2024.11
 #      CREATED: 25.04.2023
 #=================================================================================== 
 
@@ -14,6 +14,7 @@
 #  GLOBAL CONFIG VARIABLES
 #===============================================================================
 readonly log_mail="logs.carlos3@gmail.com"								# Email to send log errors
-check_hostnames="true"													# Empty value -> no check and hostnames from inventory data
 readonly repositories_path="${lss_path}/repositories/"					# Base path of scripts repositories dirs: linux, w7, w10, etc.
+check_hostnames="true"													# Empty value -> no check and hostnames from inventory data
+
 
