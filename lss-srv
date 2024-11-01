@@ -16,9 +16,29 @@
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS path
-readonly lssinventory_path="${lss_path}/lss-inventory"		# lss-inventory path
+readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS root path
+readonly lssinventory_path="${lss_path}/lss-inventory"		# lss-inventory executable path
+
+unset log_mail												# log mail                        (loaded in config file)
+unset check_hostnames										# enable/disable check hostnames  (loaded in config file)
+unset repositories_path										# repositories path               (loaded in config file)
+
+unset hostname												# hostname parameter
+unset hostname_inventory									# hostname get from lss-inventory matching with mac
+unset mac													# mac parameter
+unset repository											# repository parameter
+unset repository_path										# repository path
+unset action												# action parameter
+unset script												# script parameter
+unset script_path											# script path
+unset exec_msg												# exec_msg parameter
+
+
+#===============================================================================
+#  LOAD CONFIG
+#===============================================================================
 source "${lss_path}/config"									# LOAD CONFIG VARIABLES
+
 
 
 
@@ -71,7 +91,7 @@ function check_params() {
 	   esac
 	done													
 
-	# Allow agent empty MAC value (for agent backwards compatibility) 
+	# EMPTY MAC: allowed for agent backwards compatibility
 	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }				
 
 	if [ $# -eq 0 ]; then
@@ -109,8 +129,7 @@ function check_params() {
 
 #=== FUNCTION ==================================================================
 #        NAME: log
-# DESCRIPTION: write in ${script_path}/log file using format: 
-#              [DATE TIME] [MAC] [HOSTNAME] [ACTION] EXEC_MSG
+# DESCRIPTION: write in ${script_path}/log file using format: [DATE TIME] [MAC] [HOSTNAME] [ACTION] EXEC_MSG
 #			   and send mail log
 #  PARAMETERS:
 #		$1: mac
@@ -120,13 +139,12 @@ function check_params() {
 #		$5: exec_msg
 #==========sp=====================================================================
 function log() {
-	local m="$1"							# mac
-	local hn="$2"							# hostname
-	local a="$3"							# action
-    local sp="$4"							# script path
-    local em="$5"							# exec message
-	local sn="labadmin-script-server"		# script name
-	[ "$sp" ] && sn="$(basename "$sp")"
+	local m="$1"						# mac
+	local hn="$2"						# hostname
+	local a="$3"						# action
+    local sp="$4"						# script path
+    local em="$5"						# exec message
+	local sn="$(basename "$sp")"		# script name
 
 	local m2="[${m}] "
 	local hn_width=8
@@ -206,15 +224,15 @@ function action_list() {
 
 #=== FUNCTION ==================================================================
 #        NAME: action_get
-# DESCRIPTION: Show script code
+# DESCRIPTION: Show script code, log action and exit
 #===============================================================================
 function action_get() {
-	# GET HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
+	# SHOW HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
 	if [ -e "${script_path/hostname}" ]; then
 		get_hostname_inventory "$mac" || { log "$m" "$hostname" "get-hostname_error" "$script" "Error get-hostname for mac: $m"; exit 1; }
 		cat "${script_path}/script" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g" 2>&1
 
-	# GET REGULAR SCRIPT
+	# SHOW REGULAR SCRIPT
 	else
 		cat "${script_path}/script" 2>&1
 	fi
