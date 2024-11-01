@@ -163,12 +163,6 @@ function check_hostname() {
 	local m="$2"
 	unset hostname_inventory
 
-	# Check hostnames is enabled in config file?
-	if [ ! "$check_hostnames" ]; then
-		hostname_inventory="$hn"
-		return 0
-	fi
-
 	# Get hostname from inventory for $mac host
 	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")
 
@@ -194,18 +188,18 @@ function check_hostname() {
 #===============================================================================
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
-	check_hostname "$hostname" "$mac" 
+	[ "$check_hoststnames" ] && check_hostname "$hostname" "$mac" 
 
-	# LIST ALL PENDING SCRIPTS FOR CORRECT HOSTNAME
+	# LIST PENDING SCRIPTS
 	IFS2="$IFS"; IFS=$'\n'
 	for s in $(ls "$repository_path"); do
 		local sre="${s%% *}"						# script regular expresión (script dir name before first space)
 		local sn="${s#* }"							# script name (script dir name afetr first space)
 		local sp="${repository_path}/${s}"			# script path
 
-		# Check if list only set hostname script
-		[ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue
-		[ ! "$check_hostname" ] && [ -e "${sp}/hostname" ] && continue
+		# Check hostname script exception
+		[ ! "$check_hostname" ] && [ -e "${sp}/hostname" ] && continue							# No check_hostnames enabled -> skip hostname script
+		[ "$check_hostname" ] && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# 
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
