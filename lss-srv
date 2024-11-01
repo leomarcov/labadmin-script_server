@@ -151,8 +151,8 @@ function log() {
 
 	# Save file log
 	if [ "$sp" ]; then
-		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad8="        " pad11="           " 
-		echo -e "[${d}] [${m}] [${hn^^}${hi}]${pad8:${#hn}} [${a^^}]${pad11:${#hn}} ${em}" >> "${sp}/log"
+		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
+		echo -e "[${d}] [${m}] [${hn^^}${hi}]${pad10:${#hn}} [${a^^}]${pad12:${#hn}} ${em}" >> "${sp}/log"
 	fi
 	
 	# Send mail log
