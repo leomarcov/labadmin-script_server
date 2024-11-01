@@ -186,7 +186,7 @@ function get_hostname_inventory() {
 	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m"); local r=$?
 
 	# Update hostname_match
-	[ "$hostname" != "$hostname_inventory" ] && hostname_match="true"
+	[ "$hostname" = "$hostname_inventory" ] && hostname_match="true"
 
 	return $?
 }
