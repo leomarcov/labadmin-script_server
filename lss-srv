@@ -148,7 +148,7 @@ function log() {
 
 	# Save file log
 	if [ "$sp" ]; then
-		local d=$(date "+%Y-%m-%d_%H:%M:%S"" pad8="        " pad11="           "                                                                                                                                                                                                                                                       
+		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad8="        " pad11="           "                                                                                                                                                                                                                                                       
 		echo -e "[${d}] [${m}] [${hn^^}]${pad8:${#hn}} [${a^^}]${pad11:${#hn}} ${em}" >> "${sp}/log"
 	fi
 	
