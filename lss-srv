@@ -144,17 +144,20 @@ function log() {
 	local a="$3"                      # action
 	local sp="$4"                     # script path
 	local em="$5"                     # exec message
-	local sn="$(basename "$sp")"      # script name
+	local sn=$(basename "$sp")        # script name
+	local hi=""                       # hostname inventory match?
+	
+	[ "$check_hostnames" ] && [ ! "$hostname_inventory" ] && hi="?"
 
 	# Save file log
 	if [ "$sp" ]; then
-		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad8="        " pad11="           "                                                                                                                                                                                                                                                       
-		echo -e "[${d}] [${m}] [${hn^^}]${pad8:${#hn}} [${a^^}]${pad11:${#hn}} ${em}" >> "${sp}/log"
+		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad8="        " pad11="           " 
+		echo -e "[${d}] [${m}] [${hn^^}${hi}]${pad8:${#hn}} [${a^^}]${pad11:${#hn}} ${em}" >> "${sp}/log"
 	fi
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}${hi}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
