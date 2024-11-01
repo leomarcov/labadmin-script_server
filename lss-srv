@@ -160,10 +160,9 @@ function log() {
 function get_hostname_inventory() {
 	local m="$1"
 	unset hostname_inventory
-
-	# Call to lss-inventory
-	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")
 	
+	# Call to lss-inventory
+	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")	
 	return $?
 }
 
@@ -210,12 +209,12 @@ function action_list() {
 # DESCRIPTION: Show script code
 #===============================================================================
 function action_get() {
-	# Cat script and insert new hostname in script code
+	# GET HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
 	if [ -e "${script_path/hostname}" ]; then
-		check_hostname "$hostname" "$mac"
+		get_hostname_inventory "$mac" || { log "$m" "$hostname" "get-hostname_error" "$script" "Error get-hostname for mac: $m"; exit 1; }
 		cat "${script_path}/script" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g" 2>&1
 
-	# Cat regular script
+	# GET REGULAR SCRIPT
 	else
 		cat "${script_path}/script" 2>&1
 	fi
