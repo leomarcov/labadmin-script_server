@@ -188,7 +188,7 @@ function check_hostname() {
 #===============================================================================
 function action_list() {
 	# CHECK REMOTE MAC-HOSTNAME 
-	[ "$check_hoststnames" ] && check_hostname "$hostname" "$mac" 
+	[ "$check_hostnames" ] && check_hostname "$hostname" "$mac" 
 
 	# LIST PENDING SCRIPTS
 	IFS2="$IFS"; IFS=$'\n'
