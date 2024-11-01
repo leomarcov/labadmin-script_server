@@ -3,7 +3,7 @@
 # LABADMIN SCRIPT MANAGER
 #         FILE: lss-manager
 #
-#  DESCRIPTION: Labadmin script server manager for script config
+#  DESCRIPTION: Labadmin Script Server Manager for script configuration and log viewer
 #               CLI to interac over scripts and logs
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
@@ -39,6 +39,17 @@ S_B="\e[1m"             # Style BOLD
 S_D="\e[2m"             # Style DIM
 S_U="\e[4m"            	# Style UNDERLINE
 S_I="\e[7m"             # Style INVERTED
+S_DL="\e[K"             # Style DELETE TO END OF LINE
+cursor_save()		 { echo -en "\e[s"; }			# Cursor SAVE POSITION
+cursor_restore()	 { echo -en "\e[u"; }			# Cursor RESTORE POSITION
+cursor_hide()		 { echo -en "\e[?25l"; }		# Cursor HIDE CURSOR
+cursor_show()		 { echo -en "\e[?25h"; }		# Cursor SHOW CURSOR
+cursor_move-up()	 { echo -en "\e[${1}A"; }		# Cursor MOVE UP $1 LINES
+cursor_move-down()	 { echo -en "\e[${1}B"; }		# Cursor MOVE DOWN $1 LINES
+cursor_move-left()	 { echo -en "\e[${1}D"; }		# Cursor MOVE LEFT $1 COLS
+cursor_move-right()  { echo -en "\e[${1}C"; }		# Cursor MOVE RIGHT $1 COLS
+cursor_move-begin()  { echo -en "\r"; }             # Cursor MOVE BEGIN POSITION IN CURRENT LINE
+cursor_move-pos()    { echo -en "\e[${1};${2}H"; }  # Cursor MOVE LINE $1 COL $2
 C_D="\e[39m"            # Color DEFAULT
 C_R="\e[31m"            # Color RED
 C_BR="\e[1m\e[31m"      # Color BOLD RED
@@ -60,6 +71,21 @@ C_BC="\e[1m\e[36m"      # Color BOLD CYAN
 C_LC="\e[96m"           # Color LIGHT CYAN
 C_N="\e[90m"            # Color GREY
 C_LN="\e[37m"           # Color LIGHT GREY
+B_R="\e[41m"            # Background RED
+B_G="\e[42m"            # Background GREEN
+B_Y="\e[43m"            # Background YELLOW
+B_B="\e[44m"            # Background BLUE
+B_M="\e[45m"            # Background MAGENTA
+B_C="\e[46m"            # Background CYAN
+B_LG="\e[47m"           # Background LIGHT GREY
+B_DG="\e[100m"          # Background DARK GREY
+B_LR="\e[101m"          # Background LIGHT RED
+B_LG="\e[102m"          # Background LIGHT GREEN
+B_LY="\e[103m"          # Background LIGHT YELLOW
+B_LB="\e[104m"          # Background LIGHT BLUE
+B_LM="\e[105m"          # Background LIGHT MAGENTA
+B_LC="\e[106m"          # Background LIGHT CYAN
+B_W="\e[107m"           # Background LIGHT WHITE
 
 
 
