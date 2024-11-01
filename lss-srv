@@ -25,6 +25,7 @@ unset repositories_path										# repositories path               (loaded in co
 
 unset hostname												# hostname parameter
 unset hostname_inventory									# hostname get from lss-inventory matching with mac
+unset hostname_match										# hostname parameter matches with hostname inventory
 unset mac													# mac parameter
 unset repository											# repository parameter
 unset repository_path										# repository path
@@ -147,7 +148,7 @@ function log() {
 	local sn=$(basename "$sp")        # script name
 	local hi=""                       # hostname inventory match?
 	
-	[ "$check_hostnames" ] && [ ! "$hostname_inventory" ] && hi="?"
+	[ "$check_hostnames" ] && [ ! "$hostname_match" ] && hi="?"
 
 	# Save file log
 	if [ "$sp" ]; then
@@ -165,11 +166,13 @@ function log() {
 #=== FUNCTION ==================================================================
 #        NAME: get_hostname_inventory
 # DESCRIPTION: Get hostname from inventory given MAC and write in global variable hostname_inventory
+#              and check if matches with hostname parameter
 #  PARAMETERS:
 #		$1: mac
 #
 # GLOBAL VARIABLES MODIFIED
 #		$hostname_inventory		hostname inventory name for given mac
+#		$hostname_match			no empty if hostname parameter matches with hostname inventory
 #
 # EXIT CODE
 #		0 if found hostname for mac
@@ -177,10 +180,14 @@ function log() {
 #===============================================================================
 function get_hostname_inventory() {
 	local m="$1"
-	unset hostname_inventory
+	unset hostname_inventory hostname_match
 	
 	# Call to lss-inventory
-	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m")	
+	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m"); local r=$?
+
+	# Update hostname_match
+	[ "$hostname" != "$hostname_inventory" ] && hostname_match="true"
+
 	return $?
 }
 
@@ -203,8 +210,8 @@ function action_list() {
 		local sp="${repository_path}/${s}"			# script path
 
 		# Check hostnames?
-		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue														# check_hostnames disabled -> skip hostname script
-		[ "$check_hostnames" ]   && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
+		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
+		[ "$check_hostnames" ]   && [ ! "$hostname_match" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
