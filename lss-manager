@@ -341,7 +341,7 @@ echo '#!/usr/bin/env bash
 #===================================================================================
 # SELECT SCRIPT
 #         FILE: select
-#        USAGE: select hostname mac hostname_match
+#        USAGE: select hostname mac hostname_inventory
 #
 #  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
 #               Use select_type variable to config select beahvior.
@@ -366,7 +366,7 @@ readonly select_type="once"     # always|once|custom
 #===============================================================================
 readonly hostname="$1"              					# Current host local hostname
 readonly mac="$2"                  						# Current hot MAC
-readonly hostname_match="$3"        					# Correct hostname for MAC
+readonly hostname_inventory="$3"        				# hostname from inventory for MAC
 readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
