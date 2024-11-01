@@ -146,11 +146,11 @@ function log() {
 	local em="$5"                     # exec message
 	local sn="$(basename "$sp")"      # script name
 
-	local d="$(date "+%Y-%m-%d_%H:%M:%S")"
-	local pad8="        " pad11="           "                                                                                                                                                                                                                                                       
-	
 	# Save file log
-	[ "$sp" ] && echo -e "${dt} ${m2} ${hn2} ${a2} ${em}" >> "${sp}/log"
+	if [ "$sp" ]; then
+		local d="$(date "+%Y-%m-%d_%H:%M:%S")" pad8="        " pad11="           "                                                                                                                                                                                                                                                       
+		echo -e "[${d}] [${m}] [${hn^^}]${pad8:${#hn}} [${a^^}]${pad11:${#hn}} ${em" >> "${sp}/log"
+	fi
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
