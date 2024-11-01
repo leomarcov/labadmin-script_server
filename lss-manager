@@ -15,8 +15,19 @@
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly lss_path=$(dirname "$(readlink -f "$0")")
-readonly lssinventory_path="${lss_path}/lss-inventory"
+readonly lss_path=$(dirname "$(readlink -f "$0")")				# LSS root path
+readonly lssinventory_path="${lss_path}/lss-inventory"			# lss-inventory executable path
+unset repository												# Current selected repository
+unset repository_path											# Current selected repository path
+unset script_name												# Current selected script name
+unset scripts													# Array for list of scripts loades
+unset menu_path													# Temp dir to create file for read autocomplete
+unset action													# Current selected action
+unset action_params												# Action params
+
+#===============================================================================
+#  LOAD CONFIG
+#===============================================================================
 source "${lss_path}/config"
 
 
@@ -55,29 +66,25 @@ C_LN="\e[37m"           # Color LIGHT GREY
 
 #=== FUNCTION ==================================================================
 #        NAME: show_menu
-# DESCRIPTION: show list of repository scripts and resume log stats
-#
-# PARAMETERS
-#	$1 		-a show all scripts (included hidden)
-#
+# DESCRIPTION: show list of current repository scripts and log statics
 # GLOBAL VARIABLES WRITEEN
 #	$scripts[]
 #===============================================================================
 function show_menu() {
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
-	menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
+	local menu="  ${S_B}\tRE\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
-	local sld="" sl=""
-	IFS2="$IFS"; IFS=$'\n'
+	# Create sl variable with script names first disabled and sorted by time
+	IFS2="$IFS"; IFS=$'\n'; local sld="" sl=""
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
 		sl="$sl"$'\n'"$s"
 	done
 
-	unset scripts
-	i=1; 
+	# Create menu variable with script list 
+	i=1; unset scripts
 	for s in $sld $sl; do
 		script_path="${repository_path}/${s}"
 		scripts[$i]="$s"		# Update scripts[] found		
@@ -95,10 +102,11 @@ function show_menu() {
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
-	echo -en "\e[1A"
+
+	echo -en "\e[1A"	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
-	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
-	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"
+	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"		
+	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
 	echo -e "$menu"
 	echo
 }
@@ -122,6 +130,7 @@ function show_menu() {
 #===============================================================================
 function change_repository() {
 	local r="$1"
+
 	# Check if exist repository
 	[ ! -d "${repositories_path}/${r}" ] && return 1
 	[[ $(readlink -f "${repositories_path}/${r}") = $(readlink -f "${repositories_path}") ]] && return 1		# Check if try directory outside repositories_path
@@ -471,7 +480,7 @@ function action_status() {
 	echo -e "  Showing file stats from file ${S_B}$f${S_R}"
 	[ "$action_params" ] && echo -e "  Filtering hosts by: $action_params"
 	echo
-	i=1; n_get=0; n_ok=0; n_error=0; n_pending=0
+	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
 	pad1="         "; pad2="                         " 
 	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
 		h_log=$(grep -F "[$h]" "$f")
