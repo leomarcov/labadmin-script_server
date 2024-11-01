@@ -139,25 +139,22 @@ function check_params() {
 #		$5: exec_msg
 #==========sp=====================================================================
 function log() {
-	local m="$1"						# mac
-	local hn="$2"						# hostname
-	local a="$3"						# action
-    local sp="$4"						# script path
-    local em="$5"						# exec message
-	local sn="$(basename "$sp")"		# script name
+	local m="$1"                      # mac
+	local hn="$2"                     # hostname
+	local a="$3"                      # action
+	local sp="$4"                     # script path
+	local em="$5"                     # exec message
+	local sn="$(basename "$sp")"      # script name
 
-	local m2="[${m}] "
-	local hn_width=8
-	local hn2="[${hn^^}]$(seq -s" " 1 $(($hn_width-${#hn}))|tr -d "[0-9]") "
-    local a_width=11
-    local a2="[${a^^}]$(seq -s" " 1 $(($a_width-${#a}))|tr -d "[0-9]") "
+	local d="$(date "+%Y-%m-%d_%H:%M:%S")"
+	local pad8="        " pad11="           "                                                                                                                                                                                                                                                       
 	
 	# Save file log
-	[ "$sp" ] && echo -e "[$(date "+%Y-%m-%d_%H:%M:%S")] ${m2}${hn2}${a2}${em}" >> "${sp}/log"
+	[ "$sp" ] && echo -e "${dt} ${m2} ${hn2} ${a2} ${em}" >> "${sp}/log"
 	
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nMAC: ${m}\nHostname: ${hn}\n$([ "$sn" ] && echo "Script: ${sn}\n")Action: ${a}\nError msg: ${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
