@@ -197,9 +197,9 @@ function action_list() {
 		local sn="${s#* }"							# script name (script dir name afetr first space)
 		local sp="${repository_path}/${s}"			# script path
 
-		# Check hostname script exception
-		[ ! "$check_hostname" ] && [ -e "${sp}/hostname" ] && continue							# No check_hostnames enabled -> skip hostname script
-		[ "$check_hostname" ] && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# 
+		# Check hostnames?
+		[ ! "$check_hostname" ] && [ -e "${sp}/hostname" ] && continue														# check_hostnames disabled -> skip hostname script
+		[ "$check_hostname" ]   && [ "$hostname" != "$hostname_inventory" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
 
 		# Check if hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
