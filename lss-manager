@@ -186,7 +186,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  log  status  map  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  priority  log  status  map  log-clean  log-wipe  ls  script  select
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -304,6 +304,8 @@ function action_h() {
     ${S_B}select${S_R}\tShow select file of selected script
     ${S_B}disable${S_R}\tDisable selected script
     ${S_B}enable${S_R}\tEnable selected script
+	${S_B}hostname${S_R}\tToogle hostname flag on selected script
+	${S_B}priority${S_R}\tToogle priority flag on selected script
 	${S_B}delete${S_R}\tDelete selected script
     ${S_B}set-name${S_R}\tChange name of selected script
     ${S_B}set-RE${S_R}\tChange RE of selected script
@@ -653,6 +655,45 @@ function action_enable() {
 	rm -rf "${f}/disable"
 	echo
 }
+
+#=== FUNCTION ==================================================================
+#        NAME: action_hostname
+# DESCRIPTION: action to toogle hostname flag on selected script
+#===============================================================================
+function action_hostname() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+
+	if [ -e "${f}/hostname" ]; then
+		echo -e "  Disabling hostname flag ${S_B}${f}${S_R}"
+		rm -rf "${f}/disable"
+	else
+		echo -e "  Enabling hostname flag ${S_B}${f}${S_R}"
+		touch "${f}/disable"
+	fi
+
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_priority
+# DESCRIPTION: action to toogle priority flag on selected script
+#===============================================================================
+function action_priority() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+
+	if [ -e "${f}/priority" ]; then
+		echo -e "  Disabling priority flag ${S_B}${f}${S_R}"
+		rm -rf "${f}/disable"
+	else
+		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
+		touch "${f}/disable"
+	fi
+
+}
+
+
 
 
 #=== FUNCTION ==================================================================
