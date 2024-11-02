@@ -508,8 +508,8 @@ function action_log-show() {
 # DESCRIPTION: action to show exec status of selected script
 #===============================================================================
 function action_status() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/log"
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
+
 	echo -e "  Showing file stats from file ${S_B}$f${S_R}"
 	[ "$action_params" ] && echo -e "  Filtering hosts by: $action_params"
 	echo
@@ -537,8 +537,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/log"
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
 
 	# Select hosts to color
 	local hg="" hr="" hy="" h_log=""
@@ -552,11 +551,11 @@ function action_map() {
 			hy="${hy} ${h}"
 		fi
 	done
-	if [ "$action_params" ]; then
+	if [ "$action_params" ] ; then
 		# Show only selected maps by params
 		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
-	else
+	elif [ "$script_name" ]
 		# Show maps according script RE
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 	fi
