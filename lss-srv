@@ -5,7 +5,7 @@
 #        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
 #
 #  DESCRIPTION: Labadmin Script Server
-#               Manage actions to do: list pending scripts, show script code, save exec status (exec_ok or exec_error)
+#               Manage actions to do: list pending scripts, print script code, save exec status (exec_ok or exec_error)
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
@@ -45,7 +45,7 @@ source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 
 #=== FUNCTION ==================================================================
 #        NAME: help
-# DESCRIPTION: Show help and exit 
+# DESCRIPTION: Print help and exit 
 #  PARAMETERS:
 #	$1	Exit code value
 #===============================================================================
@@ -204,42 +204,50 @@ function action_list() {
 
 	# LIST PENDING SCRIPTS
 	IFS2="$IFS"; IFS=$'\n'
+	local list="" priority_list=""
 	for s in $(ls "$repository_path"); do
 		local sre="${s%% *}"						# script regular expresión (script dir name before first space)
 		local sn="${s#* }"							# script name (script dir name afetr first space)
 		local sp="${repository_path}/${s}"			# script path
-
-		# Check hostnames?
+		
+		# Check intentory hostname script
 		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
 		[ "$check_hostnames" ]   && [ ! "$hostname_match" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
 
-		# Check if hostname match with script REGEX
+		# Check hostname match with script REGEX
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
 
-		# Check if script is disabled
+		# Check script is disabled
 		[ -e "${sp}/disable" ] && continue		
 
-		# Check if hostname is selected
+		# Check hostname is selected
 		bash "${sp}/select" "$hostname" "$mac" "$hostname_inventory" || continue
 
-		# List script
-		echo "$s"
+		# Check priority script
+		[ "$priority_list" ] && [ ! -e "${sp}/priority" ] && continue
+		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] { priority_list="true"; unset list; }
+
+		# Add script to list
+		list="${list}"$'\n'"${s}"
 	done
 	IFS="$IFS2"
+
+	# Print selected scripts list
+	echo "$list"
 }
 
 
 #=== FUNCTION ==================================================================
 #        NAME: action_get
-# DESCRIPTION: Show script code, log action and exit
+# DESCRIPTION: Print script code, log action and exit
 #===============================================================================
 function action_get() {
-	# SHOW HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
+	# PRINT HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
 	if [ -e "${script_path}/hostname" ]; then
 		get_hostname_inventory "$mac" || { log "$m" "$hostname" "get_error" "$script_path" "Error inventory get-hostname for mac: $m"; exit 1; }
 		cat "${script_path}/script" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g" 2>&1
 
-	# SHOW REGULAR SCRIPT
+	# PRINT REGULAR SCRIPT
 	else
 		cat "${script_path}/script" 2>&1
 	fi
