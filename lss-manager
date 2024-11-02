@@ -495,10 +495,11 @@ function action_log() {
 function action_log-show() {
 	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
 
-	echo -e "  Showing file ${S_B}$f${S_R}"
+	echo -e "  File ${S_B}$f${S_R}"
+	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 	[ "$action_params" ] && echo -e "  Filtering lines by: $action_params"
 	egrep -i --color "${action_params}" "$f"
-	echo
+	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 }
 
 
