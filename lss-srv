@@ -224,12 +224,12 @@ function action_list() {
 		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] && { priority_list="true"; unset list; }
 
 		# Add script to list
-		list="${list}"$'\n'"${s}"
+		list="${list}${list:+$'\n'}${s}"
 	done
 	IFS="$IFS2"
 
 	# Print selected scripts list
-	echo -n "$list"
+	echo "$list"
 
 	# Log list
 	log "$mac" "$hostname" "LIST" "" "|${list//$'\n'/|}|"
