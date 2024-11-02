@@ -555,7 +555,7 @@ function action_map() {
 		# Show only selected maps by params
 		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
-	elif [ "$script_name" ]
+	elif [ "$script_name" ]; then
 		# Show maps according script RE
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 	fi
