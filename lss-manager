@@ -500,7 +500,7 @@ function action_log-show() {
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 	[ "$action_params" ] && echo -e "  Filtering lines by: $action_params"
 	egrep -i --color "${action_params}" "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
+	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
 }
 
 
