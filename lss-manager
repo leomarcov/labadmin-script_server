@@ -511,11 +511,11 @@ function action_log-show() {
 function action_status() {
 	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
 
+	echo
 	echo -e "  File stats from file ${S_B}$f${S_R}"
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 
 	[ "$action_params" ] && echo -e "  Filtering hosts by: $action_params"
-	echo
 	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
 	pad1="         "; pad2="                         " 
 	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
