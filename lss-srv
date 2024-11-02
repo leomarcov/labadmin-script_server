@@ -146,18 +146,15 @@ function log() {
 	local sp="$4"                     # script path
 	local em="$5"                     # exec message
 	local sn=$(basename "$sp")        # script name
-	local hi=""                       # hostname inventory match?
 	
-	[ "$check_hostnames" ] && [ ! "$hostname_match" ] && hi="HOSTNAME?"
-
 	# Save file log
 	[ ! "$sp" ] && sp="${lss_path}"			# Save script log or lss log
 	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
-	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}} [${a^^}]${pad12:${#hn}} ${hi} ${em}" >> "${sp}/log"
+	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#hn}} ${em}" >> "${sp}/log"
 
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}${hi}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
@@ -232,7 +229,7 @@ function action_list() {
 	IFS="$IFS2"
 
 	# Print selected scripts list
-	echo "$list"
+	echo -n "$list"
 
 	# Log list
 	log "$mac" "$hostname" "LIST" "" "|${list//$'\n'/|}|"
