@@ -99,7 +99,7 @@ B_W="\e[107m"           # Background LIGHT WHITE
 function show_menu() {
 	echo
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
-	local menu="  ${S_B}\tRE\tFLAGS\tSCRIPT\tSELECT\tGET\tOK\tERROR${S_R}\n"
+	local menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
 	# Create sl variable with script names first disabled and sorted by time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" sl=""
@@ -116,7 +116,7 @@ function show_menu() {
 		scripts[$i]="$s"		# Update scripts[] found		
 
 		local f=""; 																						# flags
-		[ -e "${script_path}"/disable ] && f="${f}D "; [ -e "${script_path}"/hostname ] && f="${f}H "; [ -e "${script_path}"/priority ] && f="${f}P ";
+		[ -e "${script_path}"/disable ] && f="${f}D"; [ -e "${script_path}"/hostname ] && f="${f}H"; [ -e "${script_path}"/priority ] && f="${f}P";
 
 		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
 		se=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")							# select script type
