@@ -493,8 +493,7 @@ function action_log() {
 # DESCRIPTION: action to show log file of selected script
 #===============================================================================
 function action_log-show() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/log"
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
 
 	echo -e "  Showing file ${S_B}$f${S_R}"
 	[ "$action_params" ] && echo -e "  Filtering lines by: $action_params"
