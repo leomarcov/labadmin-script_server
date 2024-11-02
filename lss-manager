@@ -307,9 +307,9 @@ function action_h() {
     ${S_B}select${S_R}\tShow select file of selected script
     ${S_B}disable${S_R}\tDisable selected script
     ${S_B}enable${S_R}\tEnable selected script
-	${S_B}hostname${S_R}\tToogle hostname flag on selected script
-	${S_B}priority${S_R}\tToogle priority flag on selected script
-	${S_B}delete${S_R}\tDelete selected script
+    ${S_B}hostname${S_R}\tToogle hostname flag on selected script
+    ${S_B}priority${S_R}\tToogle priority flag on selected script
+    ${S_B}delete${S_R}\tDelete selected script
     ${S_B}set-name${S_R}\tChange name of selected script
     ${S_B}set-RE${S_R}\tChange RE of selected script
  
