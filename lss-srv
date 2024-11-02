@@ -241,10 +241,13 @@ function action_list() {
 # DESCRIPTION: Print script code, log action and exit
 #===============================================================================
 function action_get() {
+	local m=""
+	
 	# PRINT HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
 	if [ -e "${script_path}/hostname" ]; then
 		get_hostname_inventory "$mac" || { log "$m" "$hostname" "get_error" "$script_path" "Error inventory get-hostname for mac: $m"; exit 1; }
 		cat "${script_path}/script" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g" 2>&1
+		m="${hostname} -> ${hostname_inventory}"
 
 	# PRINT REGULAR SCRIPT
 	else
@@ -252,10 +255,10 @@ function action_get() {
 	fi
 
 	if [ $? -eq 0 ]; then
-		log "$mac" "$hostname" "$action" "$script_path"
+		log "$mac" "$hostname" "$action" "$script_path" "$m"
 		exit 0 
 	else
-		log "$mac" "$hostname" "get_error" "$script_path"
+		log "$mac" "$hostname" "get_error" "$script_path" "$m"
 		exit 1
 	fi
 }
