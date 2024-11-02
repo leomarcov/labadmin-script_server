@@ -126,7 +126,7 @@ function show_menu() {
 		[ -e "${script_path}/disable" ] && cd="${S_D}" || cd=""													# disabled
 		sel=""; [ "$s" = "${script_name}" ] && sel="${C_Y}"														# current script selected
 
-		menu="$menu\n  ${sel}${cd}[$i]\t${s/ /$'\t'}\t${f}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
+		menu="$menu\n  ${cd}${sel}[$i]${C_D}\t${s/ /$'\t'}\t${f}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
