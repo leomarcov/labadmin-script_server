@@ -536,7 +536,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${lss_path}/log"; action_params="*"; }		# Log file path
 
 	# Select hosts to color
 	local hg="" hr="" hy="" h_log=""
@@ -554,7 +554,7 @@ function action_map() {
 		# Show only selected maps by params
 		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
-	elif [ "$script_name" ]; then
+	else
 		# Show maps according script RE
 		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
 	fi
