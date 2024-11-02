@@ -123,7 +123,7 @@ function show_menu() {
 		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0					# get count
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0					# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0					# error count
-		[ -e "${script_path}/disable" ] && cd="${S_B}" || cd=""													# disabled
+		[ -e "${script_path}/disable" ] && cd="${S_D}" || cd=""													# disabled
 		sel=""; [ "$s" = "${script_name}" ] && sel="${C_Y}"														# current script selected
 
 		menu="$menu\n  ${sel}${cd}[$i]\t${s/ /$'\t'}\t${f}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
