@@ -224,7 +224,7 @@ function action_list() {
 
 		# Check priority script
 		[ "$priority_list" ] && [ ! -e "${sp}/priority" ] && continue
-		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] { priority_list="true"; unset list; }
+		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] && { priority_list="true"; unset list; }
 
 		# Add script to list
 		list="${list}"$'\n'"${s}"
