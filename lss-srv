@@ -151,11 +151,10 @@ function log() {
 	[ "$check_hostnames" ] && [ ! "$hostname_match" ] && hi="?"
 
 	# Save file log
-	if [ "$sp" ]; then
-		local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
-		echo -e "[${d}] [${m}] [${hn^^}]${hi}${pad10:$((${#hn}+${#hi}))} [${a^^}]${pad12:${#hn}} ${em}" >> "${sp}/log"
-	fi
-	
+	[ ! "$sp" ] && sp="${lss_path}"			# Save script log or lss log
+	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
+	echo -e "[${d}] [${m}] [${hn^^}]${hi}${pad10:$((${#hn}+${#hi}))} [${a^^}]${pad12:${#hn}} ${em}" >> "${sp}/log"
+
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
 		echo -e "Date:\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t${m}\nHostname:\t${hn}${hi}\n$([ "$sn" ] && echo "Script:\t\t${sn}\n")Action:\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
