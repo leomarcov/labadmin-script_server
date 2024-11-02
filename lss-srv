@@ -148,12 +148,12 @@ function log() {
 	local sn=$(basename "$sp")        # script name
 	local hi=""                       # hostname inventory match?
 	
-	[ "$check_hostnames" ] && [ ! "$hostname_match" ] && hi="?"
+	[ "$check_hostnames" ] && [ ! "$hostname_match" ] && hi="HOSTNAME?"
 
 	# Save file log
 	[ ! "$sp" ] && sp="${lss_path}"			# Save script log or lss log
 	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
-	echo -e "[${d}] [${m}] [${hn^^}]${hi}${pad10:$((${#hn}+${#hi}))} [${a^^}]${pad12:${#hn}} ${em}" >> "${sp}/log"
+	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}} [${a^^}]${pad12:${#hn}} ${hi} ${em}" >> "${sp}/log"
 
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
