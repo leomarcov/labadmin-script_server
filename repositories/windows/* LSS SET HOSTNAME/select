@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 #===================================================================================
 # SELECT SCRIPT
 #         FILE: select
@@ -44,6 +44,9 @@ function select_always() {
 # DESCRIPTION: select script for exec only once time (first exec ok)
 #===============================================================================
 function select_once() {
+    # Search by hostname or MAC?
+    [ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
+
     # Search in log if hostname had executed OK this script
     grep -F "[${hostname}]" "$log_path" | grep -qF "[EXEC_OK]"
     [ $? -eq 0 ] && exit 1 || exit 0
