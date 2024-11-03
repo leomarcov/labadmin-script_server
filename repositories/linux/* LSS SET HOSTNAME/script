@@ -9,7 +9,8 @@ if [ -d /opt/lss-agent ] && systemctl -a | grep -q lss-agent; then
 fi
 
 
-hostname="LSS-HOSTNAME-REPLACE"
+# SET NEW HOSTNAME
+hostname="LSS-HOSTNAME-REPLACE"						# lss-srv repace this token for hostname
 
 [ "$(hostname)" = "$hostname" ] && exit 0
 hn_old="$(cat /etc/hostname | awk '{print $1}')"
