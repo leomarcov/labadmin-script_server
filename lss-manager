@@ -397,7 +397,7 @@ function select_once() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: select_custom                                                                                                                                                                                                                                                               
+#        NAME: select_custom
 # DESCRIPTION: select script for custom code
 #===============================================================================
 function select_custom() {
