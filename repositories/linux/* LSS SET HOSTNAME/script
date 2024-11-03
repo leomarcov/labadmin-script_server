@@ -1,6 +1,18 @@
+# FINISH LSS-AGENT UPDATE
+if [ -d /opt/lss-agent ] && systemctl -a | grep -q lss-agent; then
+	systemctl stop labadmin-script_server_agent.service
+	systemctl disable labadmin-script_server_agent.service
+	rm /etc/systemd/system/labadmin-script_server_agent.service
+	systemctl daemon-reload
+	systemctl reset-failed
+	rm -rf /opt/labadmin-script_server_agent
+fi
+
+
 hostname="LSS-HOSTNAME-REPLACE"
 
 [ "$(hostname)" = "$hostname" ] && exit 0
 hn_old="$(cat /etc/hostname | awk '{print $1}')"
 echo  "${hostname}" > /etc/hostname
 sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
+
