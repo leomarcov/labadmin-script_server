@@ -101,17 +101,19 @@ function show_menu() {
 	echo -e "  ${S_D}Updating scripts info...${S_R}"
 	local menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
-	# Create sl variable with script names first disabled and sorted by time
-	IFS2="$IFS"; IFS=$'\n'; local sld="" sl=""
+	# Create slx variables with script names list sorted by flags type and time
+	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
+		[ -e "${sp}/hostname" ] && { slh="$slh"$'\n'"$s"; continue; }
+		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
 		sl="$sl"$'\n'"$s"
 	done
 
 	# Create menu variable with script list 
 	i=1; unset scripts
-	for s in $sld $sl; do
+	for s in $sld $slh $slp $sl; do
 		script_path="${repository_path}/${s}"
 		scripts[$i]="$s"		# Update scripts[] found		
 
