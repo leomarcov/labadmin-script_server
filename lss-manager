@@ -368,9 +368,9 @@ readonly select_type="once"     # always|once|custom
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly hostname="$1"              					# Current host local hostname
-readonly mac="$2"                  						# Current hot MAC
-readonly hostname_inventory="$3"        				# hostname from inventory for MAC
+readonly hostname="$1"                                  # Current host local hostname
+readonly mac="$2"                                       # Current hot MAC
+readonly hostname_inventory="$3"                        # hostname from inventory for MAC
 readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
@@ -387,8 +387,8 @@ function select_always() {
 # DESCRIPTION: select script for exec only once time (first exec ok)
 #===============================================================================
 function select_once() {
-	# Search by hostname or MAC?
-	[ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
+    # Search by hostname or MAC?
+    [ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
 
     # Search in log if hostname had executed OK this script
     grep -F "[${hostname}]" "$log_path" | grep -qF "[EXEC_OK]"
@@ -397,7 +397,7 @@ function select_once() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: select_custom
+#        NAME: select_custom                                                                                                                                                                                                                                                               
 # DESCRIPTION: select script for custom code
 #===============================================================================
 function select_custom() {
