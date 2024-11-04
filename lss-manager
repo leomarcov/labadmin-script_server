@@ -105,7 +105,7 @@ function show_menu() {
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
 	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
-		[ ! -d "${sp} ] && continue
+		[ ! -d "${sp}" ] && continue
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
 		[ -e "${sp}/hostname" ] && { slh="$slh"$'\n'"$s"; continue; }
 		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
