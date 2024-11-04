@@ -127,9 +127,9 @@ function show_menu() {
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0					# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0					# error count
 		ci=""; cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; } 							# color index disabled
-		[ "$s" = "${script_name}" ] && cs="${S_B" || cs=""														# style index current script selected
+		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""														# color current script selected
 
-		menu="$menu\n  ${c_s}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
+		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${se}\t${ng} ${lg}\t${no} $lo\t$([ "$ne" -gt 0 ] && echo "${C_R}")${ne} ${S_R}""${le}"
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
