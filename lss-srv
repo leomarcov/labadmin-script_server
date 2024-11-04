@@ -2,7 +2,7 @@
 #===================================================================================
 # LABADMIN SCRIPT SERVER
 #         FILE: lss-srv
-#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]
+#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message] [-v version]
 #
 #  DESCRIPTION: Labadmin Script Server
 #               Manage actions to do: list pending scripts, print script code, save exec status (exec_ok or exec_error)
@@ -33,6 +33,7 @@ unset action												# action parameter
 unset script												# script parameter
 unset script_path											# script path
 unset exec_msg												# exec_msg parameter
+unset agent_version											# agent LSS version
 
 
 #===============================================================================
@@ -62,7 +63,7 @@ function help() {
 #	$@	All parameter from command line
 #===============================================================================
 function check_params() {
-	while getopts ":h:M:r:a:s:m:" option
+	while getopts ":h:M:r:a:s:m:v:" option
 	do		
 		case $option in
 		h)			
@@ -84,6 +85,9 @@ function check_params() {
 		;;
 		m) 
 			readonly exec_msg="$OPTARG"
+		;;
+		v)
+			agent_version="$OPTARG"
 		;;
 		?)
 			echo "Incorrect option: $OPTARG"
@@ -124,6 +128,8 @@ function check_params() {
 	elif [ "$script" ] && ([ ! -d "$script_path" ] || [ ! -r "$script_path" ]); then
 		echo "Cant access script path: $script_path"
 		exit 2
+	elif [ ! "$agent_version" ]; then
+		agent_version="20220601"
 	fi
 }
 
@@ -220,7 +226,7 @@ function action_list() {
 		[ -e "${sp}/disable" ] && continue		
 
 		# Check hostname is selected
-		bash "${sp}/select" "$hostname" "$mac" "$hostname_inventory" || continue
+		bash "${sp}/select" "$hostname" "$mac" "$hostname_inventory" "$agent_version" || continue
 
 		# Check priority script
 		[ "$priority_list" ] && [ ! -e "${sp}/priority" ] && continue
