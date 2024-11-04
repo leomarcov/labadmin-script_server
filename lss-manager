@@ -136,7 +136,7 @@ function show_menu() {
 	echo -en "\e[1A"	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
 	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
-	local bar2="       $(echo -e "${S_D}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-15)) | tr -d "[0-9]")$(echo -e "${S_R}")"
+	local bar2="      $(echo -e "${S_D}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${S_R}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}" | sed "$(($(echo "${sld} ${slh} ${slp}" | wc -l)+2))i\\${bar2}")$'\n'"${bar}"	# Add bars after format columns
 	echo -e "$menu"
 	echo
