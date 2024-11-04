@@ -36,6 +36,11 @@ systemctl restart ssh.service
 adduser --disabled-password lss-agent 			# Only login with private key
 adduser --disabled-password lss-admin  			# Only login with private key
 ```
+  * Create repository log files
+```
+touch /opt/labadmin-script_server/repositories/{linux,windows}/log
+```
+
   * Set permissions for agent and admin user
 ```bash
 chown lss-admin:lss-agent /opt/labadmin-script_server
@@ -44,7 +49,6 @@ chown -R lss-admin:lss-admin /opt/labadmin-script_server/repositories/
 
 # Make sure ssh user has write permission to log files!:
 find /opt/labadmin-script_server/repositories/ -type f -name log -exec chmod a+w {} \;
-touch /opt/labadmin-script_server/log; chown lss-admin:lss-agent /opt/labadmin-script_server/log; chmod g+w /opt/labadmin-script_server/log
  ```
   * Generate SSH private and public keys for client (hosts) authentications
 ```bash
