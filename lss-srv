@@ -232,7 +232,7 @@ function action_list() {
 	echo "$list"
 
 	# Log list
-	log "$mac" "$hostname" "LIST" "" "|${list//$'\n'/|}|"
+	log "$mac" "$hostname" "LIST" "" "${repository^^}: |${list//$'\n'/|}|"
 }
 
 
