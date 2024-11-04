@@ -497,7 +497,7 @@ function action_log() {
 # DESCRIPTION: action to show log file of selected script
 #===============================================================================
 function action_log-show() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
 
 	echo
 	echo -e "  File ${S_B}$f${S_R}"
@@ -513,7 +513,7 @@ function action_log-show() {
 # DESCRIPTION: action to show exec status of selected script
 #===============================================================================
 function action_status() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${lss_path}/log"		# Log file path
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
 
 	echo
 	echo -e "  File stats from file ${S_B}$f${S_R}"
@@ -544,7 +544,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${lss_path}/log"; action_params="*"; }		# Log file path
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }		# Log file path
 
 	# Select hosts to color
 	local hg="" hr="" hy="" h_log=""
