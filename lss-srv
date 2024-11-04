@@ -207,7 +207,7 @@ function action_list() {
 		local sp="${repository_path}/${s}"			# script path
 
 		# Check repository directory format
-		[ ! -d "${sp} ] || [ ! "$sn" ] || [ ! "${sre}" ] && continue
+		[ ! -d "${sp}" ] || [ ! "$sn" ] || [ ! "${sre}" ] && continue
 	
 		# Check intentory hostname script
 		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
