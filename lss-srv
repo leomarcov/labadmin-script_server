@@ -148,7 +148,7 @@ function log() {
 	local sn=$(basename "$sp")        # script name
 	
 	# Save file log
-	[ ! "$sp" ] && sp="${lss_path}"			# Save script log or lss log
+	[ ! "$sp" ] && sp="${repository_path}"  # Save script log or lss log
 	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
 	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}} ${em}" >> "${sp}/log"
 
@@ -205,7 +205,10 @@ function action_list() {
 		local sre="${s%% *}"						# script regular expresión (script dir name before first space)
 		local sn="${s#* }"							# script name (script dir name afetr first space)
 		local sp="${repository_path}/${s}"			# script path
-		
+
+		# Check repository directory format
+		[ ! -d "${sp} ] || [ ! "$sn" ] || [ ! "${sre}" ] && continue
+	
 		# Check intentory hostname script
 		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
 		[ "$check_hostnames" ]   && [ ! "$hostname_match" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
@@ -232,7 +235,7 @@ function action_list() {
 	echo "$list"
 
 	# Log list
-	log "$mac" "$hostname" "LIST" "" "${repository^^}: |${list//$'\n'/|}|"
+	log "$mac" "$hostname" "LIST" "" "|${list//$'\n'/|}|"
 }
 
 
