@@ -103,7 +103,7 @@ function show_menu() {
 
 	# Create slx variables with script names list sorted by flags type and time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
-	for s in $(stat -c "%Y %n" "${repository_path}"/* | sort -n | cut -f2- -d " "); do
+	for s in $(stat -c "%Y %n" "${repository_path}"/*/log | sed 's/\/log$//' | sort -n | cut -f2- -d " "); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
 		[ ! -d "${sp}" ] && continue
 		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
