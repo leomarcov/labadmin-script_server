@@ -608,7 +608,7 @@ function action_bash() {
 	local f="$repository_path/${script_name}/"
 	echo -e "  Opening shell in ${S_B}${f}${S_R}"
 	echo
-	(cd "$f"; env PS1="  [LSS-BASH]\033[0m:\[\033[33m\]\W\[\033[0m\]]\$ "  bash --norc)
+	(cd "$f"; env PS1="  \033[1m[LSS-BASH]\033[0m:\[\033[33m\]\W\[\033[0m\]]\$ "  bash --norc)
 	echo
 }
 
