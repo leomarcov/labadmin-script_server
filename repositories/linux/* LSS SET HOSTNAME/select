@@ -2,7 +2,7 @@
 #===================================================================================
 # SELECT SCRIPT
 #         FILE: select
-#        USAGE: select hostname mac hostname_inventory
+#        USAGE: select HOSTNAME MAC HOSTNAME_INVENTORY AGENT_VERSION
 #
 #  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
 #               Use select_type variable to config select beahvior.
@@ -12,22 +12,23 @@
 #      LICENSE: GNU General Public License v3.0
 #      VERSION: 2024.11
 #      CREATED: 2022.06.01
-#===================================================================================                                                                                                                                                                                                        
+#===================================================================================
 
 
 #===============================================================================
 #  CONFIG SELECT TYPE BEAHVIOR
 #===============================================================================
-readonly select_type="custom"     # always|once|custom
+readonly select_type="once"     # always|once|custom
 
 
 
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly hostname="$1"              # Current host local hostname
-readonly mac="$2"                   # Current hot MAC
-readonly hostname_inventory="$3"    # Correct hostname for MAC
+readonly hostname="$1"                                  # Current host local hostname
+readonly mac="$2"                                       # Current hot MAC
+readonly hostname_inventory="$3"                        # hostname from inventory for MAC
+readonly agent_version="$4"								# agent version
 readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
 
 
@@ -48,7 +49,7 @@ function select_once() {
     [ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
 
     # Search in log if hostname had executed OK this script
-    grep -F "[${hostname}]" "$log_path" | grep -qF "[EXEC_OK]"
+    grep -F "[${id_search}]" "$log_path" | grep -qF "[EXEC_OK]"
     [ $? -eq 0 ] && exit 1 || exit 0
 }
 
@@ -58,9 +59,7 @@ function select_once() {
 # DESCRIPTION: select script for custom code
 #===============================================================================
 function select_custom() {
-	[ "$hostname" != "$hostname_inventory" ] && exit 0
-	grep -F "[${hostname}]" "$log_path" | grep -qF "[EXEC_OK]" || exit 0
-    exit 1
+	[ "$hostname" != "$hostname_inventory" ] && exit 0 || exit 1
 }
 
 # Exec select function according $select_type content
