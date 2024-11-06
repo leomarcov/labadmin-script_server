@@ -160,7 +160,7 @@ function log() {
 
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
-		echo -e "Date:\t\t\t$(date "+%Y-%m-%d %H:%M:%S")\nMAC:\t\t\t${m}\nHostname:\t${hn}\n$([ "$sn" ] && echo "Script:\t\t\t${sn}\n")Action:\t\t\t${a}\nError msg:\t${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
+		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nMAC: ${m}\nHostname: ${hn}\n$([ "$sn" ] && echo "Script: ${sn}\n")Action: ${a}\nError msg: ${em}" | mail -s "【script-server】【$sn】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
 }
 
