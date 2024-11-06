@@ -116,13 +116,13 @@ function show_menu() {
 	i=1; unset scripts
 	for s in $sld $slh $slp $sl; do
 		script_path="${repository_path}/${s}"
-		scripts[$i]="$s"		# Update scripts[] found		
+		scripts[$i]="$s"		# Update scripts[] found	
 
 		local f=" "; 
 		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${C_D}"									# Flag disabled
 		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${C_D}"									# Flag hostname
 		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${C_D}"									# Flag priority
-		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)							
+		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
 		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; }			# Colors when disabled
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
@@ -238,7 +238,7 @@ function read_action() {
 #===============================================================================
 function action_cd() {
 		# cd parent
-        if [ ! "$action_params" ] || [ "$action_params" = ".." ]; then    
+        if [ ! "$action_params" ] || [ "$action_params" = ".." ]; then
             action_..
 
 		# cd <n>
