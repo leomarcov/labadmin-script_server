@@ -22,6 +22,8 @@ unset repository_path											# Current selected repository path
 unset script_name												# Current selected script name
 unset scripts													# Array for list of scripts loades
 unset menu_path													# Temp dir to create file for read autocomplete
+unset menu_time													# Last time menu was shoed
+unset menu														# Last menu text loaded
 unset action													# Current selected action
 unset action_params												# Action params
 
@@ -93,13 +95,27 @@ B_W="\e[107m"           # Background LIGHT WHITE
 #=== FUNCTION ==================================================================
 #        NAME: show_menu
 # DESCRIPTION: show list of current repository scripts and log statics
+# PARAMETERS:
+#	$1	not empoty force reload menu
 # GLOBAL VARIABLES MODIFIED
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	echo
-	echo -e "  ${S_D}Updating scripts info...${S_R}"
-	local menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
+	# Force reload?
+	local reload="$1"
+
+	# SHOW SAVED MENU
+	local ct=$(date +%s)
+	if [ ! "$reload" ] && [ "$menu" ] && [ $((ct-menu_time)) -ge 1 ]; then
+	   echo -e "$menu"
+	   menu_time="$ct"
+	   return
+	fi
+
+
+	# RELOAD AND SHOW MENU
+	echo -en "\n  ${S_D}Updating scripts info...${S_R}"
+	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
 	# Create slx variables with script names list sorted by flags type and time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
@@ -116,7 +132,7 @@ function show_menu() {
 	i=1; unset scripts
 	for s in $sld $slh $slp $sl; do
 		script_path="${repository_path}/${s}"
-		scripts[$i]="$s"		# Update scripts[] found	
+		scripts[$i]="$s"		# Update scripts[] found
 
 		local f=" "; 
 		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${C_D}"									# Flag disabled
@@ -136,14 +152,16 @@ function show_menu() {
 	done 
 	IFS="$IFS2"
 
-	echo -en "\e[1A"	# Overwrite Updating scripts info... lina
+	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
 	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
 	local bar2="      $(echo -e "${S_D}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-16)) | tr -d "[0-9]")$(echo -e "${S_R}")"
 	local n=$(echo "${sld} ${slh} ${slp}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
+	menu="\n${menu}\n"
+
 	echo -e "$menu"
-	echo
+	menu_time=$(date +%s)
 }
 
 
@@ -177,7 +195,7 @@ function change_repository() {
 	unset scripts
 
 	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu
+	show_menu reload
 	return 0
 }
 
@@ -219,10 +237,20 @@ function read_action() {
 
 	# Action repository name
 	elif change_repository "$action"; then
-		read_action
-		return
+		action="none"
 	fi
 }
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_none
+# DESCRIPTION: empty action (do nothing and show menu again)
+#===============================================================================
+
+function action_none() {
+	return
+}
+
 
 
 #=== FUNCTION ==================================================================
@@ -299,9 +327,9 @@ function action_h() {
     ${S_B}create${S_R}\tCreate new script folder with default template files
     ${S_B}cd <n>${S_R}\tSelect script number <n>
     ${S_B}<n>${S_R}\tSelect script number <n>
-    ${S_B}cd <str>${S_R}\tSelect script contaning str in name 
+    ${S_B}cd <str>${S_R}\tSelect script contaning str in name
     ${S_B}<repo>${S_R}\tChange to repository <repo>
- 
+
    Script actions:
     ${S_B}bash${S_R}\tOpen Bash in selected script directory
     ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
@@ -318,8 +346,8 @@ function action_h() {
     ${S_B}delete${S_R}\tDelete selected script
     ${S_B}set-name${S_R}\tChange name of selected script
     ${S_B}set-RE${S_R}\tChange RE of selected script
- 
-    " | column -L -t -s $'\t' 
+
+    " | column -L -t -s $'\t'
 }
 
 
@@ -417,6 +445,8 @@ function select_custom() {
 "select_${select_type}"' > "$f/select"
 
 	echo -e "  Script directory: ${S_B}$f${S_R}/"
+
+	show_menu reload
 	echo
 }
 
@@ -433,8 +463,8 @@ function action_delete() {
         echo -e "  Removing script ${S_B}${f}${S_R}"
         rm -rf "$f"
 		action_..
-		show_menu
-    fi  
+		show_menu reload
+    fi
     echo
 }
 
@@ -481,7 +511,7 @@ function action_exit() {
 # DESCRIPTION: action to exit
 #===============================================================================
 function action_q() {
-	echo 
+	echo
 	exit 0
 }
 
@@ -525,7 +555,7 @@ function action_status() {
 
 	[ "$action_params" ] && echo -e "  Filtering hosts by: $action_params"
 	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
-	pad1="         "; pad2="                         " 
+	pad1="         "; pad2="                         "
 	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
 		h_log=$(grep -F "[$h]" "$f")
 		h_last=$(echo "$h_log" | tail -1 | cut -f1 -d" " | tr -d "[]")
@@ -625,7 +655,7 @@ function action_log-wipe() {
 		local f="$repository_path/${script_name}/log"
 		echo -e "  Wiping file ${S_B}${f}${S_R}"
 		echo -n "" > "$f"
-	fi	
+	fi
 	echo
 }
 
@@ -637,12 +667,12 @@ function action_log-wipe() {
 #===============================================================================
 function action_log-clean() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-    read -r -p "  Sure? All errors log data will be removed (N/y) " r 
+    read -r -p "  Sure? All errors log data will be removed (N/y) " r
     if [ "$r" = "y" ]; then
         local f="$repository_path/${script_name}/log"
         echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
 		sed -i "/ERROR\]/d" "$f"
-	fi  
+	fi
     echo
 }
 
@@ -736,7 +766,7 @@ function action_..() {
 
 #=== FUNCTION ==================================================================
 #        NAME: main
-# DESCRIPTION: main 
+# DESCRIPTION: main
 #===============================================================================
 function main()  {
 	clear
