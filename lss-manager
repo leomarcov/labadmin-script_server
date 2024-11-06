@@ -248,8 +248,9 @@ function action_cd() {
 		else
             local s=""
             s=$(for i in ${!scripts[@]}; do
-			echo "${scripts[$i]}" | grep "$action_params"
+			echo "${scripts[$i]}" | grep -i "$action_params"
             done)
+echo "AAA${s}BBB"
             if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
                 echo "$s"
                 echo
