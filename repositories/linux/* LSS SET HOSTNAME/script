@@ -5,3 +5,4 @@ hn_old="$(cat /etc/hostname | awk '{print $1}')"
 echo  "${hostname}" > /etc/hostname
 sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
 
+rm /home/*/.config/google-chrome/Singleton*		# Prevent google-chrome error when hostname changes
