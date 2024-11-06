@@ -581,6 +581,7 @@ function action_map() {
 	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }		# Log file path
 
 	# Select hosts to color
+	echo "Calculating hosts to hightlight..."
 	local hg="" hr="" hy="" h_log=""
 	for h in $(awk '{print $3}' "$f" | sort -u | sed -E 's/^\[||\]$//g'); do
 		h_log=$(grep -F "[$h]" "$f" | tail -1)
@@ -592,6 +593,8 @@ function action_map() {
 			hy="${hy} ${h}"
 		fi
 	done
+
+	echo "Generating map..."
 	if [ "$action_params" ] ; then
 		# Show only selected maps by params
 		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
