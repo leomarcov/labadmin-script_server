@@ -536,7 +536,7 @@ function action_log-show() {
 	echo
 	echo -e "  File ${S_B}$f${S_R}"
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-	[ "$action_params" ] && echo -e "  Filtering lines by: $action_params"
+	[ "$action_params" ] && echo -e "  ${S_D}Filtering lines by:${S_R} $action_params"
 	egrep -i --color "${action_params}" "$f"
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
 }
