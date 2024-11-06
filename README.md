@@ -39,6 +39,7 @@ adduser --disabled-password lss-admin  			# Only login with private key
   * Create repository log files
 ```
 touch /opt/labadmin-script_server/repositories/{linux,windows}/log
+touch /opt/labadmin-script_server/repositories/{linux,windows}/\*\ LSS\ SET\ HOSTNAME/log
 ```
 
   * Set permissions for agent and admin user
