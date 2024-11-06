@@ -250,26 +250,31 @@ function action_list() {
 # DESCRIPTION: Print script code, log action and exit
 #===============================================================================
 function action_get() {
-	local em=""
-	
-	# PRINT HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
-	if [ -e "${script_path}/hostname" ]; then
-		get_hostname_inventory "$mac" || { log "$mac" "$hostname" "get_error" "$script_path" "Error inventory get-hostname for mac: $mac"; exit 1; }
-		cat "${script_path}/script" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g" 2>&1
-		em="${hostname} -> ${hostname_inventory}"
-
-	# PRINT REGULAR SCRIPT
-	else
-		cat "${script_path}/script" 2>&1
-	fi
-
-	if [ $? -eq 0 ]; then
-		log "$mac" "$hostname" "$action" "$script_path" "$em"
-		exit 0 
-	else
-		log "$mac" "$hostname" "get_error" "$script_path" "$em"
+	local em
+	local c=$(cat "${script_path}/script")
+	if [ $? -ne 0 ]; then
+		log "$mac" "$hostname" "get_error" "$script_path" "Error reading script $script_path"
 		exit 1
+	fi	
+	
+	# HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
+	if [ -e "${script_path}/hostname" ]; then
+		if ! get_hostname_inventory "$mac"; then
+			log "$mac" "$hostname" "get_error" "$script_path" "Error inventory get-hostname for mac: $mac"
+			exit 1
+		fi
+		if ! echo "$c" | grep -q "LSS-HOSTNAME-REPLACE"; then
+			log "$mac" "$hostname" "get_error" "$script_path" "Not found replace token LSS-HOSTNAME-REPLACE in hostname script ${script_path}"
+			exit 1	
+		fi
+		c=$(echo "$c" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g")
+		em="${hostname} -> ${hostname_inventory}"
 	fi
+
+	# PRINT SCRIPT
+	echo "$c"
+	log "$mac" "$hostname" "$action" "$script_path" "$em"
+	exit 0 
 }
 
 
