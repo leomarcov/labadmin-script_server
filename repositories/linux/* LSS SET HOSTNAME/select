@@ -18,7 +18,7 @@
 #===============================================================================
 #  CONFIG SELECT TYPE BEAHVIOR
 #===============================================================================
-readonly select_type="once"     # always|once|custom
+readonly select_type="custom"     # always|once|custom
 
 
 
