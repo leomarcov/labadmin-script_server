@@ -1,3 +1,3 @@
-$hostname="LSS-HOSTNAME-REPLACE"
+$hostname="LSS-HOSTNAME-REPLACE"		# lss-srv repace this token for hostname
 
 if($env:COMPUTERNAME -cne $hostname) { Rename-Computer -NewName $hostname -Force }
