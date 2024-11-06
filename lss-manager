@@ -250,11 +250,10 @@ function action_cd() {
             s=$(for i in ${!scripts[@]}; do
 			echo "${scripts[$i]}" | grep -i "$action_params"
             done)
-echo "AAA${s}BBB"
             if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
                 echo "$s"
                 echo
-            elif [ "$(echo "$s" | wc -l)" -eq 1 ]; then
+            elif [ "$s" ]; then
                 script_name="$s"
             else
                 echo "  Cant change action $p1"
