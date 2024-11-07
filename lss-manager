@@ -22,7 +22,6 @@ unset repository_path											# Current selected repository path
 unset script_name												# Current selected script name
 unset scripts													# Array for list of scripts loades
 unset menu_path													# Temp dir to create file for read autocomplete
-unset menu_time													# Last time menu was shoed
 unset action													# Current selected action
 unset action_params												# Action params
 
