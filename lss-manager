@@ -586,7 +586,7 @@ function action_map() {
 	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
 		case $(echo "${h_log}" | grep -F "[${h}]" | tail -1 | cut -f2 -d" ") in
 			\[EXEC_OK\])      hg="${hg} ${h}"		;;
-			\[EXEC_ERROR\])   hr="${hg} ${h}"		;;
+			\[EXEC_ERROR\])   hr="${hr} ${h}"		;;
 			*)                hy="${hy} ${h}"		;;
 		esac
 	done
