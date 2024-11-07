@@ -1,39 +1,49 @@
 #!/usr/bin/env bash
 #===================================================================================
-# LABADMIN SCRIPT MANAGER
-#         FILE: lss-manager
+# LABADMIN SCRIPT SERVER INVENTORY
+#         FILE: lss-inventory
+#        USAGE: lss-inventory ACTION [PARAMS...]
 #
-#  DESCRIPTION: Labadmin Script Server Manager for script configuration and log viewer
-#               CLI to interac over scripts and logs
+#  DESCRIPTION: Labadmin script server inventory to manage asociation of hostnames-MAC
+#               Manage actions to do: show maps, get MAC->hostname and hostname->, get labadmin config files
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
-#      VERSION: 2024.11
-#      CREATED: 2022.06.28
+#      VERSION: 2024.10
+#      CREATED: 2024.10.31
 #=================================================================================== 
 
+
 #===============================================================================
-#  GLOBAL VARIABLES
+#  CONFIG VARIABLES
 #===============================================================================
-readonly lss_path=$(dirname "$(readlink -f "$0")")				# LSS root path
-readonly lssinventory_path="${lss_path}/lss-inventory"			# lss-inventory executable path
-unset repository												# Current selected repository
-unset repository_path											# Current selected repository path
-unset script_name												# Current selected script name
-unset scripts													# Array for list of scripts loades
-unset menu_path													# Temp dir to create file for read autocomplete
-unset menu_time													# Last time menu was shoed
-unset action													# Current selected action
-unset action_params												# Action params
+# Inventories repository path
+readonly inventories_path="$(dirname "$(readlink -f "$0")")/inventories"		
+
+# Default inventory_path -> first *default*.inventory file in $invenrories_path or first *.inventory file
+readonly inventory_path=$(ls "$inventories_path"/*default*.inventory "$inventories_path"/*.inventory 2>/dev/null | head -1)
+
+
+if [ ! -r "$inventory_path" ] || [ ! -f "$inventory_path" ]; then
+	echo "Cant access inventory file $inventory_path"
+	exit 1
+fi
 
 #===============================================================================
 #  LOAD CONFIG
 #===============================================================================
-source "${lss_path}/config"
+declare -A LAB 					# LOC[lab_id] = lab long name
+declare -A MAP 					# MAP[lab_id] = map host distribution
+declare -A MAC 					# MAC[hostname] = mac address of hostname
+declare -A HN 					# HN[lab_id] = lab hostname prefix
+declare -A hosts_colors			# List of hosts selected to show un color
+declare -A colors_hosts			# Count of hosts of each color
+declare -A level_colors 		# level_clors[lab_id] = color code of each lab line in DIST variable
+source ${inventory_path}		# Load inventory file
 
 
 #===============================================================================
-#  COLORS AND FORMAT
+#  COLORS AND TEXT
 #===============================================================================
 S_R="\e[0m"            	# Reset all attributes
 S_B="\e[1m"             # Style BOLD
@@ -41,6 +51,7 @@ S_D="\e[2m"             # Style DIM
 S_U="\e[4m"            	# Style UNDERLINE
 S_I="\e[7m"             # Style INVERTED
 S_DL="\e[K"             # Style DELETE TO END OF LINE
+
 cursor_save()		 { echo -en "\e[s"; }			# Cursor SAVE POSITION
 cursor_restore()	 { echo -en "\e[u"; }			# Cursor RESTORE POSITION
 cursor_hide()		 { echo -en "\e[?25l"; }		# Cursor HIDE CURSOR
@@ -51,6 +62,7 @@ cursor_move-left()	 { echo -en "\e[${1}D"; }		# Cursor MOVE LEFT $1 COLS
 cursor_move-right()  { echo -en "\e[${1}C"; }		# Cursor MOVE RIGHT $1 COLS
 cursor_move-begin()  { echo -en "\r"; }             # Cursor MOVE BEGIN POSITION IN CURRENT LINE
 cursor_move-pos()    { echo -en "\e[${1};${2}H"; }  # Cursor MOVE LINE $1 COL $2
+
 C_D="\e[39m"            # Color DEFAULT
 C_R="\e[31m"            # Color RED
 C_BR="\e[1m\e[31m"      # Color BOLD RED
@@ -88,215 +100,280 @@ B_LM="\e[105m"          # Background LIGHT MAGENTA
 B_LC="\e[106m"          # Background LIGHT CYAN
 B_W="\e[107m"           # Background LIGHT WHITE
 
+# LAB COLORS ACCORDING GRID LINE
+declare -A lab_color
+level_color=("$C_G" "$C_LB" "$C_LY" "$C_D")
+lab_color[" "]="${S_D}${C_N}"
+l=0; for p in $(echo "$DIST" | tr -s " " "_"); do for lab in $(echo "$p" | tr -s "_" " "); do lab_color[$lab]=${level_color[$l]}; done; l=$((l+1)); done
+
+
+
 
 
 
 #=== FUNCTION ==================================================================
-#        NAME: show_menu
-# DESCRIPTION: show list of current repository scripts and log statics
-# PARAMETERS:
-#	$1	nostats-> no show stats  | empty or other value -> show stats
-# GLOBAL VARIABLES MODIFIED
-#	$scripts[]
+# NAME: invetory_draw_map
+# DESCRIPTION: draw single lab map on grid specific column
+# PARAMS:
+#  $1 	lab id to draw
+#  $2	column
+#  $3	width
 #===============================================================================
-function show_menu() {
-	# Load stats info?
-	local stats="true"; [ "${1,,}" = "nostats" ] && unset stats
-	[ ! "${scripts[*]}" ] && stats="true"
+function inventory_draw_map {
+	local lab_id="$1"
+	local c="$2"
+	local w="$3"
+	local map="${MAP[$lab_id]}"
+	[ ! "$map" ] && lab_id=" "
 
-	[ "$stats" ] && echo -en "\n  ${S_D}Updating stats info...${S_R}"
-	local menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
+	# Print header
+	cursor_move-begin; cursor_move-right "$c"
+	echo -e "${lab_color[$lab_id]}${S_D}┌$(seq -s"─" $(($w+1))| tr -d "[0-9]")┐${S_R}";
+	cursor_move-right "$c"
+	echo -e "  ${S_B}${lab_id:0:$(($w-2))}${S_R}";
+	cursor_move-right "$c"
+	echo -e "${lab_color[$lab_id]}${S_D}└$(seq -s"─" $(($w+1))| tr -d "[0-9]")┘${S_R}";	
+	local l=3
 
-	# Create scriptlist variables with script names list sorted by flags type and time
-	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
-	for s in $(stat -c "%Y %n" "${repository_path}"/*/log | sed 's/\/log$//' | sort -n | cut -f2- -d " "); do
-		s=$(basename "$s"); sp="${repository_path}/${s}"
-		[ ! -d "${sp}" ] && continue
-		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
-		[ -e "${sp}/hostname" ] && { slh="$slh"$'\n'"$s"; continue; }
-		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
-		sl="$sl"$'\n'"$s"
+	# Print map
+	map=$(echo "$map" | sed '/^$/d' )
+	c=$((c+1))
+
+	while read r; do
+		cursor_move-right "$c"
+		for h in $r; do
+			if [ "$h" -eq "$h" ] &>/dev/null; then
+				hn="${HN[$lab_id]}${h}"
+				mac=${MAC["$hn"]}
+				# Red ID (MAC not found in config file)
+				if [ ! "$mac" ]; then 
+					color="${S_D}";
+				# Color host
+				elif [ "${hosts_colors["$hn"]}" ]; then 
+					color="${hosts_colors["$hn"]}"
+					count_hosts_sel=$((count_hosts_sel+1))
+					colors_hosts["$color"]=$((${colors_hosts["$color"]}+1))
+				# White ID (MAC not found in arp file)
+				else 
+					color="${S_R}"
+					count_hosts_unsel=$((count_hosts_unsel+1))
+				fi
+				[[ "$h" = 00 ]] && color="${color}${S_B}"
+				echo -en "${color}$h${S_R} "
+			else 
+				echo -en "${S_D}$h${S_R} "
+			fi
+		done
+		echo
+		l=$((l+1))
+	done <<<$(echo "$map")
+	cursor_move-up $l
+}
+
+
+#=== FUNCTION ==================================================================
+# NAME: inventory_calculate_grid_size
+# DESCRIPTION: calculate DIST sizes (column widths and file heights)
+# PARAMS:
+#  $1 	DIST 
+#
+# GLOBAL VARIABLES:
+#  $grid_file_height[]		
+#  $grid_column_width[]
+#  $grid_total_width
+#  $grid_total_height
+#===============================================================================
+function inventory_calculate_grid_size() {
+	local DIST="$1"
+	local dist_l=1 dist_c=1
+	unset grid_file_height grid_column_width grid_total_width grid_total_height; grid_total_height=3
+
+	# Loop each file and columns of DIST 
+	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do  	
+		h=$(echo "${MAP[$lab]}" | wc -l)	# current lab height
+		w=$(echo "${MAP[$lab]}" | wc -L)	# current lab width
+		[ "$w" -lt 12 ] && w=12				# min  lab width
+		[ ${grid_file_height[$dist_l]:-0} -lt $h ] && grid_file_height[$dist_l]=$h
+		[ ${grid_column_width[$dist_c]:-0} -lt $w ] && grid_column_width[$dist_c]=$w
+		dist_c=$((dist_c+1))
+	done
+		grid_total_height=$((grid_total_height+3+grid_file_height[$dist_l]))
+		dist_l=$((dist_l+1)); dist_c=1
+	done
+	grid_total_width=$(($(echo ${grid_column_width[*]} | tr " " "+")+${#grid_column_width[*]}*3))
+}
+
+
+#=== FUNCTION ==================================================================
+# NAME: print_map_grid
+# DESCRIPTION: draw inventory lab maps grid
+#===============================================================================
+function inventory_draw_grid {
+	clear
+
+	# CALCULATE GRID SIZE
+	DIST_CURRENT="$DIST"
+	inventory_calculate_grid_size "$DIST_CURRENT"
+
+	# NOT ENOUGHT COLUMNS! -> ADJUST DIST TO WIDTH
+	if [ "$COLUMNS" -lt $grid_total_width ]; then
+		grid_max_width=$(echo ${grid_column_width[*]} | tr " " "\n" | sort -n | tail -1)
+		grid_cols=$((COLUMNS/grid_max_width))
+		DIST_CURRENT=$(i=0; for l in $DIST; do i=$((i+1)); echo -n "$l "; [ $((i%grid_cols)) -eq 0 ] && echo ; done)
+		inventory_calculate_grid_size "$DIST_CURRENT"
+	fi
+
+	# SHOW TITLE
+	count_hosts_sel=0
+	count_hosts_unsel=0
+	count_maps=0
+	header_widht=65; [ "$header_widht" -lt $grid_total_width ] && header_widht=$grid_total_width
+	echo -e "${S_D}┌$(seq -s"─" $(($header_widht))| tr -d "[0-9]")┐"
+	echo -en "│  ${S_R}${S_B}LABADMIN   ${S_R}${S_D}|${S_R}  $TITLE${S_R}${S_D}"; cursor_move-begin; cursor_move-right $((header_widht)); echo -e "${S_D}│"; 
+	echo -e "${S_D}└$(seq -s"─" $(($header_widht))| tr -d "[0-9]")┘"
+
+	# PRINT MAPS
+	local dist_l=1 dist_c=1 c=1
+	for p in $(echo "$DIST_CURRENT" | tr -s " \t" '$'); do for lab in $(echo "$p" | tr -s '$' " "); do 
+		count_maps=$((count_maps+1))
+		[ $dist_c -gt 1 ] && c=$((c+3+grid_column_width[$((dist_c-1))]))
+		inventory_draw_map $lab $c ${grid_column_width[$dist_c]}
+		dist_c=$((dist_c+1))
+	done
+		seq $((3+grid_file_height[$dist_l])) | tr -d "[0-9]"
+		dist_l=$((dist_l+1)); dist_c=1; c=1;
 	done
 
-	# Create menu variable with script list 
-	i=1; unset scripts
-	for s in $sld $slh $slp $sl; do
-		script_path="${repository_path}/${s}"
-		scripts[$i]="$s"		# Update scripts[] found
-
-		local f=" "; 
-		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${C_D}"									# Flag disabled
-		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${C_D}"									# Flag hostname
-		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${C_D}"									# Flag priority
-		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; }			# Colors when disabled
-		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
-
-		if [ "$stats" ]; then
-			local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
-			local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
-			local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
-			local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
-			local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${ne}${C_R}"		# error count
-		else
-			local st="  -" ng="-" no="-" ne="-"
+	# SHOW COUNTS IN HEADER 
+	if [ "$LINES" -ge "$grid_total_height" ]; then	
+		cursor_save; cursor_move-pos 2 $((19+${#TITLE}))
+		echo -en " ${S_R}${S_D}|  ${count_maps} maps · $((count_hosts_sel+count_hosts_unsel)) hosts " 
+		if [ "${hosts_colors[*]}" ]; then
+			echo -n "("
+			for c in "${!colors_hosts[@]}"; do 
+				echo -en "${S_R}${c}${colors_hosts["$c"]}${C_D}${S_D}·"
+			done
+			echo -e "${S_R}${C_D}${count_hosts_unsel}${S_D}${C_D})"
 		fi
-
-		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}""${le}"
-		i=$((i+1))
-	done 
-	IFS="$IFS2"
-	[ "$stats" ] && echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
-	menu=$(echo -e "${menu}" | column -t -s $'\t')
-	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
-	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
-	local bar2="      $(echo -e "${S_D}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-16)) | tr -d "[0-9]")$(echo -e "${S_R}")"
-	local n=$(echo "${sld} ${slh} ${slp}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
-	menu="\n${menu}\n"
-
-	echo -e "$menu"
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: change_repository
-# DESCRIPTION: change current repository and show menu
-# PARAMETERS
-#	$1		repository name
-#
-# GLOBAL VARIABLES MODIFIED
-#	$repository
-#	$repository_path
-#	$script_name
-#	$scripts
-#
-# RETURN
-#	0 if repository change is ok
-#	1 if cant change repository (not exists?)
-#===============================================================================
-function change_repository() {
-	local r="$1"
-
-	# Check if exist repository
-	[ ! -d "${repositories_path}/${r}" ] && return 1
-	[[ $(readlink -f "${repositories_path}/${r}") = $(readlink -f "${repositories_path}") ]] && return 1		# Check if try directory outside repositories_path
-	[[ $(readlink -f "${repositories_path}/${r}") != $(readlink -f "${repositories_path}")* ]] && return 1		# Check if try directory outside repositories_path
-
-	repository="$r"
-	repository_path="${repositories_path}/${repository}/"
-	unset script_name
-	unset scripts
-
-	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu nostats
-	return 0
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: read_action
-# DESCRIPTION: prompt for action to exec and change repository
-# GLOBAL VARIABLES MODIFIED
-#	$action
-#	$action_params
-#===============================================================================
-function read_action() {
-	# Generate actions files for read tab autocomplete
-	if [ ! "$menu_path" ]; then
-	   menu_path=$(mktemp -d)
-	   mkdir "${menu_path}/script" "${menu_path}/root"
-	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  hostname  priority  log  status  map  log-clean  log-wipe  ls  script  select
-	fi
-	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
-
-	# Read prompt: repository/script selected>
-	local prompt="  ${C_Y}${repository}${S_R}$([ "$script_name" ] && echo "/${C_Y}${script_name}${S_R}")> "
-	read -r -e  -p "$(echo -e "$prompt")" action
-
-	action="$(echo "$action" | xargs)"		# Trim and compact spaces
-	action_params="${action#* }"
-	[ "$action_params" = "$action" ] && action_params=""
-	action="${action%% *}"
-
-	# Empty action: list
-	if [ ! "$action" ]; then
-		action="list"
-		action_params="nostats"
-
-	# Action <n>: cd <n>
-	elif [ "$action" -eq "$action" ] &>/dev/null; then
-		action_params="$action"
-		action="cd"
-
-	# Action repository name
-	elif change_repository "$action"; then
-		action="none"
+		cursor_restore
 	fi
 }
 
-
 #=== FUNCTION ==================================================================
-#        NAME: action_none
-# DESCRIPTION: empty action (do nothing and show menu again)
+#        NAME: action_map
+# DESCRIPTION: draw map
+#  PARAMETERS:
+#    -S                      Check network and hightlight online hosts 
+#    -d <LAB DIST>           Show only list of LABS
+#    -D <LAB RE>             Show only LABS matches with RE
+#    -g <HOST LIST>          Hightlight green HOST LIST (space separated)
+#    -b <HOST LIST>          Hightlight blue HOST LIST (space separated)
+#    -y <HOST LIST>          Hightlight yellow HOST LIST (space separated)
+#    -r <HOST LIST>          Hightlight red HOST LIST (space separated)
 #===============================================================================
+function action_map() {
+	# Check action_map params
+	while getopts ":d:g:r:b:y:D:S" option; do
+		case $option in
+		S)
+			echo -n "Scaning network..."
+    		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
+			[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
+    		echo "  Complete!"
+			echo "Generating map..."
+			for h in "${!MAC[@]}"; do
+				echo "$arp_out" | grep -qi "${MAC["$h"]}" && hosts_colors["$h"]="${S_B}${C_LG}"
+			done
+		;;
+		d)			
+			d_flag="true"
+			DIST="$OPTARG"
+		;;
+		D)	
+			D_flag="true"
+			local re="$OPTARG"
+			if [ "$re" ] && [ "$re" != "*" ]; then
+				local DIST2=""
+				for d in $DIST; do
+					[[ "${HN["$d"]}" = $re ]] && DIST2="${DIST2} $d"
+				done
+				[ "$DIST2" ] && DIST="$DIST2"
+			fi
+		;;
+		g) 
+			G_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_LG}"
+			done
+		;;
+		b) 
+			B_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_B}"
+			done
+		;;
+		y) 
+			Y_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_Y}"
+			done
+		;;
+		r) 
+			R_flag="true"
+			for h in $OPTARG; do
+				hosts_colors["$h"]="${S_B}${C_R}"
+			done
+		;;
+		?)
+			echo "Incorrect option: $OPTARG"
+			exit 2
+		;;
+	   esac
+	done
 
-function action_none() {
-	return
+	# Draw grid
+	inventory_draw_grid
 }
 
 
 
-#=== FUNCTION ==================================================================
-#        NAME: action_cd
-# DESCRIPTION: change selected script according $action and $actions_params
-#				cd | cd .. 	unselect current script
-#				cd <n>		select <n> script
-#				cd <str>	select string contaning <str> in name
-#
-# GLOBAL VARIABLES MODIFIED
-#   $action
-#   $action_params
-#===============================================================================
-function action_cd() {
-		# cd parent
-        if [ ! "$action_params" ] || [ "$action_params" = ".." ]; then
-            action_..
-
-		# cd <n>
-		elif [ "$action_params" -eq "$action_params" ] &>/dev/null; then
-            script_name="${scripts[$action_params]}"
-            [ ! "$script_name" ] && echo -e "  Invalid script number!\n"
-
-		# cd <string>
-		else
-            local s=""
-            s=$(for i in ${!scripts[@]}; do
-			echo "${scripts[$i]}" | grep -i "$action_params"
-            done)
-            if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
-                echo "$s"
-                echo
-            elif [ "$s" ]; then
-                script_name="$s"
-            else
-                echo "  Script not found $action_params"
-            fi
-        fi
-}
-
-
 
 #=== FUNCTION ==================================================================
-#        NAME: exec_action
-# DESCRIPTION: exec function of selected action
+#        NAME: get_MAC
+# DESCRIPTION: get MAC from a hostname
+#  PARAMETERS:
+#	$1	hostname to get MAC
 #===============================================================================
-function exec_action() {
-	action_function="action_${action}"
-	if [ "$(type -t "$action_function")" != "function" ]; then
-		echo -e "  Unrecognized action: $action\n"
+function action_get-mac() {
+	local hn="$1"
+	local m="${MAC["$hn"]}"
+
+	if [ "$m" ]; then
+		echo "$m"
+		return 0
+	else
+		echo "No MAC found for hostname $hn" 1>&2
 		return 1
 	fi
-	"$action_function"
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: get_hostname
+# DESCRIPTION: get hostname from a MAC
+#  PARAMETERS:
+#	$1	MAC to get hostname
+#===============================================================================
+function action_get-hostname() {
+	local m=$(echo "${1,,}" | tr "-" ":")
+	for hn in "${!MAC[@]}"; do
+		cm="${MAC["$hn"]}"
+		if [ "${cm,,}" = "${m}" ]; then
+			echo "$hn"
+			return 0
+		fi
+	done
+	echo "No hostname found for MAC $m" 1>&2
+	return 1
 }
 
 
@@ -308,493 +385,46 @@ function action_help() {
 	action_h
 }
 
-
 #=== FUNCTION ==================================================================
-#        NAME: action_h
+#        NAME: action_help
 # DESCRIPTION: action to show help
 #===============================================================================
 function action_h() {
-	echo -e "
-   Global actions:
-    ${S_B}list${S_R}\tList scripts and stats
-    ${S_B}create${S_R}\tCreate new script folder with default template files
-    ${S_B}cd <n>${S_R}\tSelect script number <n>
-    ${S_B}<n>${S_R}\tSelect script number <n>
-    ${S_B}cd <str>${S_R}\tSelect script contaning str in name
-    ${S_B}<repo>${S_R}\tChange to repository <repo>
+	echo -e "LABADMIN INVENTARY MANAGER
 
-   Script actions:
-    ${S_B}bash${S_R}\tOpen Bash in selected script directory
-    ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
-    ${S_B}map [LAB...]${S_R}\tShow exec stats in a map. Optionaly show only a list of LABS
-    ${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
-    ${S_B}log-wipe${S_R}\tWipe log file of selected script
-    ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
-    ${S_B}script${S_R}\tShow script file of selected script
-    ${S_B}select${S_R}\tShow select file of selected script
-    ${S_B}disable${S_R}\tDisable selected script
-    ${S_B}enable${S_R}\tEnable selected script
-    ${S_B}hostname${S_R}\tToogle hostname flag on selected script
-    ${S_B}priority${S_R}\tToogle priority flag on selected script
-    ${S_B}delete${S_R}\tDelete selected script
-    ${S_B}set-name${S_R}\tChange name of selected script
-    ${S_B}set-RE${S_R}\tChange RE of selected script
+${S_B}USAGE${S_R}
+  $(basename "$0")${S_R} ACTION [PARAMS...]
 
-    " | column -L -t -s $'\t'
+${S_B}ACTIONS${S_R}
+    ${S_B}help${S_R}                      Show help
+    ${S_B}map [PARAMS...]${S_R}           Show maps grid hosts
+        ${S_B}-S${S_R}                      Check network and hightlight online hosts 
+        ${S_B}-d <LAB DIST>${S_R}           Show only list of LABS
+        ${S_B}-D <LAB RE>${S_R}             Show only LABS matches with RE
+        ${S_B}-g <HOST LIST>${S_R}          Hightlight green HOST LIST (space separated)
+        ${S_B}-b <HOST LIST>${S_R}          Hightlight blue HOST LIST (space separated)
+        ${S_B}-y <HOST LIST>${S_R}          Hightlight yellow HOST LIST (space separated)
+        ${S_B}-r <HOST LIST>${S_R}          Hightlight red HOST LIST (space separated)
+    ${S_B}get-mac <hostname>${S_R}        Get mac from hostname
+    ${S_B}get-hostname <MAC>${S_R}        Get hostname from mac
+    "
 }
 
 
 
 #=== FUNCTION ==================================================================
-#        NAME: action_l
-# DESCRIPTION: action to show scripts menu
+#        NAME: exec_action
+# DESCRIPTION: exec function of selected action
 #===============================================================================
-function action_l() {
-    show_menu "$action_params"
-}
-
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_list
-# DESCRIPTION: action to show scripts menu
-#===============================================================================
-function action_list() {
-	show_menu "$action_params"
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_create
-# DESCRIPTION: create new empty script
-#===============================================================================
-function action_create() {
-    read -r -p "  Regular expresion: " re
-    read -r -p "  Description: " d
-    local f="$repository_path/${re} ${d}"
-
-	# Create directory and files and set permissions
-    mkdir "$f"
-    touch "${f}/disable"                               # Start disabled
-    touch "$f/log" "$f/script" "$f/select"
-    chmod a+w "$f/log"
-	[ $(id -u) -eq 0 ] && chown -R lss-admin:lss-admin "$f"
-
-echo '#!/usr/bin/env bash
-#===================================================================================
-# SELECT SCRIPT
-#         FILE: select
-#        USAGE: select HOSTNAME MAC HOSTNAME_INVENTORY AGENT_VERSION
-#
-#  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
-#               Use select_type variable to config select beahvior.
-#               Optionaly compelte select_custom() for custom selection
-#
-#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
-#      LICENSE: GNU General Public License v3.0
-#      VERSION: 2024.11
-#      CREATED: 2022.06.01
-#===================================================================================
-
-
-#===============================================================================
-#  CONFIG SELECT TYPE BEAHVIOR
-#===============================================================================
-readonly select_type="once"     # always|once|custom
-
-
-
-#===============================================================================
-#  GLOBAL VARIABLES
-#===============================================================================
-readonly hostname="$1"                                  # Current host local hostname
-readonly mac="$2"                                       # Current hot MAC
-readonly hostname_inventory="$3"                        # hostname from inventory for MAC
-readonly agent_version="$4"								# agent version
-readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
-
-
-#=== FUNCTION ==================================================================
-#        NAME: select_always
-# DESCRIPTION: select script for exec everytime
-#===============================================================================
-function select_always() {
-    exit 0
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: select_once
-# DESCRIPTION: select script for exec only once time (first exec ok)
-#===============================================================================
-function select_once() {
-    # Search by hostname or MAC?
-    [ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
-
-    # Search in log if hostname had executed OK this script
-    grep -F "[${id_search}]" "$log_path" | grep -qF "[EXEC_OK]"
-    [ $? -eq 0 ] && exit 1 || exit 0
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: select_custom
-# DESCRIPTION: select script for custom code
-#===============================================================================
-function select_custom() {
-    echo "Complete select_custom function"
-    exit 1
-}
-
-# Exec select function according $select_type content
-"select_${select_type}"' > "$f/select"
-
-	echo -e "  Script directory: ${S_B}$f${S_R}/"
-
-	show_menu nostats
-	echo
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_delete
-# DESCRIPTION: action to delete selected script
-#===============================================================================
-function action_delete() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-    read -r -p "  Sure? Script and logs will be removed (N/y) " r
-    if [ "$r" = "y" ]; then
-        local f="$repository_path/${script_name}/"
-        echo -e "  Removing script ${S_B}${f}${S_R}"
-        rm -rf "$f"
-		action_..
-		show_menu nostats
-    fi
-    echo
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_set-name
-# DESCRIPTION: action to set name of selected script
-#===============================================================================
-function action_set-name() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local script_desc
-	read -r -p "  New name: " script_desc 
-	local script_new_name="${script_name%% *} ${script_desc}"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}"
-	action_..
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_setRE
-# DESCRIPTION: action to set REGEX of selected script
-#===============================================================================
-function action_set-RE() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local script_re
-	read -r -p "  New REGEX: " script_re
-	local script_new_name="${script_re} ${script_name#* }"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}"
-	action_..
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_exit
-# DESCRIPTION: action to exit
-#===============================================================================
-function action_exit() {
-	echo
-	exit 0
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_q
-# DESCRIPTION: action to exit
-#===============================================================================
-function action_q() {
-	echo
-	exit 0
-}
-
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_log
-# DESCRIPTION: action to call specific log subaction according $action_params
-#===============================================================================
-function action_log() {
-		action_log-show
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_log-show
-# DESCRIPTION: action to show log file of selected script
-#===============================================================================
-function action_log-show() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
-
-	echo
-	echo -e "  File ${S_B}$f${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-	[ "$action_params" ] && echo -e "  ${S_D}Filtering lines by:${S_R} $action_params"
-	egrep -i --color "${action_params}" "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_status
-# DESCRIPTION: action to show exec status of selected script
-#===============================================================================
-function action_status() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
-
-	echo
-	echo -e "  File stats from file ${S_B}$f${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-
-	[ "$action_params" ] && echo -e "  ${S_D}Filtering hosts by:${S_R} $action_params"
-	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
-	pad1="         "; pad2="                         "
-	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
-		h_log=$(grep -F "[$h]" "$f")
-		h_last=$(echo "$h_log" | tail -1 | cut -f1 -d" " | tr -d "[]" | tr "_" " ")
-		h_get=$(echo "$h_log" | grep -Fc "[GET]")
-		h_ok=$(echo "$h_log" | grep -Fc "[EXEC_OK]")
-		h_error=$(echo "$h_log" | grep -Fc "[EXEC_ERROR]")
-		h_pending="                   "; echo "$h_log" | tail -1 | grep -vqiF "[EXEC_OK]" && { h_pending="  ${C_R}PENDING!${S_R}         ";  n_pending=$((n_pending+1)); }
-		n_get=$((n_get+h_get)); n_ok=$((n_ok+h_ok)); n_error=$((n_error+h_error));
-		echo -e "${S_D}${pad1:${#i}}$i${S_R}  ${h}$([ "$h_get" -gt 0 ] && echo "${C_Y}")${pad2:$((${#h}+${#h_get}))}  ${h_get}${S_R} GET$([ "${h_ok}" -gt 0 ] && echo "${C_G}")${pad1:${#h_ok}}${h_ok}${S_R} OK$([ "$h_error" -gt 0 ] && echo "${C_R}")${pad1:${#h_error}}${h_error}${S_R} ERRORS${h_pending}${S_D}(${h_last})${S_R}"
-		i=$((i+1))
-	done
-	echo -e "${S_D}  ------------------------------------------------------------------------------------${S_R}"
-	echo -e "${pad1}    ${pad2:${#n_get}}${C_Y}${n_get}${S_R} GET${pad1:${#n_ok}}${C_G}${n_ok}${S_R} OK${pad1:${#n_error}}${C_R}${n_error}${S_R} ERRORS   ${C_R}${n_pending}${S_R} PENDING!"
-	echo
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_map
-# DESCRIPTION: action to show exec status map of selected script
-#===============================================================================
-function action_map() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }		# Log file path
-
-	# Select hosts to color
-	echo "  Calculating hosts to hightlight..."
-	local h h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
-	local ha; declare -A ha
-	for h in $h_log; do	ha["${h%% *}"]="${h##* }"; done	
-	for h in ${!ha[@]}; do
-		case ${ha[$h]} in
-			EXEC_OK)      hg="${hg} ${h}"		;;
-			EXEC_ERROR)   hr="${hr} ${h}"		;;
-			*)            hy="${hy} ${h}"		;;
-		esac
-	done
-	IFS='$\n\t '
-
-#	local hg="" hr="" hy="" h_log=$(awk '{print $3,$4}' "$f")
-#	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
-#		case $(echo "${h_log}" | grep -F "[${h}]" | tail -1 | cut -f2 -d" ") in
-#			\[EXEC_OK\])      hg="${hg} ${h}"		;;
-#			\[EXEC_ERROR\])   hr="${hr} ${h}"		;;
-#			*)                hy="${hy} ${h}"		;;
-#		esac
-#	done
-
-	echo "  Generating map..."
-	if [ "$action_params" ] ; then
-		# Show only selected maps by params
-		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
-		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
-	else
-		# Show maps according script RE
-		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
+function exec_action() {
+	action_function="action_${action}"
+	if [ ! "$action" ] || [ "$(type -t "$action_function")" != "function" ]; then
+		[ "$action" ] && echo -e "  Unrecognized action: $action" || action_h
+		exit 1
 	fi
-	echo
+	"$action_function" "$@"
 }
 
-#=== FUNCTION ==================================================================
-#        NAME: action_script
-# DESCRIPTION: action to show script file content of selected script
-#===============================================================================
-function action_script() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/script"
-	echo
-	echo -e "  File ${S_B}${f}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-	cat "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_select
-# DESCRIPTION: action to show select file content of selected script
-#===============================================================================
-function action_select() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/select"
-	echo
-	echo -e "  File ${S_B}${f}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-	cat "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_bash
-# DESCRIPTION: action to open Bash in selected script folder
-#===============================================================================
-function action_bash() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Opening shell in ${S_B}${f}${S_R}"
-	echo
-	(cd "$f"; env PS1="  [LSS-BASH]\033[0m:\[\033[1;94m\]\W\[\033[0m\]]\$ "  bash --norc)
-	echo
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_log-wipe
-# DESCRIPTION: action to wipe log file of selected script
-#===============================================================================
-function action_log-wipe() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	read -r -p "  Sure? All log data will be removed (N/y) " r
-	if [ "$r" = "y" ]; then
-		local f="$repository_path/${script_name}/log"
-		echo -e "  Wiping file ${S_B}${f}${S_R}"
-		echo -n "" > "$f"
-	fi
-	echo
-}
-
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_log-clean
-# DESCRIPTION: action to clean all log error entries in log file of selected script
-#===============================================================================
-function action_log-clean() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-    read -r -p "  Sure? All errors log data will be removed (N/y) " r
-    if [ "$r" = "y" ]; then
-        local f="$repository_path/${script_name}/log"
-        echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
-		sed -i "/ERROR\]/d" "$f"
-	fi
-    echo
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_disable
-# DESCRIPTION: action to disable selected script
-#===============================================================================
-function action_disable() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Disabling script ${S_B}${f}${S_R}"
-	touch "${f}/disable"
-	echo
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_enable
-# DESCRIPTION: action to enable selected script
-#===============================================================================
-function action_enable() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Enabling script ${S_B}${f}${S_R}"
-	rm -rf "${f}/disable"
-	echo
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_hostname
-# DESCRIPTION: action to toogle hostname flag on selected script
-#===============================================================================
-function action_hostname() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-
-	if [ -e "${f}/hostname" ]; then
-		echo -e "  Disabling hostname flag ${S_B}${f}${S_R}"
-		rm -rf "${f}/hostname"
-	else
-		echo -e "  Enabling hostname flag ${S_B}${f}${S_R}"
-		touch "${f}/hostname"
-	fi
-
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_priority
-# DESCRIPTION: action to toogle priority flag on selected script
-#===============================================================================
-function action_priority() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-
-	if [ -e "${f}/priority" ]; then
-		echo -e "  Disabling priority flag ${S_B}${f}${S_R}"
-		rm -rf "${f}/priority"
-	else
-		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
-		touch "${f}/priority"
-	fi
-
-}
-
-
-
-
-#=== FUNCTION ==================================================================
-#        NAME: action_ls
-# DESCRIPTION: action to list all files of selected script
-#===============================================================================
-function action_ls() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "\n${f}${S_D}"
-	ls -lh --color "$f" | tail -n +2
-	echo -e "${S_R}"
-}
-
-#=== FUNCTION ==================================================================
-#        NAME: action_..
-# DESCRIPTION: action deselect selected script
-#===============================================================================
-function action_..() {
-	script_name=""
-}
-
-
-
-
-#=== FUNCTION ==================================================================
-#        NAME: main
-# DESCRIPTION: main
-#===============================================================================
-function main()  {
-	clear
-	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
-	echo -e " │${S_R}${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
-	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
-
-	change_repository "linux" 	# Default repository linux
-
-	while true; do
-		read_action
-		exec_action
-	done
-}
-main "$@"
+# EXEC FUNCTION ACTION
+action="$1"; shift 
+exec_action "$@"
