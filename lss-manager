@@ -592,7 +592,7 @@ function action_map() {
 			*)            hy="${hy} ${h}"		;;
 		esac
 	done
-
+	IFS='$\n\t '
 
 #	local hg="" hr="" hy="" h_log=$(awk '{print $3,$4}' "$f")
 #	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
