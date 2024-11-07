@@ -582,7 +582,7 @@ function action_map() {
 
 	# Select hosts to color
 	echo "  Calculating hosts to hightlight..."
-	local hg="" hr="" hy="" h_log=$(awk '{print $3.$4}' "$f")
+	local hg="" hr="" hy="" h_log=$(awk '{print $3,$4}' "$f")
 	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
 		case $(echo "${h_log}" | grep -F "[${h}]" | tail -1 | cut -f2 -d" ") in
 			\[EXEC_OK\])      hg="${hg} ${h}"		;;
