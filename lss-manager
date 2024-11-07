@@ -584,7 +584,7 @@ function action_map() {
 	echo "  Calculating hosts to hightlight..."
 	local h h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
 	local ha; declare -A ha
-	for h in $h_log; do	ha["${h%% *}"]="${h##*  }"; done	
+	for h in $h_log; do	ha["${h%% *}"]="${h##* }"; done	
 	for h in ${!ha[@]}; do
 		case ${ha[$h]} in
 			EXEC_OK)      hg="${hg} ${h}"		;;
