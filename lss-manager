@@ -94,17 +94,23 @@ B_W="\e[107m"           # Background LIGHT WHITE
 #        NAME: show_menu
 # DESCRIPTION: show list of current repository scripts and log statics
 # PARAMETERS:
-#	$1	nostats-> no show stats  | empty or other value -> show stats
+#	$1	noreload-> no reload menu  | empty or other value -> reload
 # GLOBAL VARIABLES MODIFIED
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	# Load stats info?
-	local stats="true"; [ "${1,,}" = "nostats" ] && unset stats
-	[ ! "${scripts[*]}" ] && stats="true"
+	# reload param
+	local reload="true"; [ "${1,,}" = "noreload" ] && unset reload
+	[ ! "${scripts[*]}" ] && reload="true"
 
-	[ "$stats" ] && echo -en "\n  ${S_D}Updating stats info...${S_R}"
-	local menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
+
+	# SHOW SAVED MENU
+	[ ! "$reload" ] && { echo -e "$menu"; return; }
+
+	# RELOAD MENU
+	show_header
+	echo -en "\n  ${S_D}Updating scripts info...${S_R}"
+	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
 	# Create scriptlist variables with script names list sorted by flags type and time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
@@ -130,7 +136,7 @@ function show_menu() {
 		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; }			# Colors when disabled
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
-		if [ "$stats" ]; then
+		if [ "$reload" ]; then
 			local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
 			local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
 			local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
@@ -144,7 +150,7 @@ function show_menu() {
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
-	[ "$stats" ] && echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
+	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
 	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
@@ -186,7 +192,7 @@ function change_repository() {
 	unset scripts
 
 	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu nostats
+	show_menu noreload
 	return 0
 }
 
@@ -220,7 +226,7 @@ function read_action() {
 	# Empty action: list
 	if [ ! "$action" ]; then
 		action="list"
-		action_params="nostats"
+		action_params="noreload"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -449,7 +455,7 @@ function select_custom() {
 
 	echo -e "  Script directory: ${S_B}$f${S_R}/"
 
-	show_menu nostats
+	show_menu noreload
 	echo
 }
 
@@ -466,7 +472,7 @@ function action_delete() {
         echo -e "  Removing script ${S_B}${f}${S_R}"
         rm -rf "$f"
 		action_..
-		show_menu nostats
+		show_menu noreload
     fi
     echo
 }
@@ -508,6 +514,7 @@ function action_exit() {
 	echo
 	exit 0
 }
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_q
@@ -777,6 +784,16 @@ function action_..() {
 }
 
 
+#=== FUNCTION ==================================================================
+#        NAME: show_header
+# DESCRIPTION: show header
+#===============================================================================
+function show_header() {
+	clear
+	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
+	echo -e " │${S_R}${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
+	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
+}
 
 
 #=== FUNCTION ==================================================================
@@ -784,11 +801,6 @@ function action_..() {
 # DESCRIPTION: main
 #===============================================================================
 function main()  {
-	clear
-	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
-	echo -e " │${S_R}${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
-	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
-
 	change_repository "linux" 	# Default repository linux
 
 	while true; do
