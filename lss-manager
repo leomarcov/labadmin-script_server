@@ -582,16 +582,13 @@ function action_map() {
 
 	# Select hosts to color
 	echo "  Calculating hosts to hightlight..."
-	local hg="" hr="" hy="" h_log=""
-	for h in $(awk '{print $3}' "$f" | sort -u | sed -E 's/^\[||\]$//g'); do
-		h_log=$(grep -F "[$h]" "$f" | tail -1)
-		if echo "$h_log" | grep -qF "[EXEC_OK]"; then
-			hg="${hg} ${h}"
-		elif echo "$h_log" | grep -qF "[EXEC_ERROR]"; then
-			hr="${hr} ${h}"
-		else
-			hy="${hy} ${h}"
-		fi
+	local hg="" hr="" hy="" h_log=$(awk '{print $3.$4}' "$f")
+	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
+		case $(echo "${h_log}" | grep -F "[${h}]" | tail -1 | cut -f2 -d" ") in
+			\[EXEC_OK\])      hg="${hg} ${h}"		;;
+			\[EXEC_ERROR\])   hr="${hg} ${h}"		;;
+			*)                hy="${hy} ${h}"		;;
+		esac
 	done
 
 	echo "  Generating map..."
