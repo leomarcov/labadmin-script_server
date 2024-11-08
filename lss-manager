@@ -21,6 +21,8 @@ unset repository												# Current selected repository
 unset repository_path											# Current selected repository path
 unset script_name												# Current selected script name
 unset scripts													# Array for list of scripts loades
+unset menu														# Saved menu list script
+unset menu_nextreload											# Force next menu reload
 unset menu_path													# Temp dir to create file for read autocomplete
 unset action													# Current selected action
 unset action_params												# Action params
@@ -90,25 +92,46 @@ B_W="\e[107m"           # Background LIGHT WHITE
 
 
 
+
+#=== FUNCTION ==================================================================
+#        NAME: show_header
+# DESCRIPTION: show header and cleaer screen
+#===============================================================================
+function show_header() {
+	clear
+	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
+	echo -e " │${S_R}${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
+	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
+}
+
+
+
 #=== FUNCTION ==================================================================
 #        NAME: show_menu
 # DESCRIPTION: show list of current repository scripts and log statics
 # PARAMETERS:
-#	$1	noreload-> no reload menu  | empty or other value -> reload
+#	-c	clear screen and show menu before show menu
+#	-r	reload menu and stats (by default no reaload)
 # GLOBAL VARIABLES MODIFIED
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	# reload param
-	local reload="true"; [ "${1,,}" = "noreload" ] && unset reload
-	[ ! "${scripts[*]}" ] && reload="true"
-
+	# READ PARAMS
+	local f_reload f_clear opt OPTIND
+	while getopts "rc" o; do
+		case $o in
+		r) f_reload=1			;;
+		c) f_clear=1			;;
+		esac
+	done
+	[ ! "${scripts[*]}" ] && f_reload=1
+	[ "$menu_nextreload" ] && { f_reload=1; unset menu_nextreload; }
 
 	# SHOW SAVED MENU
-	[ ! "$reload" ] && { echo -e "$menu"; return; }
+	[ ! "$f_reload" ] && { echo -e "$menu"; return; }
 
 	# RELOAD MENU
-	show_header
+	[ "$f_clear" ] && show_header
 	cursor_hide
 	echo -en "\n  ${S_D}Updating scripts info...${S_R}"
 	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
@@ -137,15 +160,11 @@ function show_menu() {
 		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; }			# Colors when disabled
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
-		if [ "$reload" ]; then
-			local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
-			local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
-			local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
-			local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
-			local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${ne}${C_R}"		# error count
-		else
-			local st="  -" ng="-" no="-" ne="-"
-		fi
+		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
+		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
+		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
+		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
+		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${ne}${C_R}"		# error count
 
 		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}""${le}"
 		i=$((i+1))
@@ -194,7 +213,7 @@ function change_repository() {
 	unset scripts
 
 	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu noreload
+	show_menu -c
 	return 0
 }
 
@@ -227,8 +246,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list"
-		action_params="noreload"
+		action="list-noreload"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -278,7 +296,7 @@ function action_cd() {
 		else
             local s=""
             s=$(for i in ${!scripts[@]}; do
-			echo "${scripts[$i]}" | grep -i "$action_params"
+			echo "${scripts[$i]}" | grep -Fi "$action_params"
             done)
             if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
                 echo "$s"
@@ -351,13 +369,21 @@ function action_h() {
 }
 
 
+#=== FUNCTION ==================================================================
+#        NAME: action_list-noreload
+# DESCRIPTION: action to show scripts menu and no reload
+#===============================================================================
+function action_list-noreload() {
+	show_menu
+}
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_l
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_l() {
-    show_menu "$action_params"
+    show_menu -r -c
 }
 
 
@@ -367,7 +393,7 @@ function action_l() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	show_menu "$action_params"
+	show_menu -r -c
 }
 
 
@@ -381,7 +407,7 @@ function action_create() {
     local f="$repository_path/${re} ${d}"
 
 	# Create directory and files and set permissions
-    mkdir "$f"
+    mkdir "$f" || return 1
     touch "${f}/disable"                               # Start disabled
     touch "$f/log" "$f/script" "$f/select"
     chmod a+w "$f/log"
@@ -457,7 +483,9 @@ function select_custom() {
 
 	echo -e "  Script directory: ${S_B}$f${S_R}/"
 
-	show_menu noreload
+
+	script_name="${re} ${d}"
+	menu_nextreload=1
 	echo
 }
 
@@ -472,9 +500,9 @@ function action_delete() {
     if [ "$r" = "y" ]; then
         local f="$repository_path/${script_name}/"
         echo -e "  Removing script ${S_B}${f}${S_R}"
-        rm -rf "$f"
+        rm -rf "$f" || return 1
 		action_..
-		show_menu noreload
+		menu_nextreload=1
     fi
     echo
 }
@@ -489,8 +517,10 @@ function action_set-name() {
 	local script_desc
 	read -r -p "  New name: " script_desc 
 	local script_new_name="${script_name%% *} ${script_desc}"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}"
-	action_..
+	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+
+	script_name="${script_new_name}"
+	menu_nextreload=1
 }
 
 
@@ -503,8 +533,10 @@ function action_set-RE() {
 	local script_re
 	read -r -p "  New REGEX: " script_re
 	local script_new_name="${script_re} ${script_name#* }"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}"
-	action_..
+	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+
+	script_name="${script_new_name}"
+	menu_nextreload=1
 }
 
 
@@ -594,7 +626,7 @@ function action_map() {
 
 	# Select hosts to color
 	echo "  Calculating hosts to hightlight..."
-	local h h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
+	local h hg hr hy h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
 	local ha; declare -A ha
 	for h in $h_log; do	ha["${h%% *}"]="${h##* }"; done	
 	for h in ${!ha[@]}; do
@@ -641,6 +673,7 @@ function action_script() {
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
 }
 
+
 #=== FUNCTION ==================================================================
 #        NAME: action_select
 # DESCRIPTION: action to show select file content of selected script
@@ -655,6 +688,7 @@ function action_select() {
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
 }
 
+
 #=== FUNCTION ==================================================================
 #        NAME: action_bash
 # DESCRIPTION: action to open Bash in selected script folder
@@ -667,6 +701,7 @@ function action_bash() {
 	(cd "$f"; env PS1="  [LSS-BASH]\033[0m:\[\033[1;94m\]\W\[\033[0m\]]\$ "  bash --norc)
 	echo
 }
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_log-wipe
@@ -682,7 +717,6 @@ function action_log-wipe() {
 	fi
 	echo
 }
-
 
 
 #=== FUNCTION ==================================================================
@@ -713,6 +747,7 @@ function action_disable() {
 	echo
 }
 
+
 #=== FUNCTION ==================================================================
 #        NAME: action_enable
 # DESCRIPTION: action to enable selected script
@@ -724,6 +759,7 @@ function action_enable() {
 	rm -rf "${f}/disable"
 	echo
 }
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_hostname
@@ -786,16 +822,6 @@ function action_..() {
 }
 
 
-#=== FUNCTION ==================================================================
-#        NAME: show_header
-# DESCRIPTION: show header
-#===============================================================================
-function show_header() {
-	clear
-	echo -e "${S_D} ┌───────────────────────────────────────────────┐"
-	echo -e " │${S_R}${S_B}            LABADMIN SCRIPT SERVER ${S_D}            │"
-	echo -e "${S_D} └───────────────────────────────────────────────┘${S_R}"
-}
 
 
 #=== FUNCTION ==================================================================
