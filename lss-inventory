@@ -277,7 +277,7 @@ function action_map() {
 		case $option in
 		S)
 			echo -n "Scaning network..."
-    		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"        # In background is better to avoid > directly                                                                                                                                                                                   
+    		arp_out="$(arp-scan -l  -q -r 1 -N 2>/dev/null)"                                                                                                                                                                                   
 			[ $? -ne 0 ] && { echo "! Failed to scan network hosts (arp-scan exit error)" 1>&2; exit 1; }
     		echo "  Complete!"
 			echo "Generating map..."
