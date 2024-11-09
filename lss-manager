@@ -515,7 +515,7 @@ function action_delete() {
 function action_set-name() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local script_desc
-	read -r -p "  New name: " script_desc 
+	[ "$action_params" ] && script_desc="$action_params" || read -r -p "  New name: " script_desc 
 	local script_new_name="${script_name%% *} ${script_desc}"
 	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
 
