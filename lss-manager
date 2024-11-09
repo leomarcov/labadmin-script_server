@@ -531,7 +531,7 @@ function action_set-name() {
 function action_set-RE() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local script_re
-	[ "$action_params" ] && script_re="$action_params" || read -r -p "  New name: " script_re 
+	[ "$action_params" ] && script_re="$action_params" || read -r -p "  New REGEX: " script_re 
 	local script_new_name="${script_re} ${script_name#* }"
 	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
 
