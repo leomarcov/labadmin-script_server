@@ -2,6 +2,7 @@
 #===================================================================================
 # LABADMIN SCRIPT MANAGER
 #         FILE: lss-manager
+#        USAGE: lss-manager [-r repository]
 #
 #  DESCRIPTION: Labadmin Script Server Manager for script configuration and log viewer
 #               CLI to interac over scripts and logs
