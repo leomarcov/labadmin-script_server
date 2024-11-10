@@ -830,12 +830,13 @@ function action_..() {
 #===============================================================================
 function main()  {
 	# READ PARAMS
+	local o r="linux"	# Default repository linux
 	while getopts ":r:" o; do
 		case $o in
-		r) r="$OPTARG"			;;
-		esac
+		r) r="$OPTARG"									;;
+		?) echo "Incorrect option: $OPTARG"; exit 2		;;
+	esac
 	done
-	[ ! "$r" ] && r="linux" 	# Default repository linux
 
 	# SET REPOSITORY
 	change_repository "$r"
