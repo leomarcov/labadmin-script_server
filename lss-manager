@@ -842,6 +842,7 @@ function main()  {
 	# SET REPOSITORY
 	change_repository "$r"
 
+	# MAIN LOOP
 	while true; do
 		read_action
 		exec_action
