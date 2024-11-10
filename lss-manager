@@ -829,7 +829,16 @@ function action_..() {
 # DESCRIPTION: main
 #===============================================================================
 function main()  {
-	change_repository "linux" 	# Default repository linux
+	# READ PARAMS
+	while getopts ":r:" o; do
+		case $o in
+		r) r="$OPTARG"			;;
+		esac
+	done
+	[ ! "$r" ] && r="linux" 	# Default repository linux
+
+	# SET REPOSITORY
+	change_repository "$r"
 
 	while true; do
 		read_action
