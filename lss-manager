@@ -842,9 +842,10 @@ function help() {
 function main()  {
 	# READ PARAMS
 	local o r="linux"	# Default repository linux
-	while getopts ":r:" o; do
+	while getopts ":r:h" o; do
 		case $o in
 		r) r="$OPTARG"									;;
+		h) help											;;
 		?) echo "Incorrect option: $OPTARG"; help 1		;;
 	esac
 	done
