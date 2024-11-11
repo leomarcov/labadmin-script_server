@@ -845,7 +845,7 @@ function main()  {
 	while getopts ":r:h" o; do
 		case $o in
 		r) r="$OPTARG"									;;
-		h) help											;;
+		h) help	1										;;
 		?) echo "Incorrect option: $OPTARG"; help 1		;;
 	esac
 	done
