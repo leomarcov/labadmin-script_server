@@ -823,6 +823,16 @@ function action_..() {
 }
 
 
+#=== FUNCTION ==================================================================
+#        NAME: help
+# DESCRIPTION: Print help and exit 
+#  PARAMETERS:
+#	$1	Exit code value
+#===============================================================================
+function help() {
+	echo -e "Usage: $(basename "$0") [-r repository]"
+	exit "$1"
+}
 
 
 #=== FUNCTION ==================================================================
@@ -835,7 +845,7 @@ function main()  {
 	while getopts ":r:" o; do
 		case $o in
 		r) r="$OPTARG"									;;
-		?) echo "Incorrect option: $OPTARG"; exit 2		;;
+		?) echo "Incorrect option: $OPTARG"; help 1		;;
 	esac
 	done
 
