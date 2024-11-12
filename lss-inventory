@@ -351,7 +351,7 @@ function action_labadmin-conf() {
 
 	# Check lab exists
 	if [ ! "$lab" ] || [ ! "${LAB["$lab"]}" ]; then
-		echo "No lab found $lab"
+		echo "No lab found ${lab//\/\//\/}"
 		return 1
 	fi
 
