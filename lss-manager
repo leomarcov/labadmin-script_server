@@ -716,6 +716,7 @@ function action_log-wipe() {
 		echo -e "  Wiping file ${S_B}${f}${S_R}"
 		echo -n "" > "$f"
 	fi
+	menu_nextreload=1
 	echo
 }
 
@@ -732,6 +733,7 @@ function action_log-clean() {
         echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
 		sed -i "/ERROR\]/d" "$f"
 	fi
+	menu_nextreload=1
     echo
 }
 
@@ -745,6 +747,7 @@ function action_disable() {
 	local f="$repository_path/${script_name}/"
 	echo -e "  Disabling script ${S_B}${f}${S_R}"
 	touch "${f}/disable"
+	menu_nextreload=1
 	echo
 }
 
@@ -758,6 +761,7 @@ function action_enable() {
 	local f="$repository_path/${script_name}/"
 	echo -e "  Enabling script ${S_B}${f}${S_R}"
 	rm -rf "${f}/disable"
+	menu_nextreload=1
 	echo
 }
 
@@ -777,7 +781,7 @@ function action_hostname() {
 		echo -e "  Enabling hostname flag ${S_B}${f}${S_R}"
 		touch "${f}/hostname"
 	fi
-
+	menu_nextreload=1
 }
 
 
@@ -796,7 +800,7 @@ function action_priority() {
 		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
 		touch "${f}/priority"
 	fi
-
+	menu_nextreload=1
 }
 
 
