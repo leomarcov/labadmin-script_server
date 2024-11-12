@@ -579,7 +579,7 @@ function action_log-show() {
 	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
 
 	echo
-	echo -e "  File ${S_B}$f${S_R}"
+	echo -e "  File ${S_B}${f//\/\//\/}${S_R}"
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 	[ "$action_params" ] && echo -e "  ${S_D}Filtering lines by:${S_R} $action_params"
 	egrep -i --color "${action_params}" "$f"
@@ -595,7 +595,7 @@ function action_status() {
 	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
 
 	echo
-	echo -e "  File stats from file ${S_B}$f${S_R}"
+	echo -e "  File stats from file ${S_B}${f//\/\//\/}${S_R}"
 	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
 
 	[ "$action_params" ] && echo -e "  ${S_D}Filtering hosts by:${S_R} $action_params"
