@@ -339,13 +339,15 @@ function action_map() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: action_labadmin-config
+#        NAME: action_labadmin-conf
 # DESCRIPTION: show labadmin config file for specific lab id
 #  PARAMETERS:
-#	$1	labid
+#	$1		labid
+#	[$2]	$2=-nohost0 skip host 0 MAC and map
 #===============================================================================
-function action_labadmin-config() {
+function action_labadmin-conf() {
 	local lab="$1"
+	local skip_host0=""; [ "$2" = "-nohost0" ] && skip_host0="true"
 
 	# Check lab exists
 	if [ ! "$lab" ] || [ ! "${LAB["$lab"]}" ]; then
@@ -371,17 +373,21 @@ srvmode='${MODE["$lab"]}'
 
 	# Macs
 	echo "# List of hosts MACs"
-	for h in "${!MAC[@]}"; do
-		local hn="${HN["$lab"]}"	# lab hostname
-		local m="${MAC[$h]}"
-		[[ "$h" != "$hn"* ]] && continue	# Skip hostnames not match current lab
-		echo "macs[$((10#${h#${hn}*}))]='${m}'"
+	for h in "${!MAC[@]}"; do					# hostname     (e.g. A11PC33)
+		local hn="${HN["$lab"]}"				# lab hostname (e.g. A11PC)
+		local m="${MAC[$h]}"					# host mac
+		[[ "$h" != "$hn"* ]] && continue		# Skip hostnames not match current lab (e.g. A11PC*)
+		local n=$((10#${h#${hn}*}))	|| exit 1	# host number in lab (e.g. 33)
+		[ "$skip_host0" ] && [ "$n" -eq 0 ] && continue
+		echo "macs["$n"]='${m}'"
 	done | sort -n -k 2 -t '['
 	echo
 
 	# Map
 	echo "# Lab distribution map"
-	echo "map='""${MAP["$lab"]}""'" | sed -E 's/\b0+([1-9][0-9]*)\b/ \1/g' | sed -E 's/\b0+0\b/ 0/g'
+	local map=$(echo "${MAP["$lab"]}" | sed -E 's/\b0+([1-9][0-9]*)\b/ \1/g' | sed -E 's/\b0+0\b/ 0/g')
+	[ "$skip_host0" ] && map=$(echo "$map" | sed -E 's/\b0+\b//g' | sed '/[0-9]/!{/./d}')
+	echo "map='$map'"
 	echo
 }
 
@@ -478,7 +484,8 @@ ${S_B}ACTIONS${S_R}
     ${S_B}get-labs${S_R}                  Get list of labs
     ${S_B}get-hosts${S_R}                 Get list of hosts
 
-    ${S_B}labadmin-config <LAB ID>${S_R}  Get labadmin lab config file for LAB ID
+    ${S_B}labadmin-conf <LAB>${S_R}       Get labadmin lab config file for LAB
+        ${S_B}-nohost0${S_R}                Skip host 0
     "
 }
 
