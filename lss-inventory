@@ -449,6 +449,14 @@ function action_get-hostname() {
 	return 1
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: action_get-epoch
+# DESCRIPTION: get epoch seconds from inventory file last modification time
+#===============================================================================
+function action_get-epoch() {
+	date -d "$(stat -c %y "$inventory_path")" +%s)
+}
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_help
@@ -483,6 +491,7 @@ ${S_B}ACTIONS${S_R}
     ${S_B}get-hostname <MAC>${S_R}        Get hostname from mac
     ${S_B}get-labs${S_R}                  Get list of labs
     ${S_B}get-hosts${S_R}                 Get list of hosts
+    ${S_B}get-epoch${S_R}                 Get epoch seconds from inventory file last modification time 
 
     ${S_B}labadmin-conf <LAB>${S_R}       Get labadmin lab config file for LAB
         ${S_B}-nohost0${S_R}                Skip host 0
