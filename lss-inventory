@@ -454,7 +454,7 @@ function action_get-hostname() {
 # DESCRIPTION: get epoch seconds from inventory file last modification time
 #===============================================================================
 function action_get-epoch() {
-	date -d "$(stat -c %y "$inventory_path")" +%s)"
+	date -d "$(stat -c %y "$inventory_path")" +%s
 }
 
 
