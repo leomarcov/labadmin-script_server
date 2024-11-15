@@ -101,7 +101,7 @@ B_W="\e[107m"           # Background LIGHT WHITE
 function show_header() {
 	clear
 	echo -e "${S_D} ┌──────────────────────────────────────────────────────────────────────────────┐"
-	echo -e " │${S_R}${S_B}                                LABADMIN SCRIPT SERVER ${S_D}                   │"
+	echo -e " │${S_R}${S_B}                             LABADMIN SCRIPT SERVER ${S_D}                          │"
 	echo -e "${S_D} └──────────────────────────────────────────────────────────────────────────────┘${S_R}"
 }
 
