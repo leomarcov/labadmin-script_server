@@ -47,6 +47,7 @@ touch /opt/labadmin-script_server/repositories/{linux,windows}/\*\ LSS\ SET\ HOS
 chown lss-admin:lss-agent /opt/labadmin-script_server
 chmod 750 /opt/labadmin-script_server
 chown -R lss-admin:lss-admin /opt/labadmin-script_server/repositories/
+chmod -R g+w /opt/labadmin-script_server/repositories/
 
 # Make sure ssh user has write permission to log files!:
 find /opt/labadmin-script_server/repositories/ -type f -name log -exec chmod a+w {} \;
