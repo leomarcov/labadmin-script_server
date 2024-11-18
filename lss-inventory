@@ -468,6 +468,15 @@ function action_edit() {
 	"$e" "$inventory_path"
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: action_show
+# DESCRIPTION: show inventory file
+#===============================================================================
+function action_show() {
+	[ ! -r "$inventory_path" ] && { echo "! No read permissions on inventory file: $inventory_path" 1>&2; exit 1; }
+	cat "$inventory_path"
+}
+
 
 #=== FUNCTION ==================================================================
 #        NAME: action_help
@@ -490,6 +499,7 @@ ${S_B}USAGE${S_R}
 ${S_B}ACTIONS${S_R}
     ${S_B}help${S_R}                      Show help
     ${S_B}edit${S_R}                      Edit inventory file
+    ${S_B}show${S_R}                      Show inventory file
     ${S_B}map [PARAMS...]${S_R}           Show maps grid hosts
         ${S_B}-S${S_R}                      Check network and hightlight online hosts 
         ${S_B}-d <LAB DIST>${S_R}           Show only list of LABS
