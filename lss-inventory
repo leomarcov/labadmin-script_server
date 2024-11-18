@@ -459,6 +459,17 @@ function action_get-epoch() {
 
 
 #=== FUNCTION ==================================================================
+#        NAME: action_edit
+# DESCRIPTION: edit inventory file
+#===============================================================================
+function action_edit() {
+	local e=$(which "${EDITOR:-vi}")
+	[ ! -w "$inventory_path" ] && { echo "! No write permissions on inventory file: $inventory_path" 1>&2; exit 1; }
+	"$e" "$inventory_path"
+}
+
+
+#=== FUNCTION ==================================================================
 #        NAME: action_help
 # DESCRIPTION: action_h alias
 #===============================================================================
@@ -478,6 +489,7 @@ ${S_B}USAGE${S_R}
 
 ${S_B}ACTIONS${S_R}
     ${S_B}help${S_R}                      Show help
+    ${S_B}edit${S_R}                      Edit inventory file
     ${S_B}map [PARAMS...]${S_R}           Show maps grid hosts
         ${S_B}-S${S_R}                      Check network and hightlight online hosts 
         ${S_B}-d <LAB DIST>${S_R}           Show only list of LABS
