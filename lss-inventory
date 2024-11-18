@@ -497,9 +497,6 @@ ${S_B}USAGE${S_R}
   $(basename "$0")${S_R} ACTION [PARAMS...]
 
 ${S_B}ACTIONS${S_R}
-    ${S_B}help${S_R}                      Show help
-    ${S_B}edit${S_R}                      Edit inventory file
-    ${S_B}show${S_R}                      Show inventory file
     ${S_B}map [PARAMS...]${S_R}           Show maps grid hosts
         ${S_B}-S${S_R}                      Check network and hightlight online hosts 
         ${S_B}-d <LAB DIST>${S_R}           Show only list of LABS
@@ -508,7 +505,9 @@ ${S_B}ACTIONS${S_R}
         ${S_B}-b <HOST LIST>${S_R}          Hightlight blue HOST LIST (space separated)
         ${S_B}-y <HOST LIST>${S_R}          Hightlight yellow HOST LIST (space separated)
         ${S_B}-r <HOST LIST>${S_R}          Hightlight red HOST LIST (space separated)
-
+    
+    ${S_B}edit${S_R}                      Edit inventory file
+    ${S_B}show${S_R}                      Show inventory file
     ${S_B}get-mac <hostname>${S_R}        Get mac from hostname
     ${S_B}get-hostname <MAC>${S_R}        Get hostname from mac
     ${S_B}get-labs${S_R}                  Get list of labs
