@@ -582,7 +582,7 @@ function action_log-show() {
 	echo -e "  File ${S_B}${f//\/\//\/}${S_R}"
 	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
 	[ "$action_params" ] && echo -e "  ${C_LN}Filtering lines by:${C_D} $action_params"
-	egrep -i --color "${action_params}" "$f"
+	egrep -i --color "${action_params}" "$f" | less +G
 	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
 }
 
