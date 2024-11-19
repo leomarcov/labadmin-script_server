@@ -46,12 +46,12 @@ source ${inventory_path}		# Load inventory file
 #===============================================================================
 #  COLORS AND TEXT
 #===============================================================================
-S_R="\e[0m"            	# Reset all attributes
-S_B="\e[1m"             # Style BOLD
-S_D="\e[2m"             # Style DIM
-S_U="\e[4m"            	# Style UNDERLINE
-S_I="\e[7m"             # Style INVERTED
-S_DL="\e[K"             # Style DELETE TO END OF LINE
+S_R="\e[0m"            		# Reset all attributes
+S_B="\e[1m"             	# Style BOLD
+S_D="\e[2m"		         	# Style DIM
+S_U="\e[4m"            		# Style UNDERLINE
+S_I="\e[7m"             	# Style INVERTED
+S_DL="\e[K"             	# Style DELETE TO END OF LINE
 
 cursor_save()		 { echo -en "\e[s"; }			# Cursor SAVE POSITION
 cursor_restore()	 { echo -en "\e[u"; }			# Cursor RESTORE POSITION
@@ -64,42 +64,42 @@ cursor_move-right()  { echo -en "\e[${1}C"; }		# Cursor MOVE RIGHT $1 COLS
 cursor_move-begin()  { echo -en "\r"; }             # Cursor MOVE BEGIN POSITION IN CURRENT LINE
 cursor_move-pos()    { echo -en "\e[${1};${2}H"; }  # Cursor MOVE LINE $1 COL $2
 
-C_D="\e[39m"            # Color DEFAULT
-C_R="\e[31m"            # Color RED
-C_BR="\e[1m\e[31m"      # Color BOLD RED
-C_LR="\e[91m"           # Color LIGHT RED
-C_G="\e[32m"            # Color GREEN
-C_BG="\e[1m\e[32m"      # Color BOLD GREEN
-C_LG="\e[92m"           # Color LIGHT GREEN
-C_Y="\e[33m"            # Color YELLOW
-C_BY="\e[1m\e[33m"      # Color BOLD YELLOW
-C_LY="\e[93m"           # Color LIGHT YELLOW
-C_B="\e[34m"            # Color BLUE
-C_BB="\e[1m\e[34m"      # Color BOLD BLUE
-C_LB="\e[94m"           # Color LIGHT BLUE
-C_M="\e[35m"            # Color MAGENTA
-C_BM="\e[1m\e[35m"      # Color BOLD MAGENTA
-C_LM="\e[95m"           # Color LIGHT MAGENTA
-C_C="\e[36m"            # Color CYAN
-C_BC="\e[1m\e[36m"      # Color BOLD CYAN
-C_LC="\e[96m"           # Color LIGHT CYAN
-C_N="\e[90m"            # Color GREY
-C_LN="\e[37m"           # Color LIGHT GREY
-B_R="\e[41m"            # Background RED
-B_G="\e[42m"            # Background GREEN
-B_Y="\e[43m"            # Background YELLOW
-B_B="\e[44m"            # Background BLUE
-B_M="\e[45m"            # Background MAGENTA
-B_C="\e[46m"            # Background CYAN
-B_LG="\e[47m"           # Background LIGHT GREY
-B_DG="\e[100m"          # Background DARK GREY
-B_LR="\e[101m"          # Background LIGHT RED
-B_LG="\e[102m"          # Background LIGHT GREEN
-B_LY="\e[103m"          # Background LIGHT YELLOW
-B_LB="\e[104m"          # Background LIGHT BLUE
-B_LM="\e[105m"          # Background LIGHT MAGENTA
-B_LC="\e[106m"          # Background LIGHT CYAN
-B_W="\e[107m"           # Background LIGHT WHITE
+C_D="\e[39m"            	# Color DEFAULT
+C_R="\e[31m"            	# Color RED
+C_BR="\e[1m\e[31m"      	# Color BOLD RED
+C_LR="\e[38;5;196m"         # Color LIGHT RED
+C_G="\e[32m"            	# Color GREEN
+C_BG="\e[1m\e[32m"      	# Color BOLD GREEN
+C_LG="\e[38;5;196m"        	# Color LIGHT GREEN
+C_Y="\e[33m"            	# Color YELLOW
+C_BY="\e[1m\e[33m"      	# Color BOLD YELLOW
+C_LY="\e[38;5;226m"         # Color LIGHT YELLOW
+C_B="\e[34m"            	# Color BLUE
+C_BB="\e[1m\e[34m"      	# Color BOLD BLUE
+C_LB="\e[38;5;110m"    	 	# Color LIGHT BLUE
+C_M="\e[35m"            	# Color MAGENTA
+C_BM="\e[1m\e[35m"      	# Color BOLD MAGENTA
+C_LM="\e[38;5;182m"        	# Color LIGHT MAGENTA
+C_C="\e[36m"            	# Color CYAN
+C_BC="\e[1m\e[36m"      	# Color BOLD CYAN
+C_LC="\e[38;5;159m"        	# Color LIGHT CYAN
+C_N="\e[38;5;241m"          # Color GREY
+C_LN="\e[38;5;248m"         # Color LIGHT GREY
+B_R="\e[41m"            	# Background RED
+B_G="\e[42m"            	# Background GREEN
+B_Y="\e[43m"            	# Background YELLOW
+B_B="\e[44m"            	# Background BLUE
+B_M="\e[45m"            	# Background MAGENTA
+B_C="\e[46m"            	# Background CYAN
+B_LG="\e[47m"           	# Background LIGHT GREY
+B_DG="\e[100m"          	# Background DARK GREY
+B_LR="\e[101m"          	# Background LIGHT RED
+B_LG="\e[102m"          	# Background LIGHT GREEN
+B_LY="\e[103m"          	# Background LIGHT YELLOW
+B_LB="\e[104m"          	# Background LIGHT BLUE
+B_LM="\e[105m"          	# Background LIGHT MAGENTA
+B_LC="\e[106m"          	# Background LIGHT CYAN
+B_W="\e[107m"           	# Background LIGHT WHITE
 
 # LAB COLORS ACCORDING GRID LINE
 declare -A lab_color
