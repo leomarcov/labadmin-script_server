@@ -39,7 +39,7 @@ source "${lss_path}/config"
 #===============================================================================
 S_R="\e[0m"            		# Reset all attributes
 S_B="\e[1m"             	# Style BOLD
-S_D="\e[38;5;248m"         	# Style DIM
+S_D="\e[2m"		         	# Style DIM
 S_U="\e[4m"            		# Style UNDERLINE
 S_I="\e[7m"             	# Style INVERTED
 S_DL="\e[K"             	# Style DELETE TO END OF LINE
@@ -72,8 +72,8 @@ C_LM="\e[38;5;182m"        	# Color LIGHT MAGENTA
 C_C="\e[36m"            	# Color CYAN
 C_BC="\e[1m\e[36m"      	# Color BOLD CYAN
 C_LC="\e[38;5;159m"        	# Color LIGHT CYAN
-C_N="\e[90m"            	# Color GREY
-C_LN="\e[37m"           	# Color LIGHT GREY
+C_N="\e[38;5;241m"          # Color GREY
+C_LN="\e[38;5;248m"         # Color LIGHT GREY
 B_R="\e[41m"            	# Background RED
 B_G="\e[42m"            	# Background GREEN
 B_Y="\e[43m"            	# Background YELLOW
@@ -100,9 +100,9 @@ B_W="\e[107m"           	# Background LIGHT WHITE
 #===============================================================================
 function show_header() {
 	clear
-	echo -e "${S_D} ┌──────────────────────────────────────────────────────────────────────────────┐"
-	echo -e " │${S_R}${S_B}                            LABADMIN SCRIPT SERVER ${S_D}                           │"
-	echo -e "${S_D} └──────────────────────────────────────────────────────────────────────────────┘${S_R}"
+	echo -e "${C_LN} ┌──────────────────────────────────────────────────────────────────────────────┐"
+	echo -e " │${C_D}${S_B}                            LABADMIN SCRIPT SERVER ${C_LN}${S_R}                           │"
+	echo -e "${C_LN} └──────────────────────────────────────────────────────────────────────────────┘${C_D}"
 }
 
 
@@ -134,7 +134,7 @@ function show_menu() {
 	# RELOAD MENU
 	[ "$f_clear" ] && show_header
 	cursor_hide
-	echo -en "\n  ${S_D}Updating scripts info...${S_R}"
+	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
 	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR${S_R}\n"
 
 	# Create scriptlist variables with script names list sorted by flags type and time
@@ -158,7 +158,7 @@ function show_menu() {
 		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${C_D}"									# Flag disabled
 		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${C_D}"									# Flag hostname
 		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${C_D}"									# Flag priority
-		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${S_D}"; }			# Colors when disabled
+		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }		# Colors when disabled index and line
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
 		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
@@ -167,15 +167,15 @@ function show_menu() {
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
 
-		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}""${le}"
+		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}${C_D}"
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
 	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
-	local bar="  $(echo -e "${S_D}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${S_R}")"
+	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
-	local bar2="      $(echo -e "${S_D}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-16)) | tr -d "[0-9]")$(echo -e "${S_R}")"
+	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-16)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	local n=$(echo "${sld} ${slh} ${slp}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
 	menu="\n${menu}\n"
 
@@ -237,7 +237,7 @@ function read_action() {
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
 	# Read prompt: repository/script selected>
-	local prompt="  ${C_Y}${repository}${S_R}$([ "$script_name" ] && echo "/${C_Y}${script_name}${S_R}")> "
+	local prompt="  ${C_Y}${repository}${C_D}$([ "$script_name" ] && echo "/${C_Y}${script_name}${C_D}")> "
 	read -r -e  -p "$(echo -e "$prompt")" action
 
 	action="$(echo "$action" | xargs)"		# Trim and compact spaces
@@ -580,10 +580,10 @@ function action_log-show() {
 
 	echo
 	echo -e "  File ${S_B}${f//\/\//\/}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
-	[ "$action_params" ] && echo -e "  ${S_D}Filtering lines by:${S_R} $action_params"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
+	[ "$action_params" ] && echo -e "  ${C_LN}Filtering lines by:${C_D} $action_params"
 	egrep -i --color "${action_params}" "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
 }
 
 
@@ -596,9 +596,9 @@ function action_status() {
 
 	echo
 	echo -e "  File stats from file ${S_B}${f//\/\//\/}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
 
-	[ "$action_params" ] && echo -e "  ${S_D}Filtering hosts by:${S_R} $action_params"
+	[ "$action_params" ] && echo -e "  ${C_LN}Filtering hosts by:${C_D} $action_params"
 	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
 	pad1="         "; pad2="                         "
 	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
@@ -609,10 +609,10 @@ function action_status() {
 		h_error=$(echo "$h_log" | grep -Fc "[EXEC_ERROR]")
 		h_pending="                   "; echo "$h_log" | tail -1 | grep -vqiF "[EXEC_OK]" && { h_pending="  ${C_R}PENDING!${S_R}         ";  n_pending=$((n_pending+1)); }
 		n_get=$((n_get+h_get)); n_ok=$((n_ok+h_ok)); n_error=$((n_error+h_error));
-		echo -e "${S_D}${pad1:${#i}}$i${S_R}  ${h}$([ "$h_get" -gt 0 ] && echo "${C_Y}")${pad2:$((${#h}+${#h_get}))}  ${h_get}${S_R} GET$([ "${h_ok}" -gt 0 ] && echo "${C_G}")${pad1:${#h_ok}}${h_ok}${S_R} OK$([ "$h_error" -gt 0 ] && echo "${C_R}")${pad1:${#h_error}}${h_error}${S_R} ERRORS${h_pending}${S_D}(${h_last})${S_R}"
+		echo -e "${C_LN}${pad1:${#i}}$i${C_D}  ${h}$([ "$h_get" -gt 0 ] && echo "${C_Y}")${pad2:$((${#h}+${#h_get}))}  ${h_get}${S_R} GET$([ "${h_ok}" -gt 0 ] && echo "${C_G}")${pad1:${#h_ok}}${h_ok}${S_R} OK$([ "$h_error" -gt 0 ] && echo "${C_R}")${pad1:${#h_error}}${h_error}${S_R} ERRORS${h_pending}${C_LN}(${h_last})${C_D}"
 		i=$((i+1))
 	done
-	echo -e "${S_D}  ------------------------------------------------------------------------------------${S_R}"
+	echo -e "${C_LN}  ------------------------------------------------------------------------------------${C_D}"
 	echo -e "${pad1}    ${pad2:${#n_get}}${C_Y}${n_get}${S_R} GET${pad1:${#n_ok}}${C_G}${n_ok}${S_R} OK${pad1:${#n_error}}${C_R}${n_error}${S_R} ERRORS   ${C_R}${n_pending}${S_R} PENDING!"
 	echo
 }
@@ -669,9 +669,9 @@ function action_script() {
 	local f="$repository_path/${script_name}/script"
 	echo
 	echo -e "  File ${S_B}${f}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
 	cat "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
 }
 
 
@@ -684,9 +684,9 @@ function action_select() {
 	local f="$repository_path/${script_name}/select"
 	echo
 	echo -e "  File ${S_B}${f}${S_R}"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
 	cat "$f"
-	echo -en "${S_D}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
 }
 
 
@@ -813,9 +813,9 @@ function action_priority() {
 function action_ls() {
 	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
 	local f="$repository_path/${script_name}/"
-	echo -e "\n${f}${S_D}"
+	echo -e "\n${f}${C_LN}"
 	ls -lh --color "$f" | tail -n +2
-	echo -e "${S_R}"
+	echo -e "${C_D}"
 }
 
 #=== FUNCTION ==================================================================
