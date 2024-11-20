@@ -146,17 +146,17 @@ function inventory_draw_map {
 			if [ "$h" -eq "$h" ] &>/dev/null; then
 				hn="${HN[$lab_id]}${h}"
 				mac=${MAC["$hn"]}
-				# Red ID (MAC not found in config file)
+				# Grey color: MAC not found in config file
 				if [ ! "$mac" ]; then 
-					color="${S_D}";
-				# Color host
+					color="${C_N}";
+				# Color host selected 
 				elif [ "${hosts_colors["$hn"]}" ]; then 
 					color="${hosts_colors["$hn"]}"
 					count_hosts_sel=$((count_hosts_sel+1))
 					colors_hosts["$color"]=$((${colors_hosts["$color"]}+1))
-				# White ID (MAC not found in arp file)
+				# White color: MAC not found in arp file
 				else 
-					color="${S_R}"
+					color="${C_D}"
 					count_hosts_unsel=$((count_hosts_unsel+1))
 				fi
 				[[ "$h" = 00 ]] && color="${color}${S_B}"
