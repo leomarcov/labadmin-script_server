@@ -154,11 +154,11 @@ function show_menu() {
 		script_path="${repository_path}/${s}"
 		scripts[$i]="$s"		# Update scripts[] found
 
-		local f=" "; 
-		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${C_D}"									# Flag disabled
-		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${C_D}"									# Flag hostname
-		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${C_D}"									# Flag priority
-		local ci="" cl=""; [ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }		# Colors when disabled index and line
+		local f=" " ci="${C_D}" cl="${C_D}"
+		[ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
+		[ -e "${script_path}"/disable ] && f="${f}${C_LR}D${cl}"									# Flag disabled
+		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${cl}"									# Flag hostname
+		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${cl}"									# Flag priority
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
 		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
