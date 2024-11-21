@@ -135,7 +135,7 @@ function show_menu() {
 	[ "$f_clear" ] && show_header
 	cursor_hide
 	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
-	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
+	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR\t LAST${S_R}\n"
 
 	# Create scriptlist variables with script names list sorted by flags type and time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
@@ -167,8 +167,8 @@ function show_menu() {
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
 		local t=$(($(date +%s)-$(date -d "$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")" +%s)))                # seconds ago
-		local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))" pad4="     " 												# days ago hours ago mins ago
-		[ "$td" -gt 0 ] && t="\e[38;5;241m${pad4:${#td}}${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${pad4:${#th}}${th}h" || t="\e[38;5;249m${pad4:${#tm}}${tm}m"; }
+		local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))" pad3="   " 													# days ago hours ago mins ago
+		[ "$td" -gt 0 ] && t="\e[38;5;241m${pad3:${#td}}${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${pad3:${#th}}${th}h" || t="\e[38;5;249m${pad3:${#tm}}${tm}m"; }
 
 		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t ${ne} ${S_R}${C_D}\t${C_LN}${t}"
 		i=$((i+1))
