@@ -176,9 +176,9 @@ function show_menu() {
 	IFS="$IFS2"
 	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
 	menu=$(echo -e "${menu}" | column -t -s $'\t')
-	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-2)) | tr -d "[0-9]")$(echo -e "${C_D}")"
+	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
-	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-16)) | tr -d "[0-9]")$(echo -e "${C_D}")"
+	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-12)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	local n=$(echo "${sld} ${slh} ${slp}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
 	menu="\n${menu}\n"
 
