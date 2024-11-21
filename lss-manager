@@ -167,8 +167,8 @@ function show_menu() {
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
 		local t=$(($(date +%s)-$(date -d "$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")" +%s)))                # seconds ago
-		local td="$((t/86400))d" th="$(((t%86400)/3600))h" tm="$(((t%3600)/60))m" pad4="     "	pad2="   "; [ "$td" = "0d" ] && td="  "		# days ago hours ago mins ago
-		
+		local td="$((t/86400))d" th="$(((t%86400)/3600))h" tm="$(((t%3600)/60))m" pad4="     "	pad2="   "; 								# days ago hours ago mins ago
+		[ "$td" = "0d" ] && [ "$th" = "0h" ] && th="  "; [ "$td" = "0d" ] && td="  "; 
 
         menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}${C_D}\t    ${C_LN}${pad4:${#td}}${td} ${pad2:${#th}}${th} ${pad2:${#tm}}${tm}"                                                                                                              
 		i=$((i+1))
