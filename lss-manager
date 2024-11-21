@@ -135,7 +135,7 @@ function show_menu() {
 	[ "$f_clear" ] && show_header
 	cursor_hide
 	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
-	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR$\tLAST{S_R}\n"
+	menu="  ${S_B}\tRE\tSCRIPT\tFLAGS\tSELECT\tGET\tOK\tERROR\tLASTS{S_R}\n"
 
 	# Create scriptlist variables with script names list sorted by flags type and time
 	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" sl=""
