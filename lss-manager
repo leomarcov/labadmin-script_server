@@ -168,7 +168,7 @@ function show_menu() {
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
 		local t=$(($(date +%s)-$(date -d "$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")" +%s)))                # seconds ago
 
-        menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}${C_D}\t     ${C_LN}($((t/86400))d $(((t%86400)/3600))h $(((t%3600)/60))m)"                                                                                                              
+        menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng} ${lg}\t${no} $lo\t${ne} ${S_R}${C_D}\t     ${C_LN}($( echo "$((t/86400))d $(((t%86400)/3600))h $(((t%3600)/60))m)" | sed 's/\([( ]\)\([0-9]\)\([dhm]\)/\1 \2\3/g')"                                                                                                              
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
