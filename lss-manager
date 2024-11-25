@@ -167,7 +167,7 @@ function show_menu() {
 		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
 		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
 		local t=$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")													# last log time
-		if [ ! "$t" ]; then t="-"
+		if [ ! "$t" ]; then t="\e[38;5;241m-"
 		else t=$(($(date +%s)-$(date -d "$t" +%s))); local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))"
 		[ "$td" -gt 0 ] && t="\e[38;5;241m${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${th}h" || t="\e[38;5;249m${tm}m"; }; fi
 
