@@ -232,16 +232,18 @@ function action_list() {
 		[ "$priority_list" ] && [ ! -e "${sp}/priority" ] && continue
 		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] && { priority_list="true"; unset list; }
 
-		# ADD CLIENT OPTIONS AFTER SCRIPT NAME: ... /OPTION1 /OPTION2 ...
+		# Add client options after script name: ... /OPTION1 /OPTION2 ...
 		if [ "$agent_version" -ge 20260200 ]; then
 			# OPTION NOSAVELOG
 			[ -f "${repository_path}/NOSAVELOG" ] && s="${s} /NOSAVELOG"
-			# OPTION PRIORITARY
-			[ -f "${repository_path}/PRIORITARY" ] && s="${s} /PRIORITARY"
 		fi
 
 		# Add script to list
-		list="${list}${list:+$'\n'}${s}"
+		if [ -f "${repository_path}/PRIORITARY" ]; then			# PRIORITARY script -> add first on list
+			list="${s}${list:+$'\n'}${list}"
+		else
+			list="${list}${list:+$'\n'}${s}"
+		fi
 	done
 	IFS="$IFS2"
 
