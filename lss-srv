@@ -239,7 +239,7 @@ function action_list() {
 		fi
 
 		# Add script to list
-		if [ -f "${repository_path}/PRIORITARY" ]; then			# PRIORITARY script -> add first on list
+		if [ -f "${repository_path}/first" ]; then			# FIRST script -> add first on list
 			list="${s}${list:+$'\n'}${list}"
 		else
 			list="${list}${list:+$'\n'}${s}"
