@@ -152,11 +152,11 @@ function log() {
 	local sp="$4"                     # script path
 	local em="$5"                     # exec message
 	local sn=$(basename "$sp")        # script name
-	
+
 	# Save file log
 	[ ! "$sp" ] && sp="${repository_path}"  # Save script log or lss log
-	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
-	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}} ${em}" >> "${sp}/log"
+	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           "
+	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}}" >> "${sp}/log"
 
 	# Send mail log
 	if [[ "${a,,}" = *error* ]]; then
@@ -214,7 +214,7 @@ function action_list() {
 
 		# Check repository directory format
 		[ ! -d "${sp}" ] || [ ! "$sn" ] || [ ! "${sre}" ] && continue
-	
+
 		# Check intentory hostname script
 		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
 		[ "$check_hostnames" ]   && [ ! "$hostname_match" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
@@ -223,7 +223,7 @@ function action_list() {
 		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
 
 		# Check script is disabled
-		[ -e "${sp}/disable" ] && continue		
+		[ -e "${sp}/disable" ] && continue
 
 		# Check hostname is selected
 		bash "${sp}/select" "$hostname" "$mac" "$hostname_inventory" "$agent_version" || continue
@@ -234,12 +234,11 @@ function action_list() {
 
 		# Add client options after script name: ... /OPTION1 /OPTION2 ...
 		if [ "$agent_version" -ge 20260200 ]; then
-			# OPTION NOSAVELOG
-			[ -f "${repository_path}/NOSAVELOG" ] && s="${s} /NOSAVELOG"
+			[ -f "${sp}/nosavelog" ] && s="${s} /NOSAVELOG"
 		fi
 
 		# Add script to list
-		if [ -f "${repository_path}/first" ]; then			# FIRST script -> add first on list
+		if [ -f "${sp}/first" ]; then			# FIRST script -> add first on list
 			list="${s}${list:+$'\n'}${list}"
 		else
 			list="${list}${list:+$'\n'}${s}"
@@ -265,8 +264,8 @@ function action_get() {
 	if [ $? -ne 0 ]; then
 		log "$mac" "$hostname" "get_error" "$script_path" "Error reading script $script_path"
 		exit 1
-	fi	
-	
+	fi
+
 	# HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
 	if [ -e "${script_path}/hostname" ]; then
 		if ! get_hostname_inventory "$mac"; then
@@ -275,7 +274,7 @@ function action_get() {
 		fi
 		if ! echo "$c" | grep -q "LSS-HOSTNAME-REPLACE"; then
 			log "$mac" "$hostname" "get_error" "$script_path" "Not found replace token LSS-HOSTNAME-REPLACE in hostname script ${script_path}"
-			exit 1	
+			exit 1
 		fi
 		c=$(echo "$c" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g")
 		em="${hostname} -> ${hostname_inventory}"
@@ -284,7 +283,7 @@ function action_get() {
 	# PRINT SCRIPT
 	echo "$c"
 	log "$mac" "$hostname" "$action" "$script_path" "$em"
-	exit 0 
+	exit 0
 }
 
 
@@ -303,7 +302,7 @@ function action_exec_ok() {
 # DESCRIPTION: Notify error execution
 #===============================================================================
 function action_exec_error() {
-	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg" 
+	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg"
 }
 
 
