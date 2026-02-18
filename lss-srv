@@ -236,6 +236,8 @@ function action_list() {
 		if [ "$agent_version" -ge 20260200 ]; then
 			# OPTION NOSAVELOG
 			[ -f "${repository_path}/NOSAVELOG" ] && s="${s} /NOSAVELOG"
+			# OPTION PRIORITARY
+			[ -f "${repository_path}/PRIORITARY" ] && s="${s} /PRIORITARY"
 		fi
 
 		# Add script to list
