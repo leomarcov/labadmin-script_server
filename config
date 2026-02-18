@@ -15,6 +15,6 @@
 #===============================================================================
 readonly log_mail="logs.carlos3@gmail.com"								# Email to send log errors
 readonly repositories_path="${lss_path}/repositories/"					# Base path of scripts repositories dirs: linux, w7, w10, etc.
-check_hostnames="true"													# Empty value -> no check and hostnames from inventory data
+check_hostnames="true"													# Empty value -> no check hostnames from inventory data
 
 
