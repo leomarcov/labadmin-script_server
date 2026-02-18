@@ -233,7 +233,7 @@ function action_list() {
 		[ ! "$priority_list" ] && [ -e "${sp}/priority" ] && { priority_list="true"; unset list; }
 
 		# ADD CLIENT OPTIONS AFTER SCRIPT NAME: ... /OPTION1 /OPTION2 ...
-		if [ "$agent_version" -ge 20261100 ]; then
+		if [ "$agent_version" -ge 20260200 ]; then
 			# OPTION NOSAVELOG
 			[ -f "${repository_path}/NOSAVELOG" ] && s="${s} /NOSAVELOG"
 		fi
