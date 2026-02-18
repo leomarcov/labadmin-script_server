@@ -138,7 +138,7 @@ function show_menu() {
 	menu="  ${S_B}\tRE\tSCRIPT\tFLAG\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
 
 	# Create scriptlist variables with script names list sorted by flags type and time
-	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" slf="" sl=""
+	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" slf="" sll="" sl=""
 	for s in $(ls "${repository_path}"/*/log | sed 's/\/log$//' | sort -n); do
 		s=$(basename "$s"); sp="${repository_path}/${s}"
 		[ ! -d "${sp}" ] && continue
@@ -146,12 +146,13 @@ function show_menu() {
 		[ -e "${sp}/hostname" ] && { slh="$slh"$'\n'"$s"; continue; }
 		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
 		[ -e "${sp}/first" ] && { slf="$slf"$'\n'"$s"; continue; }
+		[ -e "${sp}/nosavelog" ] && { sll="$sll"$'\n'"$s"; continue; }
 		sl="$sl"$'\n'"$s"
 	done
 
 	# Create menu variable with script list 
 	i=1; unset scripts
-	for s in $sld $slh $slp $slf $sl; do
+	for s in $sld $slh $slp $slf $sll $sl; do
 		script_path="${repository_path}/${s}"
 		scripts[$i]="$s"		# Update scripts[] found
 
@@ -159,8 +160,9 @@ function show_menu() {
 		[ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
 		[ -e "${script_path}"/disable ] && f="${f}${C_R}D${cl}"										# Flag disabled
 		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${cl}"									# Flag hostname
-		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${cl}"									# Flag priority
+		[ -e "${script_path}"/priority ] && f="${f}${C_B}P${cl}"									# Flag priority
 		[ -e "${script_path}"/first ] && f="${f}${C_LG}F${cl}"										# Flag first
+		[ -e "${script_path}"/nosavelog ] && f="${f}${C_LB}L${cl}"									# Flag nosavelog
 		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
 
 		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
@@ -182,7 +184,7 @@ function show_menu() {
 	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
 	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")"
-	local n=$(echo "${sld} ${slh} ${slp} ${slf}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
+	local n=$(echo "${sld} ${slh} ${slp} ${slf} ${sll}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
 	menu="\n${menu}\n"
 
 	echo -e "$menu"
@@ -238,7 +240,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  hostname  priority  first  log  status  map  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  hostname  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -368,7 +370,8 @@ function action_h() {
     ${S_B}enable${S_R}\tEnable selected script
     ${S_B}hostname${S_R}\tToogle hostname flag on selected script
     ${S_B}priority${S_R}\tToogle priority flag on selected script
-	${S_B}first${S_R}\tToogle first flag on selected script
+    ${S_B}first${S_R}\tToogle first flag on selected script
+    ${S_B}nosavelog${S_R}\tToogle nosavelog flag on selected script
     ${S_B}delete${S_R}\tDelete selected script
     ${S_B}set-name${S_R}\tChange name of selected script
     ${S_B}set-RE${S_R}\tChange RE of selected script
@@ -828,6 +831,25 @@ function action_first() {
 	fi
 	menu_nextreload=1
 }
+
+#=== FUNCTION ==================================================================
+#        NAME: action_nosavelog
+# DESCRIPTION: action to toogle nosavelog flag on selected script
+#===============================================================================
+function action_nosavelog() {
+    [ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+    local f="$repository_path/${script_name}/"
+
+    if [ -e "${f}/nosavelog" ]; then
+        echo -e "  Disabling nosavelog flag ${S_B}${f}${S_R}"
+        rm -rf "${f}/nosavelog"
+    else
+        echo -e "  Enabling nosavelog flag ${S_B}${f}${S_R}"
+        touch "${f}/nosavelog"
+    fi
+    menu_nextreload=1
+}
+
 
 
 
