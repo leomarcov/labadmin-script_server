@@ -1,235 +1,914 @@
 #!/usr/bin/env bash
 #===================================================================================
-# LABADMIN SCRIPT SERVER AGENT FOR LINUX
-#         FILE: labadmin-script_server_agent
-#  DESCRIPTION: Labadmin script server client agent for Linux hosts
+# LABADMIN SCRIPT MANAGER
+#         FILE: lss-manager
+#        USAGE: lss-manager [-r repository]
+#
+#  DESCRIPTION: Labadmin Script Server Manager for script configuration and log viewer
+#               CLI to interac over scripts and logs
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
-#      VERSION: 2026.02
+#      VERSION: 2024.11
 #      CREATED: 2022.06.28
 #=================================================================================== 
-
-
-#===============================================================================
-#  LOAD GLOBAL CONFIG
-#===============================================================================
-readonly agent_path="$(dirname "$(readlink -f "$0")")"					# Agent installed path
-source "${agent_path}/config"
 
 #===============================================================================
 #  GLOBAL VARIABLES
 #===============================================================================
-readonly hostname=$(hostname)											# Hostname
-readonly sshcmd="/opt/labadmin-script_server/lss-srv"					# Labadmin script server command path in remote server
-readonly agent_version=$(cat "${agent_path}/version" 2>/dev/null)		# Agent version
-readonly log_file="${log_path}/log"                                     # Log file where save action logs
-readonly scripts_path="${log_path}/scripts"                             # Log directory where save scripts and exec logs
+readonly lss_path=$(dirname "$(readlink -f "$0")")				# LSS root path
+readonly lssinventory_path="${lss_path}/lss-inventory"			# lss-inventory executable path
+unset repository												# Current selected repository
+unset repository_path											# Current selected repository path
+unset script_name												# Current selected script name
+unset scripts													# Array for list of scripts loades
+unset menu														# Saved menu list script
+unset menu_nextreload											# Force next menu reload
+unset menu_path													# Temp dir to create file for read autocomplete
+unset action													# Current selected action
+unset action_params												# Action params
+
+#===============================================================================
+#  LOAD CONFIG
+#===============================================================================
+source "${lss_path}/config"
+
+
+#===============================================================================
+#  COLORS AND FORMAT
+#===============================================================================
+S_R="\e[0m"            		# Reset all attributes
+S_B="\e[1m"             	# Style BOLD
+S_D="\e[2m"		         	# Style DIM
+S_U="\e[4m"            		# Style UNDERLINE
+S_I="\e[7m"             	# Style INVERTED
+S_DL="\e[K"             	# Style DELETE TO END OF LINE
+cursor_save()		 { echo -en "\e[s"; }			# Cursor SAVE POSITION
+cursor_restore()	 { echo -en "\e[u"; }			# Cursor RESTORE POSITION
+cursor_hide()		 { echo -en "\e[?25l"; }		# Cursor HIDE CURSOR
+cursor_show()		 { echo -en "\e[?25h"; }		# Cursor SHOW CURSOR
+cursor_move-up()	 { echo -en "\e[${1}A"; }		# Cursor MOVE UP $1 LINES
+cursor_move-down()	 { echo -en "\e[${1}B"; }		# Cursor MOVE DOWN $1 LINES
+cursor_move-left()	 { echo -en "\e[${1}D"; }		# Cursor MOVE LEFT $1 COLS
+cursor_move-right()  { echo -en "\e[${1}C"; }		# Cursor MOVE RIGHT $1 COLS
+cursor_move-begin()  { echo -en "\r"; }             # Cursor MOVE BEGIN POSITION IN CURRENT LINE
+cursor_move-pos()    { echo -en "\e[${1};${2}H"; }  # Cursor MOVE LINE $1 COL $2
+C_D="\e[39m"            	# Color DEFAULT
+C_R="\e[31m"            	# Color RED
+C_BR="\e[1m\e[31m"      	# Color BOLD RED
+C_LR="\e[38;5;196m"         # Color LIGHT RED
+C_G="\e[32m"            	# Color GREEN
+C_BG="\e[1m\e[32m"      	# Color BOLD GREEN
+C_LG="\e[38;5;112m"        	# Color LIGHT GREEN
+C_Y="\e[33m"            	# Color YELLOW
+C_BY="\e[1m\e[33m"      	# Color BOLD YELLOW
+C_LY="\e[38;5;185m"         # Color LIGHT YELLOW
+C_B="\e[34m"            	# Color BLUE
+C_BB="\e[1m\e[34m"      	# Color BOLD BLUE
+C_LB="\e[38;5;110m"    	 	# Color LIGHT BLUE
+C_M="\e[35m"            	# Color MAGENTA
+C_BM="\e[1m\e[35m"      	# Color BOLD MAGENTA
+C_LM="\e[38;5;182m"        	# Color LIGHT MAGENTA
+C_C="\e[36m"            	# Color CYAN
+C_BC="\e[1m\e[36m"      	# Color BOLD CYAN
+C_LC="\e[38;5;159m"        	# Color LIGHT CYAN
+C_N="\e[38;5;241m"          # Color GREY
+C_LN="\e[38;5;248m"         # Color LIGHT GREY
+B_R="\e[41m"            	# Background RED
+B_G="\e[42m"            	# Background GREEN
+B_Y="\e[43m"            	# Background YELLOW
+B_B="\e[44m"            	# Background BLUE
+B_M="\e[45m"            	# Background MAGENTA
+B_C="\e[46m"            	# Background CYAN
+B_LG="\e[47m"           	# Background LIGHT GREY
+B_DG="\e[100m"          	# Background DARK GREY
+B_LR="\e[101m"          	# Background LIGHT RED
+B_LG="\e[102m"          	# Background LIGHT GREEN
+B_LY="\e[103m"          	# Background LIGHT YELLOW
+B_LB="\e[104m"          	# Background LIGHT BLUE
+B_LM="\e[105m"          	# Background LIGHT MAGENTA
+B_LC="\e[106m"          	# Background LIGHT CYAN
+B_W="\e[107m"           	# Background LIGHT WHITE
+
 
 
 
 
 #=== FUNCTION ==================================================================
-#        NAME: log
-# DESCRIPTION: write in log file using format: [DATETIME] [ACTION]  EXEC_MSG
+#        NAME: show_header
+# DESCRIPTION: show header and cleaer screen
 #===============================================================================
-function log() {
-	local action="$1"
-	local script="$2"
-	local exec_msg="$3"
-
-	action_width=11
-	action="[${action^^}]$(seq -s" " 1 $(($action_width-${#action}))|tr -d "[0-9]")"
-	[ "$script" ] && script="[$script]"
-
-	log_msg="[$(date "+%Y-%m-%d %H:%M:%S")] ${action} ${script}"
-	[[ "$action" = *LIST* ]] && log_msg="└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n\n┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n${log_msg}"
-	if [[ "$action" = *EXEC* ]]; then
-		log_msg="${log_msg} -> '${exec_msg}'"
-	else
-		exec_msg="    ${exec_msg//$'\n'/$'\n    '}"      # Add spaces at begining each line
-		log_msg="${log_msg}\n${exec_msg}"
-	fi
-	[[ "$action" = *LIST* ]] && log_msg="${log_msg}\n"
-	echo -e "${log_msg}" >> "$log_file"
+function show_header() {
+	clear
+	echo -e "${C_LN} ┌──────────────────────────────────────────────────────────────────────────────┐"
+	echo -e " │                            ${C_D}${S_B}LABADMIN SCRIPT SERVER ${S_R}${C_LN}                           │"
+	echo -e " └──────────────────────────────────────────────────────────────────────────────┘${C_D}"
 }
 
 
+
 #=== FUNCTION ==================================================================
-#        NAME: call_script_server
-# DESCRIPTION: call ssh labadmin_script-server manager
+#        NAME: show_menu
+# DESCRIPTION: show list of current repository scripts and log statics
 # PARAMETERS:
-#	$1 	action
-#	$2 	script
-#	$3 	exec_msg
+#	-c	clear screen and show menu before show menu
+#	-r	reload menu and stats (by default no reaload)
+# GLOBAL VARIABLES MODIFIED
+#	$scripts[]
 #===============================================================================
-function call_script_server() {
-	local action="$1"
-	local script="$2"
-	local exec_msg="$3"
-
-	# Args array
-	args=()
-	[ -n "$action" ]        && args+=(-a "$action")
-	[ -n "$script" ]        && args+=(-s "$script")
-	[ -n "$exec_msg" ]      && args+=(-m "$exec_msg")
-	[ -n "$agent_version" ] && args+=(-v "$agent_version")
-
-	# Save remote command scaped en remote_cmd variable
-	printf -v remote_cmd '%q ' bash "$sshcmd" -h "$hostname" -M "$mac" -r "$repository" "${args[@]}"
-
-	# SSH exec
-	ssh 2>&1 -n -T -i "$sshprivatekey_path" "${sshuser}@${sshaddress}" -p "$sshport" "$remote_cmd"
-
-	return $?
-}
-
-
-#=== FUNCTION ==================================================================
-#        NAME: wait_connection
-# DESCRIPTION: wait until server connection is active
-#===============================================================================
-function wait_connection() {
-	n=10	# Number of tries
-	d=10	# Delay in seconds in each time
-
-	for i in $(seq 1 $n); do
-		nc -z "$sshaddress" "$sshport" &>/dev/null && return 0
-		echo "Waiting for server connection..."
-		sleep $d
+function show_menu() {
+	# READ PARAMS
+	local f_reload f_clear opt OPTIND
+	while getopts "rc" o; do
+		case $o in
+		r) f_reload=1			;;
+		c) f_clear=1			;;
+		esac
 	done
-	echo -e "\e[1m\e[31mTimeout waiting for server connection\e[0m"
-	exit 1
+	[ ! "${scripts[*]}" ] && f_reload=1
+	[ "$menu_nextreload" ] && { f_reload=1; unset menu_nextreload; }
+
+	# SHOW SAVED MENU
+	[ ! "$f_reload" ] && { echo -e "$menu"; return; }
+
+	# RELOAD MENU
+	[ "$f_clear" ] && show_header
+	cursor_hide
+	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
+	menu="  ${S_B}\tRE\tSCRIPT\tFLAG\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
+
+	# Create scriptlist variables with script names list sorted by flags type and time
+	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" slf="" sll="" sl=""
+	for s in $(ls "${repository_path}"/*/log | sed 's/\/log$//' | sort -n); do
+		s=$(basename "$s"); sp="${repository_path}/${s}"
+		[ ! -d "${sp}" ] && continue
+		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
+		[ -e "${sp}/hostname" ] && { slh="$slh"$'\n'"$s"; continue; }
+		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
+		[ -e "${sp}/first" ] && { slf="$slf"$'\n'"$s"; continue; }
+		[ -e "${sp}/nosavelog" ] && { sll="$sll"$'\n'"$s"; continue; }
+		sl="$sl"$'\n'"$s"
+	done
+
+	# Create menu variable with script list 
+	i=1; unset scripts
+	for s in $sld $slh $slp $slf $sll $sl; do
+		script_path="${repository_path}/${s}"
+		scripts[$i]="$s"		# Update scripts[] found
+
+		local f=" " ci="${C_D}" cl="${C_D}"
+		[ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
+		[ -e "${script_path}"/disable ] && f="${f}${C_R}D${cl}"										# Flag disabled
+		[ -e "${script_path}"/hostname ] && f="${f}${C_Y}H${cl}"									# Flag hostname
+		[ -e "${script_path}"/priority ] && f="${f}${C_B}P${cl}"									# Flag priority
+		[ -e "${script_path}"/first ] && f="${f}${C_LG}F${cl}"										# Flag first
+		[ -e "${script_path}"/nosavelog ] && f="${f}${C_LB}L${cl}"									# Flag nosavelog
+		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
+
+		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
+		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
+		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
+		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
+		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
+		local t=$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")													# last log time
+		if [ ! "$t" ]; then t="\e[38;5;241m-"
+		else t=$(($(date +%s)-$(date -d "$t" +%s))); local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))"
+		[ "$td" -gt 0 ] && t="\e[38;5;241m${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${th}h" || t="\e[38;5;249m${tm}m"; }; fi
+
+		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng}${lg}\t${no}$lo\t${ne}${S_R}${C_D}\t${C_LN}${t}"
+		i=$((i+1))
+	done 
+	IFS="$IFS2"
+	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
+	menu=$(echo -e "${menu}" | column -t -s $'\t' -R 6,7,8,9)
+	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
+	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
+	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")"
+	local n=$(echo "${sld} ${slh} ${slp} ${slf} ${sll}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
+	menu="\n${menu}\n"
+
+	echo -e "$menu"
+	cursor_show
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: change_repository
+# DESCRIPTION: change current repository and show menu
+# PARAMETERS
+#	$1		repository name
+#
+# GLOBAL VARIABLES MODIFIED
+#	$repository
+#	$repository_path
+#	$script_name
+#	$scripts
+#
+# RETURN
+#	0 if repository change is ok
+#	1 if cant change repository (not exists?)
+#===============================================================================
+function change_repository() {
+	local r="$1"
+
+	# Check if exist repository
+	[ ! -d "${repositories_path}/${r}" ] && return 1
+	[[ $(readlink -f "${repositories_path}/${r}") = $(readlink -f "${repositories_path}") ]] && return 1		# Check if try directory outside repositories_path
+	[[ $(readlink -f "${repositories_path}/${r}") != $(readlink -f "${repositories_path}")* ]] && return 1		# Check if try directory outside repositories_path
+
+	repository="$r"
+	repository_path="${repositories_path}/${repository}/"
+	unset script_name
+	unset scripts
+
+	echo -e "\n  ${repository^^} REPOSITORY"
+	show_menu -c
+	return 0
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: read_action
+# DESCRIPTION: prompt for action to exec and change repository
+# GLOBAL VARIABLES MODIFIED
+#	$action
+#	$action_params
+#===============================================================================
+function read_action() {
+	# Generate actions files for read tab autocomplete
+	if [ ! "$menu_path" ]; then
+	   menu_path=$(mktemp -d)
+	   mkdir "${menu_path}/script" "${menu_path}/root"
+	   cd "${menu_path}/root/"; touch cd create help list
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  hostname  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select
+	fi
+	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
+
+	# Read prompt: repository/script selected>
+	local prompt="  ${C_Y}${repository}${C_D}$([ "$script_name" ] && echo "/${C_Y}${script_name}${C_D}")> "
+	read -r -e  -p "$(echo -e "$prompt")" action
+
+	action="$(echo "$action" | xargs)"		# Trim and compact spaces
+	action_params="${action#* }"
+	[ "$action_params" = "$action" ] && action_params=""
+	action="${action%% *}"
+
+	# Empty action: list
+	if [ ! "$action" ]; then
+		action="list-noreload"
+
+	# Action <n>: cd <n>
+	elif [ "$action" -eq "$action" ] &>/dev/null; then
+		action_params="$action"
+		action="cd"
+
+	# Action repository name
+	elif change_repository "$action"; then
+		action="none"
+	fi
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_none
+# DESCRIPTION: empty action (do nothing and show menu again)
+#===============================================================================
+
+function action_none() {
+	return
+}
+
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_cd
+# DESCRIPTION: change selected script according $action and $actions_params
+#				cd | cd .. 	unselect current script
+#				cd <n>		select <n> script
+#				cd <str>	select string contaning <str> in name
+#
+# GLOBAL VARIABLES MODIFIED
+#   $action
+#   $action_params
+#===============================================================================
+function action_cd() {
+		# cd parent
+        if [ ! "$action_params" ] || [ "$action_params" = ".." ]; then
+            action_..
+
+		# cd <n>
+		elif [ "$action_params" -eq "$action_params" ] &>/dev/null; then
+            script_name="${scripts[$action_params]}"
+            [ ! "$script_name" ] && echo -e "  Invalid script number!\n"
+
+		# cd <string>
+		else
+            local s=""
+            s=$(for i in ${!scripts[@]}; do
+			echo "${scripts[$i]}" | grep -Fi "$action_params"
+            done)
+            if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
+                echo "$s"
+                echo
+            elif [ "$s" ]; then
+                script_name="$s"
+            else
+                echo "  Script not found $action_params"
+            fi
+        fi
+}
+
+
+
+#=== FUNCTION ==================================================================
+#        NAME: exec_action
+# DESCRIPTION: exec function of selected action
+#===============================================================================
+function exec_action() {
+	action_function="action_${action}"
+	if [ "$(type -t "$action_function")" != "function" ]; then
+		echo -e "  Unrecognized action: $action\n"
+		return 1
+	fi
+	"$action_function"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_help
+# DESCRIPTION: action_h alias
+#===============================================================================
+function action_help() {
+	action_h
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_h
+# DESCRIPTION: action to show help
+#===============================================================================
+function action_h() {
+	echo -e "
+   Global actions:
+    ${S_B}list${S_R}\tList scripts and stats
+    ${S_B}create${S_R}\tCreate new script folder with default template files
+    ${S_B}cd <n>${S_R}\tSelect script number <n>
+    ${S_B}<n>${S_R}\tSelect script number <n>
+    ${S_B}cd <str>${S_R}\tSelect script contaning str in name
+    ${S_B}<repo>${S_R}\tChange to repository <repo>
+
+   Script actions:
+    ${S_B}bash${S_R}\tOpen Bash in selected script directory
+    ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
+    ${S_B}map [LAB...]${S_R}\tShow exec stats in a map. Optionaly show only a list of LABS
+    ${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
+    ${S_B}log-wipe${S_R}\tWipe log file of selected script
+    ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
+    ${S_B}script${S_R}\tShow script file of selected script
+    ${S_B}select${S_R}\tShow select file of selected script
+    ${S_B}disable${S_R}\tDisable selected script
+    ${S_B}enable${S_R}\tEnable selected script
+    ${S_B}hostname${S_R}\tToogle hostname flag on selected script
+    ${S_B}priority${S_R}\tToogle priority flag on selected script
+    ${S_B}first${S_R}\tToogle first flag on selected script
+    ${S_B}nosavelog${S_R}\tToogle nosavelog flag on selected script
+    ${S_B}delete${S_R}\tDelete selected script
+    ${S_B}set-name${S_R}\tChange name of selected script
+    ${S_B}set-RE${S_R}\tChange RE of selected script
+
+    " | column -L -t -s $'\t'
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_list-noreload
+# DESCRIPTION: action to show scripts menu and no reload
+#===============================================================================
+function action_list-noreload() {
+	show_menu
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_l
+# DESCRIPTION: action to show scripts menu
+#===============================================================================
+function action_l() {
+    show_menu -r -c
+}
+
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_list
+# DESCRIPTION: action to show scripts menu
+#===============================================================================
+function action_list() {
+	show_menu -r -c
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_create
+# DESCRIPTION: create new empty script
+#===============================================================================
+function action_create() {
+    read -r -p "  Regular expresion: " re
+    read -r -p "  Description: " d
+    local f="$repository_path/${re} ${d}"
+
+	# Create directory and files and set permissions
+    mkdir "$f" || return 1
+    touch "${f}/disable"                               # Start disabled
+    touch "$f/log" "$f/script" "$f/select"
+	mkdir "$f/logs"
+    chmod ug+w "$f/log" "$f/logs"
+	[ $(id -u) -eq 0 ] && chown -R lss-admin:lss-agent "${repository_path}"
+
+echo '#!/usr/bin/env bash
+#===================================================================================
+# SELECT SCRIPT
+#         FILE: select
+#        USAGE: select HOSTNAME MAC HOSTNAME_INVENTORY AGENT_VERSION
+#
+#  DESCRIPTION: Check if hostname is selected for exec this script or not (exit with 0 or 1)
+#               Use select_type variable to config select beahvior.
+#               Optionaly compelte select_custom() for custom selection
+#
+#       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
+#      LICENSE: GNU General Public License v3.0
+#      VERSION: 2024.11
+#      CREATED: 2022.06.01
+#===================================================================================
+
+
+#===============================================================================
+#  CONFIG SELECT TYPE BEAHVIOR
+#===============================================================================
+readonly select_type="once"     # always|once|custom
+
+
+
+#===============================================================================
+#  GLOBAL VARIABLES
+#===============================================================================
+readonly hostname="$1"                                  # Current host local hostname
+readonly mac="$2"                                       # Current hot MAC
+readonly hostname_inventory="$3"                        # hostname from inventory for MAC
+readonly agent_version="$4"								# agent version
+readonly log_path="$(dirname "${BASH_SOURCE[0]}")/log"
+
+
+#=== FUNCTION ==================================================================
+#        NAME: select_always
+# DESCRIPTION: select script for exec everytime
+#===============================================================================
+function select_always() {
+    exit 0
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: select_once
+# DESCRIPTION: select script for exec only once time (first exec ok)
+#===============================================================================
+function select_once() {
+    # Search by hostname or MAC?
+    [ "$mac" ] && [ "$mac" != "00:00:00:00:00:00" ] && id_search="$mac" || id_search="$hostname"
+
+    # Search in log if hostname had executed OK this script
+    grep -F "[${id_search}]" "$log_path" | grep -qF "[EXEC_OK]"
+    [ $? -eq 0 ] && exit 1 || exit 0
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: select_custom
+# DESCRIPTION: select script for custom code
+#===============================================================================
+function select_custom() {
+    echo "Complete select_custom function"
+    exit 1
+}
+
+# Exec select function according $select_type content
+"select_${select_type}"' > "$f/select"
+
+	echo -e "  Script directory: ${S_B}$f${S_R}/"
+
+
+	script_name="${re} ${d}"
+	menu_nextreload=1
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_delete
+# DESCRIPTION: action to delete selected script
+#===============================================================================
+function action_delete() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+    read -r -p "  Sure? Script and logs will be removed (N/y) " r
+    if [ "$r" = "y" ]; then
+        local f="$repository_path/${script_name}/"
+        echo -e "  Removing script ${S_B}${f}${S_R}"
+        rm -rf "$f" || return 1
+		action_..
+		menu_nextreload=1
+    fi
+    echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_set-name
+# DESCRIPTION: action to set name of selected script
+#===============================================================================
+function action_set-name() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local script_desc
+	[ "$action_params" ] && script_desc="$action_params" || read -r -p "  New name: " script_desc 
+	local script_new_name="${script_name%% *} ${script_desc}"
+	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+
+	script_name="${script_new_name}"
+	menu_nextreload=1
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_setRE
+# DESCRIPTION: action to set REGEX of selected script
+#===============================================================================
+function action_set-RE() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local script_re
+	[ "$action_params" ] && script_re="$action_params" || read -r -p "  New REGEX: " script_re 
+	local script_new_name="${script_re} ${script_name#* }"
+	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+
+	script_name="${script_new_name}"
+	menu_nextreload=1
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_exit
+# DESCRIPTION: action to exit
+#===============================================================================
+function action_exit() {
+	echo
+	exit 0
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_q
+# DESCRIPTION: action to exit
+#===============================================================================
+function action_q() {
+	echo
+	exit 0
+}
+
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_log
+# DESCRIPTION: action to call specific log subaction according $action_params
+#===============================================================================
+function action_log() {
+		action_log-show
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_log-show
+# DESCRIPTION: action to show log file of selected script
+#===============================================================================
+function action_log-show() {
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
+
+	echo
+	echo -e "  File ${S_B}${f//\/\//\/}${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
+	[ "$action_params" ] && echo -e "  ${C_LN}Filtering lines by:${C_D} $action_params"
+	egrep -i --color "${action_params}" "$f" | less +G
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_status
+# DESCRIPTION: action to show exec status of selected script
+#===============================================================================
+function action_status() {
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
+
+	echo
+	echo -e "  File stats from file ${S_B}${f//\/\//\/}${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
+
+	[ "$action_params" ] && echo -e "  ${C_LN}Filtering hosts by:${C_D} $action_params"
+	local i=1 n_get=0 n_ok=0 n_error=0 n_pending=0
+	pad1="         "; pad2="                         "
+	for h in $(awk '{print $3}' "$f" | sort -u | grep "$action_params" | sed -E 's/^\[||\]$//g'); do
+		h_log=$(grep -F "[$h]" "$f")
+		h_last=$(echo "$h_log" | tail -1 | cut -f1 -d" " | tr -d "[]" | tr "_" " ")
+		h_get=$(echo "$h_log" | grep -Fc "[GET]")
+		h_ok=$(echo "$h_log" | grep -Fc "[EXEC_OK]")
+		h_error=$(echo "$h_log" | grep -Fc "[EXEC_ERROR]")
+		h_pending="                   "; echo "$h_log" | tail -1 | grep -vqiF "[EXEC_OK]" && { h_pending="  ${C_R}PENDING!${S_R}         ";  n_pending=$((n_pending+1)); }
+		n_get=$((n_get+h_get)); n_ok=$((n_ok+h_ok)); n_error=$((n_error+h_error));
+		echo -e "${C_LN}${pad1:${#i}}$i${C_D}  ${h}$([ "$h_get" -gt 0 ] && echo "${C_Y}")${pad2:$((${#h}+${#h_get}))}  ${h_get}${S_R} GET$([ "${h_ok}" -gt 0 ] && echo "${C_G}")${pad1:${#h_ok}}${h_ok}${S_R} OK$([ "$h_error" -gt 0 ] && echo "${C_R}")${pad1:${#h_error}}${h_error}${S_R} ERRORS${h_pending}${C_LN}(${h_last})${C_D}"
+		i=$((i+1))
+	done
+	echo -e "${C_LN}  ------------------------------------------------------------------------------------${C_D}"
+	echo -e "${pad1}    ${pad2:${#n_get}}${C_Y}${n_get}${S_R} GET${pad1:${#n_ok}}${C_G}${n_ok}${S_R} OK${pad1:${#n_error}}${C_R}${n_error}${S_R} ERRORS   ${C_R}${n_pending}${S_R} PENDING!"
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_map
+# DESCRIPTION: action to show exec status map of selected script
+#===============================================================================
+function action_map() {
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }		# Log file path
+
+	# Select hosts to color
+	echo "  Calculating hosts to hightlight..."
+	local h hg hr hy h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
+	local ha; declare -A ha
+	for h in $h_log; do	ha["${h%% *}"]="${h##* }"; done	
+	for h in ${!ha[@]}; do
+		case ${ha[$h]} in
+			EXEC_OK)      hg="${hg} ${h}"		;;
+			EXEC_ERROR)   hr="${hr} ${h}"		;;
+			*)            hy="${hy} ${h}"		;;
+		esac
+	done
+	IFS='$\n\t '
+
+#	local hg="" hr="" hy="" h_log=$(awk '{print $3,$4}' "$f")
+#	for h in $(echo "$h_log" | cut -f1 -d" "| sort -u | sed -E 's/^\[||\]$//g'); do
+#		case $(echo "${h_log}" | grep -F "[${h}]" | tail -1 | cut -f2 -d" ") in
+#			\[EXEC_OK\])      hg="${hg} ${h}"		;;
+#			\[EXEC_ERROR\])   hr="${hr} ${h}"		;;
+#			*)                hy="${hy} ${h}"		;;
+#		esac
+#	done
+
+	echo "  Generating map..."
+	if [ "$action_params" ] ; then
+		# Show only selected maps by params
+		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
+		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
+	else
+		# Show maps according script RE
+		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
+	fi
+	echo
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: action_script
+# DESCRIPTION: action to show script file content of selected script
+#===============================================================================
+function action_script() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/script"
+	echo
+	echo -e "  File ${S_B}${f}${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
+	cat "$f"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_select
+# DESCRIPTION: action to show select file content of selected script
+#===============================================================================
+function action_select() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/select"
+	echo
+	echo -e "  File ${S_B}${f}${S_R}"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
+	cat "$f"
+	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_bash
+# DESCRIPTION: action to open Bash in selected script folder
+#===============================================================================
+function action_bash() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+	echo -e "  Opening shell in ${S_B}${f}${S_R}"
+	echo
+	(cd "$f"; env PS1="  [LSS-BASH]\e[0m:\[\e[1m\e[38;5;12m\]\W\[\e[0m\]]\$ " bash --norc)
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_log-wipe
+# DESCRIPTION: action to wipe log file of selected script
+#===============================================================================
+function action_log-wipe() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	read -r -p "  Sure? All log data will be removed (N/y) " r
+	if [ "$r" = "y" ]; then
+		local f="$repository_path/${script_name}/log"
+		echo -e "  Wiping file ${S_B}${f}${S_R}"
+		echo -n "" > "$f"
+	fi
+	menu_nextreload=1
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_log-clean
+# DESCRIPTION: action to clean all log error entries in log file of selected script
+#===============================================================================
+function action_log-clean() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+    read -r -p "  Sure? All errors log data will be removed (N/y) " r
+    if [ "$r" = "y" ]; then
+        local f="$repository_path/${script_name}/log"
+        echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
+		sed -i "/ERROR\]/d" "$f"
+	fi
+	menu_nextreload=1
+    echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_disable
+# DESCRIPTION: action to disable selected script
+#===============================================================================
+function action_disable() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+	echo -e "  Disabling script ${S_B}${f}${S_R}"
+	touch "${f}/disable"
+	menu_nextreload=1
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_enable
+# DESCRIPTION: action to enable selected script
+#===============================================================================
+function action_enable() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+	echo -e "  Enabling script ${S_B}${f}${S_R}"
+	rm -rf "${f}/disable"
+	menu_nextreload=1
+	echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_hostname
+# DESCRIPTION: action to toogle hostname flag on selected script
+#===============================================================================
+function action_hostname() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+
+	if [ -e "${f}/hostname" ]; then
+		echo -e "  Disabling hostname flag ${S_B}${f}${S_R}"
+		rm -rf "${f}/hostname"
+	else
+		echo -e "  Enabling hostname flag ${S_B}${f}${S_R}"
+		touch "${f}/hostname"
+	fi
+	menu_nextreload=1
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_priority
+# DESCRIPTION: action to toogle priority flag on selected script
+#===============================================================================
+function action_priority() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+
+	if [ -e "${f}/priority" ]; then
+		echo -e "  Disabling priority flag ${S_B}${f}${S_R}"
+		rm -rf "${f}/priority"
+	else
+		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
+		touch "${f}/priority"
+	fi
+	menu_nextreload=1
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_first
+# DESCRIPTION: action to toogle first flag on selected script
+#===============================================================================
+function action_first() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+
+	if [ -e "${f}/first" ]; then
+		echo -e "  Disabling first flag ${S_B}${f}${S_R}"
+		rm -rf "${f}/first"
+	else
+		echo -e "  Enabling first flag ${S_B}${f}${S_R}"
+		touch "${f}/first"
+	fi
+	menu_nextreload=1
+}
+
+#=== FUNCTION ==================================================================
+#        NAME: action_nosavelog
+# DESCRIPTION: action to toogle nosavelog flag on selected script
+#===============================================================================
+function action_nosavelog() {
+    [ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+    local f="$repository_path/${script_name}/"
+
+    if [ -e "${f}/nosavelog" ]; then
+        echo -e "  Disabling nosavelog flag ${S_B}${f}${S_R}"
+        rm -rf "${f}/nosavelog"
+    else
+        echo -e "  Enabling nosavelog flag ${S_B}${f}${S_R}"
+        touch "${f}/nosavelog"
+    fi
+    menu_nextreload=1
 }
 
 
 
 
 #=== FUNCTION ==================================================================
-#        NAME: initialize
-# DESCRIPTION: performs init checks
+#        NAME: action_ls
+# DESCRIPTION: action to list all files of selected script
 #===============================================================================
-function initialize() {
-	# CHECK ROOT
-	if [ ! "$UID" -eq 0 ]; then
-		echo -e "\e[1m\e[31mMust be exec with administrative privileges\e[0m"
-		exit 1
-	fi
-
-	# CHECK LOG PATH
-	[ -f "$log_path" ] && rm -f "$log_path"
-	[ ! -d "$log_path" ] && mkdir -p "$log_path" 
-	[ ! -d "$scripts_path" ] && mkdir -p "$scripts_path" 
-	
-	# CHECK SSH PRIVATE KEY
-	if ! ssh-keygen -l -f "$sshprivatekey_path" 1>/dev/null; then
-		echo -e "\e[1m\e[31mError loading SSH agent private key: $sshprivatekey_path\e[0m"
-		exit 1
-	fi
-	
-	# WAIT CONNECTION
-	wait_connection
-
-	# GET DEFAULT MAC ADDRESS
-	mac=$(ip -c=never addr show dev $(ip -c=never -o -4 route get "8.8.8.8" | egrep -o "dev ([[:alnum:]])*" | awk '{print $2}') | grep link/ether | awk '{print $2}')
-	if [ $? -ne 0 ] || [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
-		echo -e "\e[1m\e[31mError getting local MAC address $MAC\e[0m"
-		exit 1		
-	fi
+function action_ls() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local f="$repository_path/${script_name}/"
+	echo -e "\n${f}${C_LN}"
+	ls -lh --color "$f" | tail -n +2
+	echo -e "${C_D}"
 }
 
+#=== FUNCTION ==================================================================
+#        NAME: action_..
+# DESCRIPTION: action deselect selected script
+#===============================================================================
+function action_..() {
+	script_name=""
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: help
+# DESCRIPTION: Print help and exit 
+#  PARAMETERS:
+#	$1	Exit code value
+#===============================================================================
+function help() {
+	echo -e "Usage: $(basename "$0") [-r repository]"
+	exit "$1"
+}
 
 
 #=== FUNCTION ==================================================================
 #        NAME: main
-# DESCRIPTION: main code
+# DESCRIPTION: main
 #===============================================================================
-function main() {
-	# INIT
-	initialize
-
-	# GET PENDING SCRIPT LIST
-	echo -e "\e[1mGETTING PENDING SCRIPT LIST\e[0m"
-	call_output=$(call_script_server "list")
-	if [ $? -ne 0 ]; then
-		echo -e "\e[1m\e[31mError getting pending scripts list\e[0m"
-		echo "$call_output"
-		log "list_error" "" "$call_output"
-		exit 1
-	fi
-	script_list="$call_output"
-	log "list_ok" "" "$script_list"
-	if [ ! "$script_list" ]; then
-		echo "0 pending scripts"
-		exit 0
-	fi
-	echo -e "$(echo "$script_list" | sed 's/\//\t\//' | column -t -s $'\t' | sed 's/\//\\e[0m\//' | sed 's/^/  \\e\[1m\\e\[33m/')\e[0m"
-
-	# GET AND EXEC SCRIPTS
-	IFS2="$IFS"; IFS=$'\n';
-	for script in $script_list; do
-		# GET SCRIPT OPTIONS
-		unset opt_nosavelog; [[ "${script,,}" = */nosavelog* ]] && opt_nosavelog="true"		# Get NOSAVELOG option
-		script_opts="${script#${script%%/*}}"												# Script options -> text after first /
-		script="${script%%/*}"       														# Clean script name -> delete all after / 
-		script=${script%"${script##*[![:space:]]}"}											# Script name trim spaces
-
-		# HEADER
-		printf '\n┌'; printf '─%.0s' $(seq 1 $((COLUMNS-2))); printf '┐\n'; echo -e "\033[1A\033[5C \e[1m\e[33m$script\e[0m "
-
-		# GET SCRIPT CODE
-		script_code=$(call_script_server "get" "$script")
-		if [ $? -ne 0 ]; then
-			echo -e "\e[1m\e[31mERROR GETTING SCRIPT CODE: $script\e[0m"
-			echo "$script_code"
-			log "get_error" "$script" "$script_code"
-			continue
-		fi
-
-		# SAVE SCRIPT
-		script_path="${scripts_path}/[$(date "+%Y-%m-%d_%H.%M.%S" | tr "/:" "-.")][EXEC_XX] ${script//\// }"
-		script_log="${script_path}.log"
-		script_path="${script_path}.sh"
-		echo "$script_code" > "$script_path" || { echo -e "\e[1m\e[31mERROR SAVING SCRIPT: ${script_path}\e[0m"; log "save_error" "$script"; continue; }
-		[ "$script_opts" ] && echo -e "\e[1mSCRIPT OPTS\e[0m: $script_opts"
-		echo -e "\e[1mSCRIPT FILE\e[0m: '$script_path'"
-		echo -e "\e[1mOUTPUT FILE\e[0m: '$script_log'"
-
-		# EXEC SCRIPT
-		echo -e "\e[1m\nEXECUTION SCRIPT\e[0m"
-		bash "$script_path" | tee "$script_log"
-		exec_code=${PIPESTATUS[0]}
-		exec_msg=$(cat "$script_log")
-
-		# RENAME SCRIPT FILE AND LOG ADDING [EXEC_CODE] TO FILENAME
-		if [ "$opt_nosavelog" ]; then				# Option NOSAVELOG -> remove script file and log
-			rm -f "$script_log" "$script_path"
-			script_log="NOSAVELOG"
-		else
-			[ $exec_code -eq 0 ] && ec="EXEC_OK" || ec="EXEC_ER"
-			script_path_old="$script_path"; script_log_old="$script_log"
-			script_path="${script_path//\[EXEC_XX\]/[$ec]}"
-			script_log="${script_log//\[EXEC_XX\]/[$ec]}"
-			mv "$script_path_old" "$script_path"
-			mv "$script_log_old" "$script_log"
-		fi
-
-		# SEND EXIT CODE TO SERVER AND LOG
-		if [ $exec_code -eq 0 ]; then
-			log "exec_ok" "$script" "$script_log"
-			call_script_server "exec_ok" "$script" "$exec_msg"
-		else
-			echo -e "\e[1m\e[31mERROR EXECUTING SCRIPT: $script\e[0m"
-			log "exec_error" "$script" "$script_log"
-			call_script_server "exec_error" "$script" "$exec_msg"
-		fi
-
-		# FOOTER
-		printf '└'; printf '─%.0s' $(seq 1 $((COLUMNS-2))); printf '┘\n'; echo -e "\033[1A\033[5C \e[1mEXIT CODE: \e[0m${exec_code} "
-
+function main()  {
+	# READ PARAMS
+	local o r="linux"	# Default repository linux
+	while getopts ":r:h" o; do
+		case $o in
+		r) r="$OPTARG"									;;
+		h) help	1										;;
+		?) echo "Incorrect option: $OPTARG"; help 1		;;
+	esac
 	done
-	IFS="$IFS2"
-	echo
-}
 
+	# SET REPOSITORY
+	change_repository "$r"
+
+	# MAIN LOOP
+	while true; do
+		read_action
+		exec_action
+	done
+}
 main "$@"
