@@ -9,7 +9,7 @@
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
-#      VERSION: 2024.11
+#      VERSION: 2026.02
 #      CREATED: 2022.06.28
 #=================================================================================== 
 
@@ -64,9 +64,9 @@ function help() {
 #===============================================================================
 function check_params() {
 	while getopts ":h:M:r:a:s:m:v:" option
-	do		
+	do
 		case $option in
-		h)			
+		h)
 			readonly hostname="$OPTARG"
 		;;
 		M)
@@ -83,7 +83,7 @@ function check_params() {
 			readonly script="$OPTARG"
 			readonly script_path="${repository_path}/${script}"
 		;;
-		m) 
+		m)
 			readonly exec_msg="$OPTARG"
 		;;
 		v)
@@ -94,10 +94,10 @@ function check_params() {
 			exit 2
 		;;
 	   esac
-	done													
+	done
 
 	# EMPTY MAC: allowed for agent backwards compatibility
-	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }				
+	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }
 
 	if [ $# -eq 0 ]; then
 		help 1
@@ -109,16 +109,16 @@ function check_params() {
 		help 2
 	elif [ ! "$repository" ]; then
 	    echo "Repository not present"
-		help 2 
+		help 2
 	elif [ ! "$action" ]; then
 	    echo "Action not present"
-		help 2  
+		help 2
 	elif  [[ "$action" != @(list|get|exec_ok|exec_error) ]]; then
 	    echo "Invalid action value"
-		help 2  
+		help 2
 	elif [[ "$action" = @(get|exec_ok|exec_error) ]] && [ ! "$script" ]; then
 		echo "Script not present"
-		help 2  
+		help 2
 	elif [ ! -d "$repositories_path" ] || [ ! -r "$repositories_path" ]; then
 		echo "Cant access repositories path: $repositories_path"
 		exit 2
@@ -153,12 +153,28 @@ function log() {
 	local em="$5"                     # exec message
 	local sn=$(basename "$sp")        # script name
 
-	# Save file log
+	# SAVE FILE
 	[ ! "$sp" ] && sp="${repository_path}"  # Save script log or lss log
 	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           "
-	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}}" >> "${sp}/log"
 
-	# Send mail log
+	# Save exec output in dedicated file
+	if [[ "${a^^}" = EXEC* ]] && [ "$em" ]; then
+		log_path="${sp}/logs/[$(echo "$d" | tr ":" ".")][${hn}][${a^^}].log"
+
+		# NOSAVELOG flag > Save first line on main log
+		if [ -f "${sp}/nosavelog" ]; then
+			em="$(echo ${em//$'\n'/ / } | cut -c 1-100) ..."
+		# Save log dedicated file
+		else
+			echo "$em" > "$log_path"
+			em="'${log_path}'"
+		fi
+	fi
+
+	# Save action in main log
+	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}} ${em}" >> "${sp}/log"
+
+	# SEND MAIL
 	if [[ "${a,,}" = *error* ]]; then
 		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nMAC: ${m}\nHostname: ${hn}\n$([ "$sn" ] && echo "Script: ${sn}\n")Action: ${a}\nError msg: ${em}" | mail -s "【script-server】【${sn:-$a}】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
