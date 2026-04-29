@@ -9,7 +9,7 @@
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
-#      VERSION: 2024.11
+#      VERSION: 2026.04
 #      CREATED: 2022.06.28
 #=================================================================================== 
 
@@ -20,12 +20,12 @@ readonly lss_path=$(dirname "$(readlink -f "$0")")			# LSS root path
 readonly lssinventory_path="${lss_path}/lss-inventory"		# lss-inventory executable path
 
 unset log_mail												# log mail                        (loaded in config file)
-unset check_hostnames										# enable/disable check hostnames  (loaded in config file)
 unset repositories_path										# repositories path               (loaded in config file)
 
 unset hostname												# hostname parameter
-unset hostname_inventory									# hostname get from lss-inventory matching with mac
-unset hostname_match										# hostname parameter matches with hostname inventory
+unset hostname_inventory									# hostname from lss-inventory (matching with mac)
+unset hostname_match										# not empty if hostname parameter matches with hostname inventory
+unset hostname_error										# not empty if not found hostname inventory for given mac
 unset mac													# mac parameter
 unset repository											# repository parameter
 unset repository_path										# repository path
@@ -64,9 +64,9 @@ function help() {
 #===============================================================================
 function check_params() {
 	while getopts ":h:M:r:a:s:m:v:" option
-	do		
+	do
 		case $option in
-		h)			
+		h)
 			readonly hostname="$OPTARG"
 		;;
 		M)
@@ -83,7 +83,7 @@ function check_params() {
 			readonly script="$OPTARG"
 			readonly script_path="${repository_path}/${script}"
 		;;
-		m) 
+		m)
 			readonly exec_msg="$OPTARG"
 		;;
 		v)
@@ -94,39 +94,39 @@ function check_params() {
 			exit 2
 		;;
 	   esac
-	done													
-
-	# EMPTY MAC: allowed for agent backwards compatibility
-	[ ! "$mac" ] && { mac="00:00:00:00:00:00"; unset check_hostnames; }				
+	done
 
 	if [ $# -eq 0 ]; then
 		help 1
 	elif [ ! "$hostname" ]; then
-		echo "Hostname not present"
+		echo "ERROR: Hostname not present" 1>&2
+		help 2
+	elif [ ! "$mac" ]; then
+		echo "ERROR: MAC not present" 1>&2
 		help 2
 	elif [ "${mac#[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]:[0-9a-f][0-9a-f]}" ]; then
-		echo "Incorrect MAC or not present"
+		echo "ERROR: Invalid MAC" 1>&2
 		help 2
 	elif [ ! "$repository" ]; then
-	    echo "Repository not present"
-		help 2 
+	    echo "ERROR: Repository not present" 1>&2
+		help 2
 	elif [ ! "$action" ]; then
-	    echo "Action not present"
-		help 2  
+	    echo "ERROR: Action not present" 1>&2
+		help 2
 	elif  [[ "$action" != @(list|get|exec_ok|exec_error) ]]; then
-	    echo "Invalid action value"
-		help 2  
+	    echo "ERROR: Invalid action value" 1>&2
+		help 2
 	elif [[ "$action" = @(get|exec_ok|exec_error) ]] && [ ! "$script" ]; then
-		echo "Script not present"
-		help 2  
+		echo "ERROR: Script not present" 1>&2
+		help 2
 	elif [ ! -d "$repositories_path" ] || [ ! -r "$repositories_path" ]; then
-		echo "Cant access repositories path: $repositories_path"
+		echo "ERROR: Cant access repositories path: $repositories_path" 1>&2
 		exit 2
 	elif [ ! -d "$repository_path" ] || [ ! -r "$repository_path" ]; then
-		echo "Cant access repository path: $repository_path"
+		echo "ERROR: Cant access repository path: $repository_path" 1>&2
 		exit 2
 	elif [ "$script" ] && ([ ! -d "$script_path" ] || [ ! -r "$script_path" ]); then
-		echo "Cant access script path: $script_path"
+		echo "ERROR: Cant access script path: $script_path" 1>&2
 		exit 2
 	elif [ ! "$agent_version" ]; then
 		agent_version="0"
@@ -152,13 +152,29 @@ function log() {
 	local sp="$4"                     # script path
 	local em="$5"                     # exec message
 	local sn=$(basename "$sp")        # script name
-	
-	# Save file log
+
+	# SAVE FILE
 	[ ! "$sp" ] && sp="${repository_path}"  # Save script log or lss log
-	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           " 
+	local d=$(date "+%Y-%m-%d_%H:%M:%S") pad10="          " pad12="           "
+
+	# Save exec output in dedicated file
+	if [[ "${a^^}" = EXEC* ]] && [ "$em" ]; then
+		log_path="${sp}/logs/[$(echo "$d" | tr ":" ".")][${hn}][${a^^}].log"
+
+		# NOSAVELOG flag > Save first line on main log
+		if [ -f "${sp}/nosavelog" ]; then
+			em="$(echo ${em//$'\n'/ / } | cut -c 1-100) ..."
+		# Save log dedicated file
+		else
+			echo "$em" > "$log_path"
+			em="'${log_path}'"
+		fi
+	fi
+
+	# Save action in main log
 	echo -e "[${d}] [${m}] [${hn^^}]${pad10:${#hn}}[${a^^}]${pad12:${#a}} ${em}" >> "${sp}/log"
 
-	# Send mail log
+	# SEND MAIL
 	if [[ "${a,,}" = *error* ]]; then
 		echo -e "Date: $(date "+%Y-%m-%d %H:%M:%S")\nMAC: ${m}\nHostname: ${hn}\n$([ "$sn" ] && echo "Script: ${sn}\n")Action: ${a}\nError msg: ${em}" | mail -s "【script-server】【${sn:-$a}】" -a "From: ${hn}<${hn}@carlos3.com>" "$log_mail"
 	fi
@@ -175,6 +191,7 @@ function log() {
 # GLOBAL VARIABLES MODIFIED
 #		$hostname_inventory		hostname inventory name for given mac
 #		$hostname_match			no empty if hostname parameter matches with hostname inventory
+#		$hotname_error			no empty if hostname not found for given mac
 #
 # EXIT CODE
 #		0 if found hostname for mac
@@ -183,15 +200,26 @@ function log() {
 function get_hostname_inventory() {
 	local m="$1"
 	unset hostname_inventory hostname_match
-	
+
 	# Call to lss-inventory
-	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m"); local r=$?
+	hostname_inventory=$(bash "${lssinventory_path}" get-hostname "$m" 2>/dev/null); local r=$?
+
+	# Check hostname charset
+	if [ "$hostname_inventory" ] && ! [[ "$hostname_inventory" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]]; then
+		log "$mac" "$hostname" "MAC_ERROR" "" "Error inventory: invalid charset hostname $hostname_inventory for MAC: $mac"
+		echo "ERROR: invalid charset hostname $hostname_inventory for MAC: $mac" 1>&2
+		exit 1
+	fi
 
 	# Update hostname_match
-	[ "$hostname" = "$hostname_inventory" ] && hostname_match="true"
+	[ "$hostname" = "$hostname_inventory" ] && hostname_match="true" || unset hostname_match
+
+	# Update hostname_error
+	[ "$r" -eq 0 ] && unset hostname_error || hostname_error="true"
 
 	return $r
 }
+
 
 
 #=== FUNCTION ==================================================================
@@ -199,9 +227,21 @@ function get_hostname_inventory() {
 # DESCRIPTION: List all pending scripts for hostname according script name and select script
 #===============================================================================
 function action_list() {
-	# GET INVENTORY HOSTNAME (exit on error)
-	if [ "$check_hostnames" ]; then
-		get_hostname_inventory "$mac" || { log "$mac" "$hostname" "LIST_ERROR" "" "Error inventory get-hostname for mac: $mac"; exit 1; }
+	# GET INVENTORY HOSTNAME
+	get_hostname_inventory "$mac" 
+
+	# CHECK HOSTNAME
+	if [ "$hostname_error" ]; then
+		log "$mac" "$hostname" "MAC_ERROR" "" "Error inventory: no hostname found for MAC: $mac"
+		echo "ERROR: no hostname found for MAC: $mac" 1>&2
+		exit 1
+	fi
+	if [ ! "$hostname_match" ]; then
+		log "$mac" "$hostname" "MAC_WARN" "" "Hostname mismatch for MAC $mac: current $hostname -> inventory $hostname_inventory)"
+		echo "WARNING: hostname mismatch for MAC $mac: current $hostname -> inventory $hostname_inventory" 1>&2
+		hostname_effective="$hostname_inventory"
+	else
+		hostname_effective="$hostname"
 	fi
 
 	# LIST PENDING SCRIPTS
@@ -214,16 +254,12 @@ function action_list() {
 
 		# Check repository directory format
 		[ ! -d "${sp}" ] || [ ! "$sn" ] || [ ! "${sre}" ] && continue
-	
-		# Check intentory hostname script
-		[ ! "$check_hostnames" ] && [ -e "${sp}/hostname" ] && continue										# check_hostnames disabled -> skip hostname script
-		[ "$check_hostnames" ]   && [ ! "$hostname_match" ] && [ ! -e "${sp}/hostname" ] && continue		# check_hostnames enabled  -> skip all excep hostname script if no hostname-mac match
 
 		# Check hostname match with script REGEX
-		[[ "${hostname,,}" = ${sre,,} ]] || continue		# If no match continue
+		[[ "${hostname_effective,,}" = ${sre,,} ]] || continue		# If no match continue
 
 		# Check script is disabled
-		[ -e "${sp}/disable" ] && continue		
+		[ -e "${sp}/disable" ] && continue
 
 		# Check hostname is selected
 		bash "${sp}/select" "$hostname" "$mac" "$hostname_inventory" "$agent_version" || continue
@@ -234,12 +270,11 @@ function action_list() {
 
 		# Add client options after script name: ... /OPTION1 /OPTION2 ...
 		if [ "$agent_version" -ge 20260200 ]; then
-			# OPTION NOSAVELOG
-			[ -f "${repository_path}/NOSAVELOG" ] && s="${s} /NOSAVELOG"
+			[ -f "${sp}/nosavelog" ] && s="${s} /NOSAVELOG"
 		fi
 
 		# Add script to list
-		if [ -f "${repository_path}/first" ]; then			# FIRST script -> add first on list
+		if [ -f "${sp}/first" ]; then			# FIRST script -> add first on list
 			list="${s}${list:+$'\n'}${list}"
 		else
 			list="${list}${list:+$'\n'}${s}"
@@ -258,33 +293,32 @@ function action_list() {
 #=== FUNCTION ==================================================================
 #        NAME: action_get
 # DESCRIPTION: Print script code, log action and exit
+#              Replace special strings in script content
 #===============================================================================
 function action_get() {
 	local em
+
+	# GET SCRIPT
 	local c=$(cat "${script_path}/script")
 	if [ $? -ne 0 ]; then
 		log "$mac" "$hostname" "get_error" "$script_path" "Error reading script $script_path"
 		exit 1
-	fi	
-	
-	# HOSTNAME SCRIPT -> replace in script code LSS-HOSTNAME-REPLACE for MAC
-	if [ -e "${script_path}/hostname" ]; then
-		if ! get_hostname_inventory "$mac"; then
-			log "$mac" "$hostname" "get_error" "$script_path" "Error inventory get-hostname for mac: $mac"
-			exit 1
-		fi
-		if ! echo "$c" | grep -q "LSS-HOSTNAME-REPLACE"; then
-			log "$mac" "$hostname" "get_error" "$script_path" "Not found replace token LSS-HOSTNAME-REPLACE in hostname script ${script_path}"
-			exit 1	
-		fi
-		c=$(echo "$c" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g")
-		em="${hostname} -> ${hostname_inventory}"
 	fi
+
+	# GET INVENTORY HOSTNAME
+	get_hostname_inventory "$mac" 
+
+	# REPLACE SCPECIAL STRINGS: 
+	#   * LSS-HOSTNAME-REPLACE
+	#   * LSS-MAC-REPLACE
+	c=$(echo "$c" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g")
+	c=$(echo "$c" | sed "s/LSS-MAC-REPLACE/${hostname_inventory}/g")
+	em="${hostname} -> ${hostname_inventory}"
 
 	# PRINT SCRIPT
 	echo "$c"
 	log "$mac" "$hostname" "$action" "$script_path" "$em"
-	exit 0 
+	exit 0
 }
 
 
@@ -303,8 +337,9 @@ function action_exec_ok() {
 # DESCRIPTION: Notify error execution
 #===============================================================================
 function action_exec_error() {
-	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg" 
+	log "$mac" "$hostname" "$action" "$script_path" "$exec_msg"
 }
+
 
 
 ##### CHECK PARAMETERS
