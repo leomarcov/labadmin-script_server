@@ -1,8 +1,9 @@
 hostname="LSS-HOSTNAME-REPLACE"						# lss-srv repace this token for hostname
 
 [ "$(hostname)" = "$hostname" ] && exit 0
+[ ! "$hostname" ] && exit 1
 hn_old="$(cat /etc/hostname | awk '{print $1}')"
-echo  "${hostname}" > /etc/hostname
+hostnamectl set-hostname "$hostname"
 sed -i "/^127.0/ s/${hn_old}/${hostname}/g" /etc/hosts
 
 rm /home/*/.config/google-chrome/Singleton*	|| true 	# Prevent google-chrome error when hostname changes
