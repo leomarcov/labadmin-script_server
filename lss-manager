@@ -406,12 +406,14 @@ function action_list() {
 function action_create() {
     read -r -p "  Regular expresion: " re
     read -r -p "  Description: " d
-    local f="$repository_path/${re} ${d}"
+	read -r -p "  Category: " c
+	local f="$repository_path/${re} ${d}"
 
 	# Create directory and files and set permissions
     mkdir "$f" || return 1
     touch "${f}/disable"                               # Start disabled
     touch "$f/log" "$f/script" "$f/select"
+	echo "$c" > "$f"/category
 	mkdir "$f/logs"
     chmod ug+w "$f/log" "$f/logs"
 	[ $(id -u) -eq 0 ] && chown -R lss-admin:lss-agent "${repository_path}"
