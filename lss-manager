@@ -23,10 +23,10 @@ unset repository_path											# Current selected repository path
 unset script_name												# Current selected script name
 unset scripts													# Array for list of scripts loades
 unset menu														# Saved menu list script
-unset menu_nextreload											# Force next menu reload
 unset menu_path													# Temp dir to create file for read autocomplete
 unset action													# Current selected action
 unset action_params												# Action params
+
 
 #===============================================================================
 #  LOAD CONFIG
@@ -100,9 +100,10 @@ B_W="\e[107m"           	# Background LIGHT WHITE
 #===============================================================================
 function show_header() {
 	clear
-	echo -e "${C_LN} ┌──────────────────────────────────────────────────────────────────────────────┐"
-	echo -e " │                            ${C_D}${S_B}LABADMIN SCRIPT SERVER ${S_R}${C_LN}                           │"
-	echo -e " └──────────────────────────────────────────────────────────────────────────────┘${C_D}"
+	[ "$menu" ] && header_width=$(($(echo "$menu" | head -1 | wc -c)-10)) || header_width=100
+	echo -e "${C_LN} ┌$(seq -s "─" 1 $header_width | tr -d [0-9])┐"
+	echo -e " │$(seq -s " " 1 $(((header_width-22)/2)) | tr -d [0-9])${C_D}${S_B}LABADMIN SCRIPT SERVER${S_R}${C_LN}$(seq -s " " 1 $(((header_width-22)/2)) | tr -d [0-9]) │"
+	echo -e " └$(seq -s "─" 1 $header_width | tr -d [0-9])┘${C_D}"
 }
 
 
@@ -110,50 +111,35 @@ function show_header() {
 #=== FUNCTION ==================================================================
 #        NAME: show_menu
 # DESCRIPTION: show list of current repository scripts and log statics
-# PARAMETERS:
-#	-c	clear screen and show menu before show menu
-#	-r	reload menu and stats (by default no reaload)
 # GLOBAL VARIABLES MODIFIED
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	# READ PARAMS
-	local f_reload f_clear opt OPTIND
-	while getopts "rc" o; do
-		case $o in
-		r) f_reload=1			;;
-		c) f_clear=1			;;
-		esac
-	done
-	[ ! "${scripts[*]}" ] && f_reload=1
-	[ "$menu_nextreload" ] && { f_reload=1; unset menu_nextreload; }
-
-	# SHOW SAVED MENU
-	[ ! "$f_reload" ] && { echo -e "$menu"; return; }
-
-	# RELOAD MENU
-	[ "$f_clear" ] && show_header
+	show_header
 	cursor_hide
 	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
-	menu="  ${S_B}\tRE\tSCRIPT\tFLAG\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
+	menu="  ${S_B}\tCATEGORY\tRE\tSCRIPT\tFLAG\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
 
-	# Create scriptlist variables with script names list sorted by flags type and time
-	IFS2="$IFS"; IFS=$'\n'; local sld="" slh="" slp="" slf="" sll="" sl=""
+	# Create sloc variable with script list orderer by category
+	IFS2="$IFS"; IFS=$'\n'; sloc=""
 	for s in $(ls "${repository_path}"/*/log | sed 's/\/log$//' | sort -n); do
-		s=$(basename "$s"); sp="${repository_path}/${s}"
-		[ ! -d "${sp}" ] && continue
-		[ -e "${sp}/disable" ] && { sld="$sld"$'\n'"$s"; continue; }
-		[ -e "${sp}/priority" ] && { slp="$slp"$'\n'"$s"; continue; }
-		[ -e "${sp}/first" ] && { slf="$slf"$'\n'"$s"; continue; }
-		[ -e "${sp}/nosavelog" ] && { sll="$sll"$'\n'"$s"; continue; }
-		sl="$sl"$'\n'"$s"
+		c=$([ -f "${s}/category" ] && cat "${s}/category" || echo "999-")
+		d=$([ -f "${s}/disable" ] && echo "A" || echo "Z")
+		sloc="${sloc}${sloc:+\n}${c}\t${d}\t${s}"
 	done
-
+	sloc=$(echo -e "$sloc" | sort -k1,1 -k2,2 -k3,3)
+	clc=$(echo "$sloc" | cut -f1 | uniq -c | awk '{print $1}')
+	sloc=$(echo "$sloc" | cut -f3-)
 	# Create menu variable with script list
 	i=1; unset scripts
-	for s in $sld $slh $slp $slf $sll $sl; do
-		script_path="${repository_path}/${s}"
-		scripts[$i]="$s"		# Update scripts[] found
+	IFS2="$IFS"; IFS=$'\n';
+	for s in $sloc; do
+		script_path="${s}"
+		s=$(basename "$s")
+		scripts[$i]="$s"		# Update scripts[]
+
+		local cat="999-"
+		[ -e "${script_path}/category" ] && cat=$(cat "${script_path}/category")
 
 		local f=" " ci="${C_D}" cl="${C_D}"
 		[ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
@@ -161,28 +147,36 @@ function show_menu() {
 		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${cl}"									# Flag priority
 		[ -e "${script_path}"/first ] && f="${f}${C_LG}F${cl}"										# Flag first
 		[ -e "${script_path}"/nosavelog ] && f="${f}${C_Y}L${cl}"									# Flag nosavelog
-		[ "$s" = "${script_name}" ] && cc="${S_B}" || cc=""											# Colors when selected script
+		[ "$s" = "${script_name}" ] && cc="${S_B}>" || cc=" "								# Colors when selected script
 
 		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
 		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
-		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
-		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
-		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
-		local t=$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")													# last log time
+		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0				# get count
+		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0					# ok count
+		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"# error count
+		local t=$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")						# last log time
 		if [ ! "$t" ]; then t="\e[38;5;241m-"
 		else t=$(($(date +%s)-$(date -d "$t" +%s))); local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))"
 		[ "$td" -gt 0 ] && t="\e[38;5;241m${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${th}h" || t="\e[38;5;249m${tm}m"; }; fi
 
-		menu="$menu\n  ${cc}${ci}[$i]${C_D}${cl}\t${s/ /$'\t'}\t${f}\t${st}\t${ng}${lg}\t${no}$lo\t${ne}${S_R}${C_D}\t${C_LN}${t}"
+		menu="$menu\n ${cc}${ci}[$i]${C_D}${cl}\t${cat#"${cat%%[!0-9]*}"}\t${s/ /$'\t'}\t${f}\t${st}\t${ng}${lg}\t${no}$lo\t${ne}${S_R}${C_D}\t${C_LN}${t}"
 		i=$((i+1))
 	done 
 	IFS="$IFS2"
-	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... lina
+	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... line
 	menu=$(echo -e "${menu}" | column -t -s $'\t' -R 6,7,8,9)
+
+	# Add header and footer separator lines
 	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
-	local bar2="      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")"
-	local n=$(echo "${sld} ${slh} ${slp} ${slf} ${sll}" | wc -l); [ "$n" -gt 0 ] &&  menu=$(echo "$menu"| sed "$((n+2))i\\${bar2}")
+	# Add category separator lines
+	local bar2="$(echo -e "${S_D}")      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")$(echo -e "${S_R}")"
+	n=0
+	for cl in $(echo "$clc" | head -n -1); do
+		[ "$n" -eq 0 ] && n="$cl" || n=$((n+cl+1))
+		menu=$(echo "$menu"| sed "$((n+3))i\\${bar2}")
+	done
+
 	menu="\n${menu}\n"
 
 	echo -e "$menu"
@@ -219,8 +213,7 @@ function change_repository() {
 	unset script_name
 	unset scripts
 
-	echo -e "\n  ${repository^^} REPOSITORY"
-	show_menu -c
+	show_menu
 	return 0
 }
 
@@ -238,7 +231,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  disable  enable  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  set-category  disable  enable  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -357,21 +350,22 @@ function action_h() {
 
    Script actions:
     ${S_B}bash${S_R}\tOpen Bash in selected script directory
-    ${S_B}status [RE]${S_R}\tShow exec stats of selected script. Optionaly filter hosts by RE
-    ${S_B}map [LAB...]${S_R}\tShow exec stats in a map. Optionaly show only a list of LABS
-    ${S_B}log [RE]${S_R}\tShow log file of selected script. Optionaly filter lines by RE
+    ${S_B}status${S_R} [RE]\tShow exec stats of selected script. Optionaly filter hosts by RE
+    ${S_B}map${S_R} [LAB...]\tShow exec stats in a map. Optionaly show only a list of LABS
+    ${S_B}log${S_R} [RE]\tShow log file of selected script. Optionaly filter lines by RE
     ${S_B}log-wipe${S_R}\tWipe log file of selected script
     ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
     ${S_B}script${S_R}\tShow script file of selected script
     ${S_B}select${S_R}\tShow select file of selected script
-    ${S_B}disable${S_R}\tDisable selected script
     ${S_B}enable${S_R}\tEnable selected script
-    ${S_B}set-name${S_R}\tChange name of selected script
-    ${S_B}set-RE${S_R}\tChange RE of selected script
+    ${S_B}set-name${S_R} <name>\tChange name of selected script
+    ${S_B}set-RE${S_R} <re>\tChange RE of selected script
+    ${S_B}set-category${S_R} <cat>\tChange caregory of selected script
     ${S_B}delete${S_R}\tDelete selected script
-	${S_B}priority${S_R}\tToogle priority flag (P) on selected script (exec onlye priority script if any selected)
-	${S_B}first${S_R}\tToogle first flag (F) on selected script (exec first this scripts on list)
-	${S_B}nosavelog${S_R}\tToogle nosavelog flag (L) on selected script (no save local logs in agents)
+    ${S_B}disable${S_R}\tToogle disable flag (D)
+    ${S_B}priority${S_R}\tToogle priority flag (P) (exec onlye priority script if any selected)
+    ${S_B}first${S_R}\tToogle first flag (F) (exec first this scripts on list)
+    ${S_B}nosavelog${S_R}\tToogle nosavelog flag (L) (no save local logs in agents)
 
     " | column -L -t -s $'\t'
 }
@@ -391,7 +385,7 @@ function action_list-noreload() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_l() {
-    show_menu -r -c
+    show_menu
 }
 
 
@@ -401,7 +395,7 @@ function action_l() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	show_menu -r -c
+	show_menu
 }
 
 
@@ -494,7 +488,6 @@ function select_custom() {
 
 
 	script_name="${re} ${d}"
-	menu_nextreload=1
 	echo
 }
 
@@ -511,7 +504,6 @@ function action_delete() {
         echo -e "  Removing script ${S_B}${f}${S_R}"
         rm -rf "$f" || return 1
 		action_..
-		menu_nextreload=1
     fi
     echo
 }
@@ -529,12 +521,11 @@ function action_set-name() {
 	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
 
 	script_name="${script_new_name}"
-	menu_nextreload=1
 }
 
 
 #=== FUNCTION ==================================================================
-#        NAME: action_setRE
+#        NAME: action_set-RE
 # DESCRIPTION: action to set REGEX of selected script
 #===============================================================================
 function action_set-RE() {
@@ -545,7 +536,18 @@ function action_set-RE() {
 	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
 
 	script_name="${script_new_name}"
-	menu_nextreload=1
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_set-category
+# DESCRIPTION: action to set category of selected script
+#===============================================================================
+function action_set-category() {
+	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	local script_cat
+	[ "$action_params" ] && script_cat="$action_params" || read -r -p "  New category:" script_cat
+	echo "$script_cat" > "${repository_path}/${script_name}/category"
 }
 
 
@@ -631,7 +633,7 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }		# Log file path
+	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }	# Log file path
 
 	# Select hosts to color
 	echo "  Calculating hosts to hightlight..."
@@ -724,7 +726,6 @@ function action_log-wipe() {
 		echo -e "  Wiping file ${S_B}${f}${S_R}"
 		echo -n "" > "$f"
 	fi
-	menu_nextreload=1
 	echo
 }
 
@@ -741,7 +742,6 @@ function action_log-clean() {
         echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
 		sed -i "/ERROR\]/d" "$f"
 	fi
-	menu_nextreload=1
     echo
 }
 
@@ -755,7 +755,6 @@ function action_disable() {
 	local f="$repository_path/${script_name}/"
 	echo -e "  Disabling script ${S_B}${f}${S_R}"
 	touch "${f}/disable"
-	menu_nextreload=1
 	echo
 }
 
@@ -769,7 +768,6 @@ function action_enable() {
 	local f="$repository_path/${script_name}/"
 	echo -e "  Enabling script ${S_B}${f}${S_R}"
 	rm -rf "${f}/disable"
-	menu_nextreload=1
 	echo
 }
 
@@ -789,7 +787,6 @@ function action_priority() {
 		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
 		touch "${f}/priority"
 	fi
-	menu_nextreload=1
 }
 
 
@@ -808,7 +805,6 @@ function action_first() {
 		echo -e "  Enabling first flag ${S_B}${f}${S_R}"
 		touch "${f}/first"
 	fi
-	menu_nextreload=1
 }
 
 #=== FUNCTION ==================================================================
@@ -826,7 +822,6 @@ function action_nosavelog() {
         echo -e "  Enabling nosavelog flag ${S_B}${f}${S_R}"
         touch "${f}/nosavelog"
     fi
-    menu_nextreload=1
 }
 
 
