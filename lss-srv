@@ -159,13 +159,13 @@ function log() {
 
 	# Save exec output in dedicated file
 	if [[ "${a^^}" = EXEC* ]] && [ "$em" ]; then
-		log_path="${sp}/logs/[$(echo "$d" | tr ":" ".")][${hn}][${a^^}].log"
-
 		# NOSAVELOG flag > Save first line on main log
 		if [ -f "${sp}/nosavelog" ]; then
 			em="$(echo ${em//$'\n'/ / } | cut -c 1-100) ..."
 		# Save log dedicated file
 		else
+			log_path="${sp}/logs/[$(echo "$d" | tr ":" ".")][${hn}][${a^^}].log"
+			[ ! -d "${sp}/logs" ] && mkdir -p "${sp}/logs"
 			echo "$em" > "$log_path"
 			em="'${log_path}'"
 		fi
