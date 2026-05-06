@@ -2,7 +2,7 @@
 #===================================================================================
 # LABADMIN SCRIPT MANAGER
 #         FILE: lss-manager
-#        USAGE: lss-manager [-r repository]
+#        USAGE: lss-manager [repository]
 #
 #  DESCRIPTION: Labadmin Script Server Manager for script configuration and log viewer
 #               CLI to interac over scripts and logs
@@ -400,9 +400,9 @@ function action_h() {
    Script flag actions:
     ${S_B}enable${S_R}\tUnset disable flag (D)
     ${S_B}disable${S_R}\tSet disable flag (D)
-    ${S_B}priority${S_R}\tToogle priority flag (P) (exec onlye priority script if any selected)
+    ${S_B}priority${S_R}\tToogle priority flag (P) (exec only priority scripts if any selected)
     ${S_B}first${S_R}\tToogle first flag (F) (exec first this scripts on list)
-    ${S_B}nosavelog${S_R}\tToogle nosavelog flag (L) (no save local logs in agents)
+    ${S_B}nosavelog${S_R}\tToogle nosavelog flag (L) (minimize logs on server and clients)
 
     " | column -L -t -s $'\t'
 }
