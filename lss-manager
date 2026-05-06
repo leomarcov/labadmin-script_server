@@ -9,7 +9,7 @@
 #
 #       AUTHOR: Leonardo Marco (labadmin@leonardomarco.com)
 #	   LICENSE: GNU General Public License v3.0
-#      VERSION: 2026.04
+#      VERSION: 2026.05
 #      CREATED: 2022.06.28
 #=================================================================================== 
 
@@ -21,11 +21,12 @@ readonly lssinventory_path="${lss_path}/lss-inventory"			# lss-inventory executa
 unset repository												# Current selected repository
 unset repository_path											# Current selected repository path
 unset script_name												# Current selected script name
+unset script_cat												# Current selected script category
+unset script_path												# Current selected script path
 unset scripts													# Array for list of scripts loades
-unset menu														# Saved menu list script
 unset menu_path													# Temp dir to create file for read autocomplete
 unset action													# Current selected action
-unset action_params												# Action params
+unset action_params												# Current selected actions optional parameters
 
 
 #===============================================================================
@@ -99,8 +100,7 @@ B_W="\e[107m"           	# Background LIGHT WHITE
 # DESCRIPTION: show header and cleaer screen
 #===============================================================================
 function show_header() {
-	clear
-	[ "$menu" ] && header_width=$(($(echo "$menu" | head -1 | wc -c)-10)) || header_width=100
+	header_width=120; [ "$COLUMNS" -lt 120 ] && header_width=$(($COLUMNS-4))
 	echo -e "${C_LN} ┌$(seq -s "─" 1 $header_width | tr -d [0-9])┐"
 	echo -e " │$(seq -s " " 1 $(((header_width-22)/2)) | tr -d [0-9])${C_D}${S_B}LABADMIN SCRIPT SERVER${S_R}${C_LN}$(seq -s " " 1 $(((header_width-22)/2)) | tr -d [0-9]) │"
 	echo -e " └$(seq -s "─" 1 $header_width | tr -d [0-9])┘${C_D}"
@@ -115,54 +115,64 @@ function show_header() {
 #	$scripts[]
 #===============================================================================
 function show_menu() {
-	show_header
+	local f_filter f_trash								# filter flag, trash flag
+	local filter="$1"									# optional filter list
+	[ "${filter}" ] && f_filter="true"
+	[ "${filter,,}" = "trash" ] && f_trash="true"		# flag to show trashed scripts on list
+
 	cursor_hide
 	echo -en "\n  ${C_LN}Updating scripts info...${C_D}"
 	menu="  ${S_B}\tCATEGORY\tRE\tSCRIPT\tFLAG\tSELECT\tGET\tOK\tERROR\tLAST${S_R}\n"
 
 	# Create sloc variable with script list orderer by category
-	IFS2="$IFS"; IFS=$'\n'; sloc=""
-	for s in $(ls "${repository_path}"/*/log | sed 's/\/log$//' | sort -n); do
-		c=$([ -f "${s}/category" ] && cat "${s}/category" || echo "999-")
-		d=$([ -f "${s}/disable" ] && echo "A" || echo "Z")
+	sloc=""
+	for s in "${repository_path}"/*/log "${repository_path}"/.TRASH/*/log; do
+		s="${s%/log}"
+		[ ! "$f_trash" ] && [[ "${s%/*}" = */.TRASH ]] && continue		# Skip /.TRASH scripts if no flag trash
+		unset c
+		[ -e "${s}/category" ] && c=$(cat "${s}/category"); [ ! "$c" ] && c="none"
+		[ -f "${s}/disable" ] && d="A" || d="Z"							# Order disabled scripts first in his category
+		[[ "${c^^}" = @("LABADMIN"|"LSS") ]] && c="000"					# Order LABADMIN category first
+		[ "${c}" = "none" ] && c="ZZY"									# Order no category last
+		[ "${c^^}" = "TRASH" ] && c="ZZZ"								# Order trash scripts last
 		sloc="${sloc}${sloc:+\n}${c}\t${d}\t${s}"
 	done
 	sloc=$(echo -e "$sloc" | sort -k1,1 -k2,2 -k3,3)
 	clc=$(echo "$sloc" | cut -f1 | uniq -c | awk '{print $1}')
 	sloc=$(echo "$sloc" | cut -f3-)
+
 	# Create menu variable with script list
-	i=1; unset scripts
-	IFS2="$IFS"; IFS=$'\n';
-	for s in $sloc; do
-		script_path="${s}"
+	i=0; unset scripts
+	while read s; do
+		local sp="${s}"
 		s=$(basename "$s")
+		i=$((i+1))
 		scripts[$i]="$s"		# Update scripts[]
 
-		local cat="999-"
-		[ -e "${script_path}/category" ] && cat=$(cat "${script_path}/category")
-
+		unset sc
+		[ -e "${sp}/category" ] && sc=$(cat "${sp}/category"); [ ! "$sc" ] && sc="${C_N}none${S_R}"
+		scripts_cat[$i]="${sc}"
+		[ "$f_filter" ] && [[ "${sc,,}" != *"$filter"* ]] && continue
 		local f=" " ci="${C_D}" cl="${C_D}"
-		[ -e "${script_path}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
-		[ -e "${script_path}"/disable ] && f="${f}${C_R}D${cl}"										# Flag disabled
-		[ -e "${script_path}"/priority ] && f="${f}${C_LB}P${cl}"									# Flag priority
-		[ -e "${script_path}"/first ] && f="${f}${C_LG}F${cl}"										# Flag first
-		[ -e "${script_path}"/nosavelog ] && f="${f}${C_Y}L${cl}"									# Flag nosavelog
-		[ "$s" = "${script_name}" ] && cc="${S_B}>" || cc=" "								# Colors when selected script
+		[ -e "${sp}/disable" ] && { ci="${C_R}"; cl="${C_LN}"; }							# Colors when disabled index and line
+		[ -e "${sp}"/disable ] && f="${f}${C_R}D${cl}"										# Flag disabled
+		[ -e "${sp}"/priority ] && f="${f}${C_LB}P${cl}"									# Flag priority
+		[ -e "${sp}"/first ] && f="${f}${C_LG}F${cl}"										# Flag first
+		[ -e "${sp}"/nosavelog ] && f="${f}${C_Y}L${cl}"									# Flag nosavelog
+		[ "$s" = "${script_name}" ] && cc=">${S_B}" || cc=" "										# Colors when selected script
 
-		local st=$(grep "readonly select_type" "${script_path}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
-		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" ${script_path}/log | sort | uniq -c)"
-		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0				# get count
-		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0					# ok count
-		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"# error count
-		local t=$(tail -1 "${script_path}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")						# last log time
+		local st=$(grep "readonly select_type" "${sp}"/select | cut -f2 -d\")				# Select type script (once, always, custom)
+		local l="$(grep -o -F -e "[GET]" -e "[EXEC_OK]" -e "[EXEC_ERROR]" "${sp}"/log | sort | uniq -c)"
+		local ng=$(echo "$l" | grep -F "[GET]" | awk '{print $1}');			[ ! "$ng" ] && ng=0												# get count
+		local no=$(echo "$l" | grep -F "[EXEC_OK]" | awk '{print $1}');		[ ! "$no" ] && no=0												# ok count
+		local ne=$(echo "$l" | grep -F "[EXEC_ERROR]" | awk '{print $1}');  [ ! "$ne" ] && ne=0; [ "$ne" -gt 0 ] && ne="${C_R}${ne}"		# error count
+		local t=$(tail -1 "${sp}"/log  | cut -f1 -d" " | tr -d "][" | tr "_" " ")													# last log time
 		if [ ! "$t" ]; then t="\e[38;5;241m-"
 		else t=$(($(date +%s)-$(date -d "$t" +%s))); local td="$((t/86400))" th="$(((t%86400)/3600))" tm="$(((t%3600)/60))"
 		[ "$td" -gt 0 ] && t="\e[38;5;241m${td}d" || { [ "$th" -gt 0 ] && t="\e[38;5;245m${th}h" || t="\e[38;5;249m${tm}m"; }; fi
+		menu="$menu\n ${cc}${ci}[$i]${C_D}${cl}\t${sc}\t${s/ /$'\t'}\t${f}\t${st}\t${ng}${lg}\t${no}$lo\t${ne}${S_R}${C_D}\t${C_LN}${t}"
+	done <<< "$sloc"
 
-		menu="$menu\n ${cc}${ci}[$i]${C_D}${cl}\t${cat#"${cat%%[!0-9]*}"}\t${s/ /$'\t'}\t${f}\t${st}\t${ng}${lg}\t${no}$lo\t${ne}${S_R}${C_D}\t${C_LN}${t}"
-		i=$((i+1))
-	done 
-	IFS="$IFS2"
 	echo -en "\n\e[2A                                           "	# Overwrite Updating scripts info... line
 	menu=$(echo -e "${menu}" | column -t -s $'\t' -R 6,7,8,9)
 
@@ -170,12 +180,14 @@ function show_menu() {
 	local bar="  $(echo -e "${C_LN}")$(seq -s"─" 1 $(($(echo "$menu" | head -1 | wc -c)-8)) | tr -d "[0-9]")$(echo -e "${C_D}")"
 	menu=$(echo "${menu}" | sed "2i\\${bar}")$'\n'"${bar}"	# Add bars after format columns
 	# Add category separator lines
-	local bar2="$(echo -e "${S_D}")      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")$(echo -e "${S_R}")"
-	n=0
-	for cl in $(echo "$clc" | head -n -1); do
-		[ "$n" -eq 0 ] && n="$cl" || n=$((n+cl+1))
-		menu=$(echo "$menu"| sed "$((n+3))i\\${bar2}")
-	done
+	if [ ! "$f_filter" ]; then
+		local bar2="$(echo -e "${S_D}")      $(echo -e "${C_LN}")$(seq -s"-" 1 $(($(echo "$menu" | head -1 | wc -c)-14)) | tr -d "[0-9]")$(echo -e "${C_D}")$(echo -e "${S_R}")"
+		n=0
+		for cl in $(echo "$clc" | head -n -1); do
+			[ "$n" -eq 0 ] && n="$cl" || n=$((n+cl+1))
+			menu=$(echo "$menu"| sed "$((n+3))i\\${bar2}")
+		done
+	fi
 
 	menu="\n${menu}\n"
 
@@ -208,9 +220,13 @@ function change_repository() {
 	[[ $(readlink -f "${repositories_path}/${r}") = $(readlink -f "${repositories_path}") ]] && return 1		# Check if try directory outside repositories_path
 	[[ $(readlink -f "${repositories_path}/${r}") != $(readlink -f "${repositories_path}")* ]] && return 1		# Check if try directory outside repositories_path
 
+	([ ! "$repository" ] || [ "$repository" != "$r" ]) && clear
+	show_header
 	repository="$r"
 	repository_path="${repositories_path}/${repository}/"
 	unset script_name
+	unset script_cat
+	unset script_path
 	unset scripts
 
 	show_menu
@@ -231,7 +247,7 @@ function read_action() {
 	   menu_path=$(mktemp -d)
 	   mkdir "${menu_path}/script" "${menu_path}/root"
 	   cd "${menu_path}/root/"; touch cd create help list
-	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  set-category  disable  enable  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select
+	   cd "${menu_path}/script/"; touch bash  delete  set-name  set-RE  set-category  disable  enable  priority  first  nosavelog log  status  map  log-clean  log-wipe  ls  script  select trash untrash
 	fi
 	cd "${menu_path}/$([ "$script_name" ] && echo "script" || echo "root")"
 
@@ -246,7 +262,7 @@ function read_action() {
 
 	# Empty action: list
 	if [ ! "$action" ]; then
-		action="list-noreload"
+		action="list"
 
 	# Action <n>: cd <n>
 	elif [ "$action" -eq "$action" ] &>/dev/null; then
@@ -290,23 +306,35 @@ function action_cd() {
 		# cd <n>
 		elif [ "$action_params" -eq "$action_params" ] &>/dev/null; then
             script_name="${scripts[$action_params]}"
-            [ ! "$script_name" ] && echo -e "  Invalid script number!\n"
+            [ ! "$script_name" ] && echo -e "  ERROR: invalid script number\n"
+			script_cat="${scripts_cat[$action_params]}"
 
 		# cd <string>
 		else
-            local s=""
-            s=$(for i in ${!scripts[@]}; do
-			echo "${scripts[$i]}" | grep -Fi "$action_params"
+            local l=""
+            l=$(for i in ${!scripts[@]}; do
+				echo "${scripts[$i]}" | grep -Fiq "$action_params" && echo "$i"
             done)
-            if [ "$(echo "$s" | wc -l)" -gt 1 ]; then
-                echo "$s"
-                echo
-            elif [ "$s" ]; then
-                script_name="$s"
+            if [ $(echo "$l" | wc -l) -gt 1 ]; then
+				IFS=$'\n'
+				for i in $l; do
+					echo "   ${scripts[$i]}"
+    			done
+				IFS=$'\n\t '
+				echo
+            elif [ "$l" ]; then
+                script_name="${scripts[$l]}"
+                script_cat="${scripts_cat[$l]}"
             else
-                echo "  Script not found $action_params"
+                echo "  ERROR: script not found $action_params\n"
             fi
         fi
+
+		if [ "${script_cat^^}" = "TRASH" ]; then
+			script_path="${repository_path}/.TRASH/${script_name}"
+		else
+			script_path="${repository_path}/${script_name}"
+		fi
 }
 
 
@@ -341,28 +369,37 @@ function action_help() {
 function action_h() {
 	echo -e "
    Global actions:
-    ${S_B}list${S_R}\tList scripts and stats
+    ${S_B}list${S_R} [CATEGORY]\tList scripts and stats. Optionaly filter by category
     ${S_B}create${S_R}\tCreate new script folder with default template files
-    ${S_B}cd <n>${S_R}\tSelect script number <n>
+    ${S_B}cd${S_R} <n>\tSelect script number <n>
     ${S_B}<n>${S_R}\tSelect script number <n>
-    ${S_B}cd <str>${S_R}\tSelect script contaning str in name
+    ${S_B}cd${S_R} <str>\tSelect script contaning str in name
     ${S_B}<repo>${S_R}\tChange to repository <repo>
 
-   Script actions:
-    ${S_B}bash${S_R}\tOpen Bash in selected script directory
+   Script status actions:
     ${S_B}status${S_R} [RE]\tShow exec stats of selected script. Optionaly filter hosts by RE
     ${S_B}map${S_R} [LAB...]\tShow exec stats in a map. Optionaly show only a list of LABS
     ${S_B}log${S_R} [RE]\tShow log file of selected script. Optionaly filter lines by RE
     ${S_B}log-wipe${S_R}\tWipe log file of selected script
     ${S_B}log-clean${S_R}\tClean all log error entries in log file of selected script
+
+   Script manage actions:
+    ${S_B}bash${S_R}\tOpen Bash in selected script directory
     ${S_B}script${S_R}\tShow script file of selected script
     ${S_B}select${S_R}\tShow select file of selected script
-    ${S_B}enable${S_R}\tEnable selected script
     ${S_B}set-name${S_R} <name>\tChange name of selected script
     ${S_B}set-RE${S_R} <re>\tChange RE of selected script
     ${S_B}set-category${S_R} <cat>\tChange caregory of selected script
-    ${S_B}delete${S_R}\tDelete selected script
-    ${S_B}disable${S_R}\tToogle disable flag (D)
+
+   Script remove actions:
+    ${S_B}delete${S_R}\tDelete selected script permanently
+    ${S_B}trash${S_R}\tMove to trash selected script
+    ${S_B}untrash${S_R}\tRestore selected script from trash
+    ${S_B}list${S_R} trash\tList thrased scripts
+
+   Script flag actions:
+    ${S_B}enable${S_R}\tUnset disable flag (D)
+    ${S_B}disable${S_R}\tSet disable flag (D)
     ${S_B}priority${S_R}\tToogle priority flag (P) (exec onlye priority script if any selected)
     ${S_B}first${S_R}\tToogle first flag (F) (exec first this scripts on list)
     ${S_B}nosavelog${S_R}\tToogle nosavelog flag (L) (no save local logs in agents)
@@ -372,22 +409,12 @@ function action_h() {
 
 
 #=== FUNCTION ==================================================================
-#        NAME: action_list-noreload
-# DESCRIPTION: action to show scripts menu and no reload
-#===============================================================================
-function action_list-noreload() {
-	show_menu
-}
-
-
-#=== FUNCTION ==================================================================
 #        NAME: action_l
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_l() {
-    show_menu
+	show_menu "${action_params}"
 }
-
 
 
 #=== FUNCTION ==================================================================
@@ -395,7 +422,7 @@ function action_l() {
 # DESCRIPTION: action to show scripts menu
 #===============================================================================
 function action_list() {
-	show_menu
+	show_menu ${action_params}
 }
 
 
@@ -404,18 +431,22 @@ function action_list() {
 # DESCRIPTION: create new empty script
 #===============================================================================
 function action_create() {
-    read -r -p "  Regular expresion: " re
-    read -r -p "  Description: " d
-	read -r -p "  Category: " c
-	local f="$repository_path/${re} ${d}"
+    read -r -p "  Regular expresion and Description: " s
+	d=$(echo "$s" | awk '{print $2}'); [ ! "$d" ] && { echo -e "  ERROR: empty description\n"; return 1; }
 
-	# Create directory and files and set permissions
-    mkdir "$f" || return 1
-    touch "${f}/disable"                               # Start disabled
-    touch "$f/log" "$f/script" "$f/select"
-	echo "$c" > "$f"/category
-	mkdir "$f/logs"
-    chmod ug+w "$f/log" "$f/logs"
+	local sp="${repository_path}/${s}"
+	[ -e "${sp}" ] && { echo -e "  ERROR: script $s already exists\n"; return 1; }
+
+	read -r -p "  Category: " c
+	c=$(echo "${c^^}" | awk '{print $1}')
+	[[ "${c,,}" = @(trash|untrash) ]] && { echo "  ERROR: reserved category\n"; return 1; }
+
+	mkdir "${sp}" || return 1
+    touch "${sp}/disable"                               # Start disabled
+    touch "${sp}/log" "${sp}/script" "${sp}/select"
+	echo "${c}" > "${sp}/category"
+	mkdir "${sp}/logs"
+    chmod ug+w "${sp}/log" "${sp}/logs"
 	[ $(id -u) -eq 0 ] && chown -R lss-admin:lss-agent "${repository_path}"
 
 echo '#!/usr/bin/env bash
@@ -484,13 +515,15 @@ function select_custom() {
 }
 
 # Exec select function according $select_type content
-"select_${select_type}"' > "$f/select"
-
-	echo -e "  Script directory: ${S_B}$f${S_R}/"
+"select_${select_type}"' > "${sp}/select"
 
 
-	script_name="${re} ${d}"
+	echo -e "  Script directory: ${S_B}${sp}${S_R}/"
 	echo
+
+	script_name="${s}"
+	script_cat="${c}"
+	script_path="${sp}"
 }
 
 
@@ -499,12 +532,12 @@ function select_custom() {
 # DESCRIPTION: action to delete selected script
 #===============================================================================
 function action_delete() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
     read -r -p "  Sure? Script and logs will be removed (N/y) " r
-    if [ "$r" = "y" ]; then
-        local f="$repository_path/${script_name}/"
-        echo -e "  Removing script ${S_B}${f}${S_R}"
-        rm -rf "$f" || return 1
+    if [ "${r,,}" = "y" ]; then
+		[ ! -d "${script_path}" ] && { echo -e "ERROR: directory ${S_B}${script_path}${S_R} not exists! (bug error?)\n"; return 1; }
+		echo -e "  Removing script ${S_B}${script_path}${S_R}"
+        rm -rf "${script_path}" || return 1
 		action_..
     fi
     echo
@@ -516,13 +549,19 @@ function action_delete() {
 # DESCRIPTION: action to set name of selected script
 #===============================================================================
 function action_set-name() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local script_desc
-	[ "$action_params" ] && script_desc="$action_params" || read -r -p "  New name: " script_desc 
-	local script_new_name="${script_name%% *} ${script_desc}"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local sd
+	[ "$action_params" ] && sd="$action_params" || read -r -p "  New name: " sd
+	local sn="${script_name%% *} ${sd}"
+	local sp="$(dirname "${script_path}")/${sn}"
 
-	script_name="${script_new_name}"
+	[ -e "${sp}" ] && { echo -e "  ERROR: already exist script ${S_B}${sp}${S_R}"; return 1; }
+	echo -e "  Renaming script to ${S_B}${sp}${S_R}"
+	mv "${script_path}" "${sp}" || return 1
+	echo
+
+	script_name="${sn}"
+	script_path="${sp}"
 }
 
 
@@ -531,13 +570,19 @@ function action_set-name() {
 # DESCRIPTION: action to set REGEX of selected script
 #===============================================================================
 function action_set-RE() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local script_re
-	[ "$action_params" ] && script_re="$action_params" || read -r -p "  New REGEX: " script_re 
-	local script_new_name="${script_re} ${script_name#* }"
-	mv "${repository_path}/${script_name}" "${repository_path}/${script_new_name}" || return 1
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local sre
+	[ "$action_params" ] && sre="$action_params" || read -r -p "  New REGEX: " sre
+	local sn="${sre} ${script_name#* }"
+	local sp="$(dirname "${script_path}")/${sn}"
 
-	script_name="${script_new_name}"
+	[ -e "${sp}" ] && { echo -e "  ERROR: already exist script ${S_B}${sp}${S_R}"; return 1; }
+	echo -e "  Renaming script to ${S_B}${sp}${S_R}"
+	mv "${script_path}" "${sp}" || return 1
+	echo
+
+	script_name="${sn}"
+	script_path="${sp}"
 }
 
 
@@ -546,10 +591,21 @@ function action_set-RE() {
 # DESCRIPTION: action to set category of selected script
 #===============================================================================
 function action_set-category() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local script_cat
-	[ "$action_params" ] && script_cat="$action_params" || read -r -p "  New category:" script_cat
-	echo "$script_cat" > "${repository_path}/${script_name}/category"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	[ "${script_cat^^}" = "TRASH" ] && { echo -e "  ERROR: cant set category from trash scripts\n"; return 1; }
+
+	local sc
+	[ "$action_params" ] && sc="$action_params" || read -r -p "  New category: " sc
+	[[ "${sc^^}" = @(TRASH|UNTRASH) ]] && { echo -e "  ERROR: reserved category\n"; return 1; }
+
+	sc=$(echo "${sc^^}" | awk '{print $1}')
+
+	local f="${script_path}/category"
+	echo -e "  Setting category ${S_B}${sc}${S_R} to ${S_B}${f}${S_R}"
+	echo "$sc" > "${f}"
+	echo
+
+	script_cat="$sc"
 }
 
 
@@ -588,7 +644,7 @@ function action_log() {
 # DESCRIPTION: action to show log file of selected script
 #===============================================================================
 function action_log-show() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
+    [ "$script_name" ] && local f="${script_path}/log" || local f="${repository_path}/log"       # Log file path
 
 	echo
 	echo -e "  File ${S_B}${f//\/\//\/}${S_R}"
@@ -604,7 +660,7 @@ function action_log-show() {
 # DESCRIPTION: action to show exec status of selected script
 #===============================================================================
 function action_status() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || local f="${repository_path}/log"		# Log file path
+    [ "$script_name" ] && local f="${script_path}/log" || local f="${repository_path}/log"       # Log file path
 
 	echo
 	echo -e "  File stats from file ${S_B}${f//\/\//\/}${S_R}"
@@ -635,10 +691,9 @@ function action_status() {
 # DESCRIPTION: action to show exec status map of selected script
 #===============================================================================
 function action_map() {
-	[ "$script_name" ] && local f="${repository_path}/${script_name}/log" || { local f="${repository_path}/log"; action_params="*"; }	# Log file path
+    [ "$script_name" ] && local f="${script_path}/log" || { local f="${repository_path}/log"; action_params="*"; }       # Log file path
 
 	# Select hosts to color
-	echo "  Calculating hosts to hightlight..."
 	local h hg hr hy h_log=$(awk '{print $3,$4}' "$f" | tr -d "[]") IFS=$'\n'
 	local ha; declare -A ha
 	for h in $h_log; do	ha["${h%% *}"]="${h##* }"; done	
@@ -660,14 +715,13 @@ function action_map() {
 #		esac
 #	done
 
-	echo "  Generating map..."
 	if [ "$action_params" ] ; then
 		# Show only selected maps by params
 		local d="d"; echo "$action_params" | grep -qF "*" && d="D"
-		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"
+		bash "${lssinventory_path}" map -H -g "$hg" -y "$hy" -r "$hr" -$d "$action_params"  
 	else
 		# Show maps according script RE
-		bash "${lssinventory_path}" map -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}"
+		bash "${lssinventory_path}" map -H -g "$hg" -y "$hy" -r "$hr" -D "${script_name%% *}" 
 	fi
 	echo
 }
@@ -677,12 +731,12 @@ function action_map() {
 # DESCRIPTION: action to show script file content of selected script
 #===============================================================================
 function action_script() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/script"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local f="${script_path}/script"
 	echo
 	echo -e "  File ${S_B}${f}${S_R}"
 	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
-	cat "$f"
+	cat "${f}"
 	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -e "${C_D}"
 }
 
@@ -692,8 +746,8 @@ function action_script() {
 # DESCRIPTION: action to show select file content of selected script
 #===============================================================================
 function action_select() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/select"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local f="${script_path}/select"
 	echo
 	echo -e "  File ${S_B}${f}${S_R}"
 	echo -en "${C_LN}"; seq -s "-" 1 $((COLUMNS)) | tr -d "[0-9]"; echo -en "${C_D}"
@@ -707,11 +761,11 @@ function action_select() {
 # DESCRIPTION: action to open Bash in selected script folder
 #===============================================================================
 function action_bash() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Opening shell in ${S_B}${f}${S_R}"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local d="${script_path}/"
+	echo -e "  Opening shell in ${S_B}${d}${S_R}"
 	echo
-	(cd "$f"; env PS1="  [LSS-BASH]\e[0m:\[\e[1m\e[38;5;12m\]\W\[\e[0m\]]\$ " bash --norc)
+	(cd "$d"; env PS1="  [LSS-BASH]\e[0m:\[\e[1m\e[38;5;12m\]\W\[\e[0m\]]\$ " bash --norc)
 	echo
 }
 
@@ -721,10 +775,10 @@ function action_bash() {
 # DESCRIPTION: action to wipe log file of selected script
 #===============================================================================
 function action_log-wipe() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
 	read -r -p "  Sure? All log data will be removed (N/y) " r
-	if [ "$r" = "y" ]; then
-		local f="$repository_path/${script_name}/log"
+	if [ "${r,,}" = "y" ]; then
+		local f="${script_path}/log"
 		echo -e "  Wiping file ${S_B}${f}${S_R}"
 		echo -n "" > "$f"
 	fi
@@ -737,10 +791,10 @@ function action_log-wipe() {
 # DESCRIPTION: action to clean all log error entries in log file of selected script
 #===============================================================================
 function action_log-clean() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
     read -r -p "  Sure? All errors log data will be removed (N/y) " r
-    if [ "$r" = "y" ]; then
-        local f="$repository_path/${script_name}/log"
+    if [ "${r,,}" = "y" ]; then
+		local f="${script_path}/log"
         echo -e "  Cleaning errors in file ${S_B}${f}${S_R}"
 		sed -i "/ERROR\]/d" "$f"
 	fi
@@ -753,9 +807,9 @@ function action_log-clean() {
 # DESCRIPTION: action to disable selected script
 #===============================================================================
 function action_disable() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Disabling script ${S_B}${f}${S_R}"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+    local f="${script_path}/disable"
+	echo -e "  Disabling script flag ${S_B}${f}${S_R}"
 	touch "${f}/disable"
 	echo
 }
@@ -766,11 +820,61 @@ function action_disable() {
 # DESCRIPTION: action to enable selected script
 #===============================================================================
 function action_enable() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "  Enabling script ${S_B}${f}${S_R}"
-	rm -rf "${f}/disable"
-	echo
+    [ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+    local f="${script_path}/disable"
+    echo -e "  Enabling script flag ${S_B}${f}${S_R}"
+    rm -f "${f}"
+    echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_trash
+# DESCRIPTION: action to move script to trash
+#===============================================================================
+function action_trash() {
+    [ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	[ "${script_cat^^}" = "TRASH" ] && { echo -e "  ERROR: script already in trash\n"; return 1; }
+
+	local sp="${repository_path}/.TRASH/${script_name}"
+	[ -d "${sp}" ] && { echo -e "  ERROR: already exists script ${S_B}${script_name}${S_R} in trash\n"; return 1; }
+
+    read -r -p "  Sure? Script will be move to trash (N/y) " r
+    if [ "${r,,}" = "y" ]; then
+        echo -e "  Moving to trash script ${S_B}${script_path}${S_R}"
+		[ ! -d "${repository_path}/.TRASH/" ] && { mkdir -p "${repository_path}/.TRASH/" || return 1; }
+		mv "${script_path}" "${sp}" || return 1
+		echo TRASH > "${sp}/category"
+		touch "${sp}/disable"
+
+	    script_cat="TRASH"
+	    script_path="${sp}"
+    fi
+    echo
+}
+
+
+#=== FUNCTION ==================================================================
+#        NAME: action_untrash
+# DESCRIPTION: action to restore script from trash
+#===============================================================================
+function action_untrash() {
+    [ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	[ "${script_cat^^}" != "TRASH" ] && { echo -e "  ERROR: script are not in trash\n"; return 1; }
+
+	local sp="${repository_path}/${script_name}/"
+    [ -d "${sp}" ] && { echo -e "  ERROR: already exists script ${S_B}${script_name}${S_R}\n"; return 1; }
+
+    read -r -p "  Sure? Script will be restore from trash (N/y) " r
+    if [ "${r,,}" = "y" ]; then
+        echo -e "  Restoring from trash script ${S_B}${f}${S_R}"
+		mv "${script_path}" "${sp}" || return 1
+        echo "UNTRASH" > "${sp}/category"
+
+		script_cat="UNTRASH"
+	    script_path="${sp}"
+    fi
+    echo
 }
 
 
@@ -779,16 +883,17 @@ function action_enable() {
 # DESCRIPTION: action to toogle priority flag on selected script
 #===============================================================================
 function action_priority() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local f="${script_path}/priority"
 
-	if [ -e "${f}/priority" ]; then
+	if [ -e "${f}" ]; then
 		echo -e "  Disabling priority flag ${S_B}${f}${S_R}"
-		rm -rf "${f}/priority"
+		rm -f "${f}"
 	else
 		echo -e "  Enabling priority flag ${S_B}${f}${S_R}"
-		touch "${f}/priority"
+		touch "${f}"
 	fi
+	echo
 }
 
 
@@ -797,16 +902,17 @@ function action_priority() {
 # DESCRIPTION: action to toogle first flag on selected script
 #===============================================================================
 function action_first() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local f="${script_path}/first"
 
-	if [ -e "${f}/first" ]; then
+	if [ -e "${f}" ]; then
 		echo -e "  Disabling first flag ${S_B}${f}${S_R}"
-		rm -rf "${f}/first"
+		rm -rf "${f}"
 	else
 		echo -e "  Enabling first flag ${S_B}${f}${S_R}"
-		touch "${f}/first"
+		touch "${f}"
 	fi
+	echo
 }
 
 #=== FUNCTION ==================================================================
@@ -814,16 +920,17 @@ function action_first() {
 # DESCRIPTION: action to toogle nosavelog flag on selected script
 #===============================================================================
 function action_nosavelog() {
-    [ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-    local f="$repository_path/${script_name}/"
+    [ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+    local f="${script_path}/nosavelog"
 
-    if [ -e "${f}/nosavelog" ]; then
+    if [ -e "${f}" ]; then
         echo -e "  Disabling nosavelog flag ${S_B}${f}${S_R}"
-        rm -rf "${f}/nosavelog"
+        rm -r "${f}"
     else
         echo -e "  Enabling nosavelog flag ${S_B}${f}${S_R}"
-        touch "${f}/nosavelog"
+        touch "${f}"
     fi
+	echo
 }
 
 
@@ -834,9 +941,9 @@ function action_nosavelog() {
 # DESCRIPTION: action to list all files of selected script
 #===============================================================================
 function action_ls() {
-	[ ! "$script_name" ] && { echo -e "  No script selected!\n"; return 1; }
-	local f="$repository_path/${script_name}/"
-	echo -e "\n${f}${C_LN}"
+	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
+	local f="${script_path}"
+	echo -e "\n  ${f}${C_LN}"
 	ls -lh --color "$f" | tail -n +2
 	echo -e "${C_D}"
 }
@@ -846,7 +953,9 @@ function action_ls() {
 # DESCRIPTION: action deselect selected script
 #===============================================================================
 function action_..() {
-	script_name=""
+	unset script_name
+	unset script_cat
+	unset script_path
 }
 
 
