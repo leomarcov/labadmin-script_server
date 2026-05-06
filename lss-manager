@@ -810,7 +810,7 @@ function action_disable() {
 	[ ! "$script_name" ] && { echo -e "  ERROR: no script selected\n"; return 1; }
     local f="${script_path}/disable"
 	echo -e "  Disabling script flag ${S_B}${f}${S_R}"
-	touch "${f}/disable"
+	touch "${f}"
 	echo
 }
 
