@@ -25,7 +25,7 @@ readonly inventory_path=$(ls "$inventories_path"/*default*.inventory "$inventori
 
 
 if [ ! -r "$inventory_path" ] || [ ! -f "$inventory_path" ]; then
-	echo "Cant access inventory file $inventory_path"
+    echo "ERROR: not found inventory file $inventory_path"
 	exit 1
 fi
 
