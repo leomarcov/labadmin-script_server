@@ -2,7 +2,7 @@
 #===================================================================================
 # LABADMIN SCRIPT SERVER
 #         FILE: lss-srv
-#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message] [-v version]
+#        USAGE: lss-srv -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message] [-v version] [ -c computermodel]
 #
 #  DESCRIPTION: Labadmin Script Server
 #               Manage actions to do: list pending scripts, print script code, save exec status (exec_ok or exec_error)
@@ -34,6 +34,7 @@ unset script												# script parameter
 unset script_path											# script path
 unset exec_msg												# exec_msg parameter
 unset agent_version											# agent LSS version
+unset agent_model											# agent computer model description
 
 
 #===============================================================================
@@ -51,7 +52,7 @@ source "${lss_path}/config"									# LOAD CONFIG VARIABLES
 #	$1	Exit code value
 #===============================================================================
 function help() {
-	echo -e "Usage: $(basename "$0") -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message]"
+	echo -e "Usage: $(basename "$0") -h hostname -M mac -r repository_name -a list|get|exec_ok|exec_error [-s script] [-m exec_message] [-v version] [-c computermodel]"
 	exit "$1"
 }
 
@@ -63,7 +64,7 @@ function help() {
 #	$@	All parameter from command line
 #===============================================================================
 function check_params() {
-	while getopts ":h:M:r:a:s:m:v:" option
+	while getopts ":h:M:r:a:s:m:v:c:" option
 	do
 		case $option in
 		h)
@@ -88,6 +89,12 @@ function check_params() {
 		;;
 		v)
 			agent_version="$OPTARG"
+		;;
+		c)
+			agent_model="$OPTARG"
+			if [ "$agent_model" ]; then
+				agent_model=$(echo "$agent_model" | paste -sd "|" | sed 's/[^a-zA-Z0-9\-\_ |.]//g')
+			fi
 		;;
 		?)
 			echo "Incorrect option: $OPTARG"
@@ -206,7 +213,7 @@ function get_hostname_inventory() {
 
 	# Check hostname charset
 	if [ "$hostname_inventory" ] && ! [[ "$hostname_inventory" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]]; then
-		log "$mac" "$hostname" "MAC_ERROR" "" "Error inventory: invalid charset hostname $hostname_inventory for MAC: $mac"
+		log "$mac" "$hostname" "LIST_ERROR" "" "Invalid charset hostname $hostname_inventory for MAC: $mac"
 		echo "ERROR: invalid charset hostname $hostname_inventory for MAC: $mac" 1>&2
 		exit 1
 	fi
@@ -232,13 +239,12 @@ function action_list() {
 
 	# CHECK HOSTNAME
 	if [ "$hostname_error" ]; then
-		log "$mac" "$hostname" "MAC_ERROR" "" "Error inventory: no hostname found for MAC: $mac"
-		echo "ERROR: no hostname found for MAC: $mac" 1>&2
+		log "$mac" "$hostname" "LIST_ERROR" "" "No hostname found for MAC: $mac (MODEL: ${agent_model:-unknown})"
+		echo "ERROR: no hostname found for MAC: $mac (MODEL: ${agent_model:-unknown})" 1>&2
 		exit 1
 	fi
 	if [ ! "$hostname_match" ]; then
-		log "$mac" "$hostname" "MAC_WARN" "" "Hostname mismatch for MAC $mac: current $hostname -> inventory $hostname_inventory)"
-		echo "WARNING: hostname mismatch for MAC $mac: current $hostname -> inventory $hostname_inventory" 1>&2
+		log "$mac" "$hostname" "LIST_WARN" "" "Hostname mismatch for MAC: $mac (HOSTNAME: ${hostname} -> ${hostname_inventory}) (MODEL: ${agent_model:-unknown})"
 		hostname_effective="$hostname_inventory"
 	else
 		hostname_effective="$hostname"
@@ -296,8 +302,6 @@ function action_list() {
 #              Replace special strings in script content
 #===============================================================================
 function action_get() {
-	local em
-
 	# GET SCRIPT
 	local c=$(cat "${script_path}/script")
 	if [ $? -ne 0 ]; then
@@ -313,11 +317,10 @@ function action_get() {
 	#   * LSS-MAC-REPLACE
 	c=$(echo "$c" | sed "s/LSS-HOSTNAME-REPLACE/${hostname_inventory}/g")
 	c=$(echo "$c" | sed "s/LSS-MAC-REPLACE/${hostname_inventory}/g")
-	em="${hostname} -> ${hostname_inventory}"
 
 	# PRINT SCRIPT
 	echo "$c"
-	log "$mac" "$hostname" "$action" "$script_path" "$em"
+	log "$mac" "$hostname" "$action" "$script_path" ""
 	exit 0
 }
 
