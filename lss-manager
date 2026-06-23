@@ -961,7 +961,7 @@ function action_..() {
 
 #=== FUNCTION ==================================================================
 #        NAME: help
-# DESCRIPTION: Print help and exit 
+# DESCRIPTION: Print help and exit
 #  PARAMETERS:
 #	$1	Exit code value
 #===============================================================================
@@ -976,7 +976,7 @@ function help() {
 # DESCRIPTION: main
 #===============================================================================
 function main()  {
-    # FORCE lss-admin USER                                                                                
+    # FORCE lss-admin USER
     if [ ! $(id -un) = "lss-admin" ]; then
         if [ $(id -u) -eq 0 ]; then
             exec runuser -u lss-admin -- "$0" "$@"
