@@ -976,6 +976,16 @@ function help() {
 # DESCRIPTION: main
 #===============================================================================
 function main()  {
+    # FORCE lss-admin USER                                                                                
+    if [ ! $(id -un) = "lss-admin" ]; then
+        if [ $(id -u) -eq 0 ]; then
+            exec runuser -u lss-admin -- "$0" "$@"
+        else
+            echo "ERROR: lss-manager must be executed has lss-admin user"
+            exit 1
+        fi
+    fi
+
 	local r="linux"	# Default repository linux
 	local p="$1"
 
