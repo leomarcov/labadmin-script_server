@@ -35,6 +35,7 @@ systemctl restart ssh.service
 ```bash
 adduser --disabled-password lss-agent 			# Only login with private key
 adduser --disabled-password lss-admin  			# Only login with private key
+adduser lss-admin lss-agent						# Add lss-admin to lss-agent group
 ```
   * Create repository log files
 ```
