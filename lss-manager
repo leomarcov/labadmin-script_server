@@ -447,7 +447,7 @@ function action_create() {
 	echo "${c}" > "${sp}/category"
 	mkdir "${sp}/logs"
     chmod ug+w "${sp}/log" "${sp}/logs"
-	chgrp -R lss-agent "${repository_path}"
+	chgrp -R lss-agent "${sp}"
 	[ $(id -u) -eq 0 ] && chown -R lss-admin "${repository_path}"
 
 echo '#!/usr/bin/env bash
