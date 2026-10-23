@@ -364,7 +364,7 @@ function action_labadmin-conf() {
 		return 1
 	fi
 
-	# Header + labname + agent_os
+	# Header + lab_name + agent_os
 	echo "#!/usr/bin/env bash
 #===================================================================================
 #        FILE: ${lab}
@@ -374,7 +374,7 @@ function action_labadmin-conf() {
 #===================================================================================
 
 # Lab name
-labname='${LAB["$lab"]}'
+lab_name='${LAB["$lab"]}'
 
 # Server default mode (winrm for Windows or ssh for Linux)
 agent_os='${MODE["$lab"]}'
